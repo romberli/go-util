@@ -19,7 +19,7 @@ type CloseConn interface {
 const (
 	portNumSshDefault      = 22
 	userNameSshDefault     = "root"
-	userPassSshDefault     = ""
+	userPassSshDefault     = "shit"
 	bytesBufferSizeDefault = 1024 * 1024 // 1MB
 )
 

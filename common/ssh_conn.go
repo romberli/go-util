@@ -19,7 +19,7 @@ type CloseConn interface {
 const (
 	portNumSshDefault      = 22
 	userNameSshDefault     = "root"
-	userPassSshDefault     = "shit"
+	userPassSshDefault     = ""
 	bytesBufferSizeDefault = 1024 * 1024 // 1MB
 )
 
@@ -54,7 +54,7 @@ type MySshConn struct {
 	SshSession *ssh.Session
 }
 
-func NewMySshConn(myConn MyConn) (sshConn *MySshConn, err error) {
+func NewMySshConn(hostIp string) (sshConn *MySshConn, err error) {
 	var (
 		auth         []ssh.AuthMethod
 		addr         string
@@ -62,6 +62,8 @@ func NewMySshConn(myConn MyConn) (sshConn *MySshConn, err error) {
 		sshClient    *ssh.Client
 		sshSession   *ssh.Session
 	)
+
+	myConn := NewMyConnWithDefaultValue(hostIp)
 
 	// get auth method
 	auth = make([]ssh.AuthMethod, 0)
@@ -92,7 +94,7 @@ func NewMySshConn(myConn MyConn) (sshConn *MySshConn, err error) {
 	}
 
 	sshConn = &MySshConn{
-		myConn,
+		*myConn,
 		sshClient,
 		sshSession,
 	}
@@ -133,15 +135,20 @@ type MySftpConn struct {
 	SftpClient *sftp.Client
 }
 
-func NewMySftpConn(mySshConn MySshConn) (sftpConn *MySftpConn, err error) {
+func NewMySftpConn(hostIp string) (sftpConn *MySftpConn, err error) {
+	var mySshConn *MySshConn
 	var sftpClient *sftp.Client
+
+	if mySshConn, err = NewMySshConn(hostIp); err != nil {
+		return nil, err
+	}
 
 	if sftpClient, err = sftp.NewClient(mySshConn.SshClient); err != nil {
 		return nil, err
 	}
 
 	sftpConn = &MySftpConn{
-		mySshConn,
+		*mySshConn,
 		sftpClient,
 	}
 

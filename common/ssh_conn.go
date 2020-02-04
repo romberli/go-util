@@ -2,6 +2,7 @@ package common
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
@@ -11,7 +12,9 @@ import (
 	"time"
 )
 
-type CloseConn interface{}
+type CloseConn interface {
+	CloseConn()
+}
 
 const (
 	portNumSshDefault      = 22
@@ -46,7 +49,7 @@ func NewMyConnWithDefaultValue(hostIp string) (conn *MyConn) {
 }
 
 type MySshConn struct {
-	Conn       MyConn
+	MyConn
 	SshClient  *ssh.Client
 	SshSession *ssh.Session
 }
@@ -126,7 +129,7 @@ func (conn *MySshConn) CloseConn() (err error) {
 }
 
 type MySftpConn struct {
-	Conn       MySshConn
+	MySshConn
 	SftpClient *sftp.Client
 }
 
@@ -157,7 +160,7 @@ func (conn *MySftpConn) CopySingleFileFromRemote(fileNameSource string, fileName
 	}
 	defer fileSource.Close()
 
-	if fileDest, err = os.Open(fileNameSource); err != nil {
+	if fileDest, err = os.Open(fileNameDest); err != nil {
 		return err
 	}
 	defer fileDest.Close()
@@ -221,6 +224,26 @@ func (conn *MySftpConn) CopyFileListFromRemote(fileListSource []string, FileDirD
 	for _, fileNameSource := range fileListSource {
 		fileNameDest := path.Base(fileNameSource)
 		if err = conn.CopySingleFileFromRemote(fileNameSource, path.Join(FileDirDest, fileNameDest)); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (conn *MySftpConn) CopyFileListFromRemoteWithNewName(fileListSource []string, FileListDest []string) (err error) {
+	if len(fileListSource) != len(FileListDest) {
+		return errors.New("the length of source and destination list must be same")
+	}
+
+	for i, fileNameSource := range fileListSource {
+		fileNameDest := FileListDest[i]
+
+		if fileNameDest == "" {
+			fileNameDest = fileNameSource
+		}
+
+		if err = conn.CopySingleFileFromRemote(fileNameSource, fileNameDest); err != nil {
 			return err
 		}
 	}

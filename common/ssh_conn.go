@@ -162,12 +162,16 @@ func (conn *MySftpConn) CopySingleFileFromRemote(fileNameSource string, fileName
 		fileSource *sftp.File
 	)
 
-	if fileSource, err = conn.SftpClient.Create(fileNameSource); err != nil {
+	if fileNameDest == "" {
+		fileNameDest = fileNameSource
+	}
+
+	if fileSource, err = conn.SftpClient.Open(fileNameSource); err != nil {
 		return err
 	}
 	defer fileSource.Close()
 
-	if fileDest, err = os.Open(fileNameDest); err != nil {
+	if fileDest, err = os.Create(fileNameDest); err != nil {
 		return err
 	}
 	defer fileDest.Close()
@@ -197,6 +201,10 @@ func (conn *MySftpConn) CopySingleFileToRemote(fileNameSource string, fileNameDe
 		fileSource *os.File
 		fileDest   *sftp.File
 	)
+
+	if fileNameDest == "" {
+		fileNameDest = fileNameSource
+	}
 
 	if fileSource, err = os.Open(fileNameSource); err != nil {
 		return err

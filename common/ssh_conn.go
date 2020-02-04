@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
+	"io"
 	"net"
 	"os"
 	"path"
@@ -179,7 +180,7 @@ func (conn *MySftpConn) CopySingleFileFromRemote(fileNameSource string, fileName
 	buf := make([]byte, bytesBufferSizeDefault)
 
 	for {
-		if n, err = fileSource.Read(buf); err != nil {
+		if n, err = fileSource.Read(buf); err != nil && err != io.EOF {
 			return err
 		}
 
@@ -219,7 +220,7 @@ func (conn *MySftpConn) CopySingleFileToRemote(fileNameSource string, fileNameDe
 	buf := make([]byte, bytesBufferSizeDefault)
 
 	for {
-		if n, err = fileSource.Read(buf); err != nil {
+		if n, err = fileSource.Read(buf); err != nil && err != io.EOF {
 			return err
 		}
 

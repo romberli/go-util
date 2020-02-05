@@ -4,13 +4,15 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/pkg/sftp"
-	"golang.org/x/crypto/ssh"
 	"io"
 	"net"
 	"os"
 	"path"
+	"strings"
 	"time"
+
+	"github.com/pkg/sftp"
+	"golang.org/x/crypto/ssh"
 )
 
 type CloseConn interface {
@@ -18,10 +20,13 @@ type CloseConn interface {
 }
 
 const (
-	portNumSshDefault      = 22
-	userNameSshDefault     = "root"
-	userPassSshDefault     = "shit"
-	bytesBufferSizeDefault = 1024 * 1024 // 1MB
+	portNumSshDefault     = 22
+	userNameSshDefault    = "root"
+	userPassSshDefault    = "shit"
+	byteBufferSizeDefault = 1024 * 1024 // 1MB
+
+	copyFromDefault int = iota
+	copyToDefault
 )
 
 type MyConn struct {
@@ -78,7 +83,7 @@ func NewMySshConn(hostIp string) (sshConn *MySshConn, err error) {
 	clientConfig = &ssh.ClientConfig{
 		User:            myConn.UserName,
 		Auth:            auth,
-		Timeout:         30 * time.Second,
+		Timeout:         10 * time.Second,
 		HostKeyCallback: hostKeyCallBack,
 	}
 
@@ -156,12 +161,40 @@ func NewMySftpConn(hostIp string) (sftpConn *MySftpConn, err error) {
 	return sftpConn, nil
 }
 
+func (conn *MySftpConn) CopyFile(fileSource io.Reader, fileDest io.Writer, bufferSize int) (err error) {
+	var n int
+
+	if bufferSize <= 0 {
+		bufferSize = byteBufferSizeDefault
+	}
+
+	buf := make([]byte, bufferSize)
+
+	for {
+		if n, err = fileSource.Read(buf); err != nil && err != io.EOF {
+			return err
+		}
+
+		if n == 0 {
+			break
+		}
+
+		if _, err = fileDest.Write(buf[0:n]); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (conn *MySftpConn) CopySingleFileFromRemote(fileNameSource string, fileNameDest string) (err error) {
 	var (
-		n          int
 		fileDest   *os.File
 		fileSource *sftp.File
 	)
+
+	fileNameSource = strings.TrimSpace(fileNameSource)
+	fileNameDest = strings.TrimSpace(fileNameDest)
 
 	if fileNameDest == "" {
 		fileNameDest = fileNameSource
@@ -177,20 +210,8 @@ func (conn *MySftpConn) CopySingleFileFromRemote(fileNameSource string, fileName
 	}
 	defer fileDest.Close()
 
-	buf := make([]byte, bytesBufferSizeDefault)
-
-	for {
-		if n, err = fileSource.Read(buf); err != nil && err != io.EOF {
-			return err
-		}
-
-		if n == 0 {
-			break
-		}
-
-		if _, err = fileDest.Write(buf[0:n]); err != nil {
-			return err
-		}
+	if err = conn.CopyFile(fileSource, fileDest, byteBufferSizeDefault); err != nil {
+		return err
 	}
 
 	return nil
@@ -198,10 +219,12 @@ func (conn *MySftpConn) CopySingleFileFromRemote(fileNameSource string, fileName
 
 func (conn *MySftpConn) CopySingleFileToRemote(fileNameSource string, fileNameDest string) (err error) {
 	var (
-		n          int
 		fileSource *os.File
 		fileDest   *sftp.File
 	)
+
+	fileNameSource = strings.TrimSpace(fileNameSource)
+	fileNameDest = strings.TrimSpace(fileNameDest)
 
 	if fileNameDest == "" {
 		fileNameDest = fileNameSource
@@ -217,28 +240,36 @@ func (conn *MySftpConn) CopySingleFileToRemote(fileNameSource string, fileNameDe
 	}
 	defer fileSource.Close()
 
-	buf := make([]byte, bytesBufferSizeDefault)
-
-	for {
-		if n, err = fileSource.Read(buf); err != nil && err != io.EOF {
-			return err
-		}
-
-		if n == 0 {
-			break
-		}
-
-		if _, err = fileDest.Write(buf[0:n]); err != nil {
-			return err
-		}
+	if err = conn.CopyFile(fileSource, fileDest, byteBufferSizeDefault); err != nil {
+		return err
 	}
 
 	return nil
 }
 
 func (conn *MySftpConn) CopyFileListFromRemote(fileListSource []string, FileDirDest string) (err error) {
+	var exists bool
+
+	FileDirDest = strings.TrimSpace(FileDirDest)
+
+	if FileDirDest == "" {
+		return errors.New("file destination directory should NOT an empty string.")
+	}
+
+	if exists, err = PathExistsLocal(FileDirDest); err != nil {
+		return err
+	}
+
+	if !exists {
+		if _, err = os.Create(FileDirDest); err != nil {
+			return err
+		}
+	}
+
 	for _, fileNameSource := range fileListSource {
+		fileNameSource = strings.TrimSpace(fileNameSource)
 		fileNameDest := path.Base(fileNameSource)
+
 		if err = conn.CopySingleFileFromRemote(fileNameSource, path.Join(FileDirDest, fileNameDest)); err != nil {
 			return err
 		}
@@ -249,14 +280,17 @@ func (conn *MySftpConn) CopyFileListFromRemote(fileListSource []string, FileDirD
 
 func (conn *MySftpConn) CopyFileListFromRemoteWithNewName(fileListSource []string, FileListDest []string) (err error) {
 	if len(fileListSource) != len(FileListDest) {
-		return errors.New("the length of source and destination list must be same")
+		return errors.New("the length of source and destination list MUST be exactly same")
 	}
 
 	for i, fileNameSource := range fileListSource {
+		fileNameSource = strings.TrimSpace(fileNameSource)
+
 		fileNameDest := FileListDest[i]
+		fileNameDest = strings.TrimSpace(fileNameDest)
 
 		if fileNameDest == "" {
-			fileNameDest = fileNameSource
+			return errors.New("destination file name should not be an empty string")
 		}
 
 		if err = conn.CopySingleFileFromRemote(fileNameSource, fileNameDest); err != nil {

@@ -2,25 +2,23 @@ package mylog
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"os"
 	"path"
 	"sort"
 	"strings"
 
-	"github.com/opentracing/opentracing-go"
-	tlog "github.com/opentracing/opentracing-go/log"
 	"github.com/pingcap/errors"
 	zaplog "github.com/pingcap/log"
-	"github.com/romber2001/go-util/common"
 	log "github.com/sirupsen/logrus"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
+
+	"github.com/romber2001/go-util/common"
 )
 
-var logger *zap.Logger
+var MyLogger *zap.Logger
 
 const (
 	DefaultLogFileName   = "run.log"
@@ -33,8 +31,6 @@ const (
 	DefaultLogFormat = "text"
 	defaultLogLevel  = log.InfoLevel
 )
-
-// var logger = zaplog.L()
 
 // EmptyFileLogConfig is an empty FileLogConfig.
 var EmptyFileLogConfig = FileLogConfig{}
@@ -240,6 +236,15 @@ func InitLogger(cfg *LogConfig) error {
 	return nil
 }
 
+// newZapLogger returns a zap logger
+func newZapLogger() (*zap.Logger, *zaplog.ZapProperties) {
+	var props *zaplog.ZapProperties
+
+	conf := &zaplog.Config{Level: "info", File: zaplog.FileLogConfig{}}
+	MyLogger, props, _ = zaplog.InitLogger(conf)
+	return MyLogger, props
+}
+
 // InitZapLogger initializes a zap logger with cfg.
 func InitZapLogger(cfg *LogConfig) error {
 	var (
@@ -247,85 +252,31 @@ func InitZapLogger(cfg *LogConfig) error {
 		err   error
 	)
 
-	logger, props, err = zaplog.InitLogger(&cfg.Config, zap.AddStacktrace(zapcore.FatalLevel))
-	if err != nil {
+	if MyLogger, props, err = zaplog.InitLogger(
+		&cfg.Config,
+		zap.AddStacktrace(zapcore.ErrorLevel),
+		zap.AddCaller(),
+		zap.Development(),
+	); err != nil {
 		return errors.Trace(err)
 	}
-	zaplog.ReplaceGlobals(logger, props)
+
+	ReplaceGlobals(MyLogger, props)
 
 	return nil
 }
 
-// SetLevel sets the zap logger's level.
-func SetLevel(level string) error {
-	l := zap.NewAtomicLevel()
-	if err := l.UnmarshalText([]byte(level)); err != nil {
-		return errors.Trace(err)
-	}
-	zaplog.SetLevel(l.Level())
-	return nil
+// L returns the global Logger, which can be reconfigured with ReplaceGlobals.
+// It's safe for concurrent use.
+func L() *zap.Logger {
+	return _globalL
 }
 
-type ctxLogKeyType struct{}
-
-var ctxLogKey = ctxLogKeyType{}
-
-// Logger gets a contextual logger from current context.
-// contextual logger will output common fields from context.
-func Logger(ctx context.Context) *zap.Logger {
-	if ctxlogger, ok := ctx.Value(ctxLogKey).(*zap.Logger); ok {
-		return ctxlogger
-	}
-	return zaplog.L()
+func ReplaceGlobals(logger *zap.Logger, props *zaplog.ZapProperties) {
+	_globalL = logger
+	_globalP = props
 }
 
-// BgLogger is alias of `log.BgLogger()`
-func BgLogger() *zap.Logger {
-	return zaplog.L()
-}
-
-// WithConnID attaches connId to context.
-func WithConnID(ctx context.Context, connID uint32) context.Context {
-	var logger *zap.Logger
-	if ctxLogger, ok := ctx.Value(ctxLogKey).(*zap.Logger); ok {
-		logger = ctxLogger
-	} else {
-		logger = zaplog.L()
-	}
-	return context.WithValue(ctx, ctxLogKey, logger.With(zap.Uint32("conn", connID)))
-}
-
-// WithKeyValue attaches key/value to context.
-func WithKeyValue(ctx context.Context, key, value string) context.Context {
-	var logger *zap.Logger
-	if ctxLogger, ok := ctx.Value(ctxLogKey).(*zap.Logger); ok {
-		logger = ctxLogger
-	} else {
-		logger = zaplog.L()
-	}
-	return context.WithValue(ctx, ctxLogKey, logger.With(zap.String(key, value)))
-}
-
-// TraceEventKey presents the TraceEventKey in span log.
-const TraceEventKey = "event"
-
-// Event records event in current tracing span.
-func Event(ctx context.Context, event string) {
-	if span := opentracing.SpanFromContext(ctx); span != nil && span.Tracer() != nil {
-		span.LogFields(tlog.String(TraceEventKey, event))
-	}
-}
-
-// Eventf records event in current tracing span with format support.
-func Eventf(ctx context.Context, format string, args ...interface{}) {
-	if span := opentracing.SpanFromContext(ctx); span != nil && span.Tracer() != nil {
-		span.LogFields(tlog.String(TraceEventKey, fmt.Sprintf(format, args...)))
-	}
-}
-
-// SetTag sets tag kv-pair in current tracing span
-func SetTag(ctx context.Context, key string, value interface{}) {
-	if span := opentracing.SpanFromContext(ctx); span != nil && span.Tracer() != nil {
-		span.SetTag(key, value)
-	}
-}
+var (
+	_globalL, _globalP = newZapLogger()
+)

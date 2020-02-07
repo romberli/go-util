@@ -1,7 +1,9 @@
 package common
 
 import (
+	"errors"
 	"os"
+	"reflect"
 
 	"github.com/pkg/sftp"
 )
@@ -46,4 +48,25 @@ func PathExistsRemote(path string, client *sftp.Client) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func TrimSpaceOfStructString(in interface{}) error {
+	inType := reflect.TypeOf(in)
+	inVal := reflect.ValueOf(in)
+
+	if inType.Kind() == reflect.Ptr {
+		inType = inType.Elem()
+		inType = inType.Elem()
+	} else {
+		return errors.New("argument must be a pointer to struct")
+	}
+
+	for i := 0; i < inVal.NumField(); i++ {
+		f := inVal.Field(i)
+		switch f.Kind() {
+		case reflect.String:
+			trimValue := f.String()
+			f.Set(reflect.ValueOf(trimValue))
+		}
+	}
 }

@@ -25,6 +25,11 @@ func TestCommon(t *testing.T) {
 	mapStrInt := map[string]int{"a": 1, "b": 2, "c": 3}
 	mapStrStr := map[string]string{"a": "xxx", "b": "yyy", "c": "zzz"}
 
+	testRemote := false
+	pathExists := "common.go"
+	pathNotExists := "not_exists.go"
+	hostIpRemote := "192.168.137.11"
+
 	// test ConvertSliceToInterface()
 	t.Log("==========test ConvertSliceToInterface() started==========")
 	sliceInterface, err = ConvertSliceToInterface(sliceInt)
@@ -124,4 +129,35 @@ func TestCommon(t *testing.T) {
 	assert.Nil(err, "test ValueInMap str2 mapStrStr failed")
 	assert.True(exists, "test ValueInMap str2 mapStrStr failed")
 	t.Log("==========test ValueInMap() completed==========")
+
+	t.Log("==========test PathExistsLocal() started==========")
+	exists, err = PathExistsLocal(pathExists)
+	assert.Nil(err, "testPathExistsLocal pathExists failed")
+	assert.True(exists, "testPathExistsLocal pathExists failed")
+	t.Log("==========test PathExistsLocal() completed==========")
+
+	t.Log("==========test PathExistsLocal() started==========")
+	exists, err = PathExistsLocal(pathExists)
+	assert.Nil(err, "test PathExistsLocal pathExists failed")
+	assert.True(exists, "test PathExistsLocal pathExists failed")
+
+	exists, err = PathExistsLocal(pathNotExists)
+	assert.Nil(err, "test PathExistsLocal pathNotExists failed")
+	assert.False(exists, "test PathExistsLocal pathNotExists failed")
+	t.Log("==========test PathExistsRemote() completed==========")
+
+	if testRemote {
+		t.Log("==========test PathExistsRemote() started==========")
+		sftpConn, err := NewMySftpConn(hostIpRemote)
+		assert.Nil(err, "cann't connect to remote host")
+
+		exists, err = PathExistsRemote(pathExists, sftpConn.SftpClient)
+		assert.Nil(err, "test PathExistsRemote pathExists failed")
+		assert.True(exists, "test PathExistsRemote pathExists failed")
+
+		exists, err = PathExistsRemote(pathNotExists, sftpConn.SftpClient)
+		assert.Nil(err, "test PathExistsRemote pathNotExists failed")
+		assert.False(exists, "test PathExistsRemote pathNotExists failed")
+		t.Log("==========test PathExistsRemote() completed==========")
+	}
 }

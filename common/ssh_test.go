@@ -11,6 +11,9 @@ func TestSsh(t *testing.T) {
 		err            error
 		cmd            string
 		hostIp         string
+		portNum        int
+		userName       string
+		userPass       string
 		result         int
 		stdOut         string
 		stdErr         string
@@ -22,6 +25,9 @@ func TestSsh(t *testing.T) {
 
 	cmd = "date"
 	hostIp = "192.168.137.11"
+	portNum = 22
+	userName = "root"
+	userPass = "shit"
 
 	assert := assert.New(t)
 
@@ -36,6 +42,10 @@ func TestSsh(t *testing.T) {
 	// create sftp connection
 	t.Log("==========create sftp connection started.==========")
 	if sftpConn, err = NewMySftpConn(hostIp); err != nil {
+		assert.Nil(err, "create new sftp connection failed")
+	}
+
+	if sftpConn, err = NewMySftpConn(hostIp, portNum, userName, userPass); err != nil {
 		assert.Nil(err, "create new sftp connection failed")
 	}
 	t.Log("==========create sftp connection completed.==========\n")
@@ -54,8 +64,8 @@ func TestSsh(t *testing.T) {
 
 	// test copy single file from remote
 	t.Log("==========copy single file from remote started.==========")
-	fileNameSource = "/tmp/test.txt"
-	fileNameDest = "/Users/romber/text.txt"
+	fileNameSource = "/root/common.go"
+	fileNameDest = "/Users/romber/common.go"
 	if err = sftpConn.CopySingleFileFromRemote(fileNameSource, fileNameDest); err != nil {
 		assert.Nil(err, "copy single file from remote failed")
 	}

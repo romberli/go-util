@@ -132,19 +132,13 @@ func TestCommon(t *testing.T) {
 
 	t.Log("==========test PathExistsLocal() started==========")
 	exists, err = PathExistsLocal(pathExists)
-	assert.Nil(err, "testPathExistsLocal pathExists failed")
-	assert.True(exists, "testPathExistsLocal pathExists failed")
-	t.Log("==========test PathExistsLocal() completed==========")
-
-	t.Log("==========test PathExistsLocal() started==========")
-	exists, err = PathExistsLocal(pathExists)
 	assert.Nil(err, "test PathExistsLocal pathExists failed")
 	assert.True(exists, "test PathExistsLocal pathExists failed")
 
 	exists, err = PathExistsLocal(pathNotExists)
 	assert.Nil(err, "test PathExistsLocal pathNotExists failed")
 	assert.False(exists, "test PathExistsLocal pathNotExists failed")
-	t.Log("==========test PathExistsRemote() completed==========")
+	t.Log("==========test PathExistsLocal() completed==========")
 
 	if testRemote {
 		t.Log("==========test PathExistsRemote() started==========")
@@ -160,4 +154,35 @@ func TestCommon(t *testing.T) {
 		assert.False(exists, "test PathExistsRemote pathNotExists failed")
 		t.Log("==========test PathExistsRemote() completed==========")
 	}
+
+	t.Log("==========test PathExists() started==========")
+	exists, err = PathExists(nil)
+	assert.NotNil(err, "test PathExists pathExists failed")
+	assert.False(exists, "test PathExists pathExists failed")
+
+	exists, err = PathExists(pathExists)
+	assert.Nil(err, "test PathExists pathExists failed")
+	assert.True(exists, "test PathExists pathExists failed")
+
+	exists, err = PathExists(pathNotExists)
+	assert.Nil(err, "test PathExists pathNotExists failed")
+	assert.False(exists, "test PathExists pathNotExists failed")
+
+	exists, err = PathExists(pathExists, nil)
+	assert.NotNil(err, "test PathExists pathExists failed")
+	assert.False(exists, "test PathExists pathExists failed")
+
+	if testRemote {
+		sftpConn, err := NewMySftpConn(hostIpRemote)
+		assert.Nil(err, "cann't connect to remote host")
+
+		exists, err = PathExists(pathExists, sftpConn.SftpClient)
+		assert.Nil(err, "test PathExists pathExists failed")
+		assert.True(exists, "test PathExists pathExists failed")
+
+		exists, err = PathExists(pathNotExists, sftpConn.SftpClient)
+		assert.Nil(err, "test PathExists pathNotExists failed")
+		assert.False(exists, "test PathExists pathNotExists failed")
+	}
+	t.Log("==========test PathExists() completed==========")
 }

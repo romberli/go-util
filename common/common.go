@@ -2,6 +2,7 @@ package common
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"reflect"
 
@@ -113,6 +114,41 @@ func PathExistsRemote(path string, client *sftp.Client) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func PathExists(in ...interface{}) (bool, error) {
+	if len(in) == 0 {
+		return false, errors.New("argument could not be nil")
+	} else if len(in) == 1 {
+		path := in[0]
+
+		switch path.(type) {
+		case string:
+			return PathExistsLocal(path.(string))
+		default:
+			return false, errors.New("first argument must be string type, which presents a file or directory")
+		}
+	} else {
+		path := in[0]
+		client := in[1]
+
+		switch path.(type) {
+		case string:
+		default:
+			return false, errors.New("first argument must be string type, which presents a file or directory")
+		}
+
+		switch client.(type) {
+		case nil:
+			return false, errors.New("second argument could not be nil")
+		case *sftp.Client:
+			return PathExistsRemote(path.(string), client.(*sftp.Client))
+		default:
+			return false, errors.New(
+				fmt.Sprintf("second argument must be *sftp.Client type instead of %s",
+					reflect.TypeOf(client).Name()))
+		}
+	}
 }
 
 func TrimSpaceOfStructString(in interface{}) error {

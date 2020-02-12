@@ -6,6 +6,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type trimStruct struct {
+	Id   int
+	Name string
+	B    bool
+	s    string
+}
+
 func TestCommon(t *testing.T) {
 	var (
 		err            error
@@ -29,6 +36,13 @@ func TestCommon(t *testing.T) {
 	pathExists := "common.go"
 	pathNotExists := "not_exists.go"
 	hostIpRemote := "192.168.137.11"
+
+	ts := &trimStruct{
+		1,
+		"    a    b   ",
+		false,
+		"             s    ",
+	}
 
 	// test ConvertSliceToInterface()
 	t.Log("==========test ConvertSliceToInterface() started==========")
@@ -185,4 +199,12 @@ func TestCommon(t *testing.T) {
 		assert.False(exists, "test PathExists pathNotExists failed")
 	}
 	t.Log("==========test PathExists() completed==========")
+
+	t.Log("==========test TrimSpaceOfStructString() started==========")
+	t.Logf("old ts: %v", *ts)
+	err = TrimSpaceOfStructString(ts)
+	assert.Nil(err, "test TrimSpaceOfStructString failed")
+	t.Logf("new ts: %v", *ts)
+	t.Log("==========test TrimSpaceOfStructString() completed==========")
+
 }

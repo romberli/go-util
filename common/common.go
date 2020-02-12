@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"strings"
 
 	"github.com/pkg/sftp"
 )
@@ -46,15 +47,15 @@ func ConvertMapToInterface(in interface{}) (map[interface{}]interface{}, error) 
 }
 
 func ElementInSlice(e interface{}, s interface{}) (bool, error) {
-	eType := reflect.TypeOf(e)
-	eValue := reflect.ValueOf(e)
+	sType := reflect.TypeOf(s)
+	sValue := reflect.ValueOf(s)
 
-	if eType.Kind() != reflect.Slice {
+	if sType.Kind() != reflect.Slice {
 		return false, errors.New("second argument must be array or slice")
 	}
 
-	for i := 0; i < eValue.Len(); i++ {
-		if reflect.DeepEqual(e, eValue.Index(i).Interface()) {
+	for i := 0; i < sValue.Len(); i++ {
+		if reflect.DeepEqual(e, sValue.Index(i).Interface()) {
 			return true, nil
 		}
 	}
@@ -156,8 +157,8 @@ func TrimSpaceOfStructString(in interface{}) error {
 	inVal := reflect.ValueOf(in)
 
 	if inType.Kind() == reflect.Ptr {
-		inType = inType.Elem()
-		inType = inType.Elem()
+		inVal = inVal.Elem()
+		inType = inVal.Type()
 	} else {
 		return errors.New("argument must be a pointer to struct")
 	}
@@ -166,8 +167,10 @@ func TrimSpaceOfStructString(in interface{}) error {
 		f := inVal.Field(i)
 		switch f.Kind() {
 		case reflect.String:
-			trimValue := f.String()
-			f.Set(reflect.ValueOf(trimValue))
+			if f.CanSet() {
+				trimValue := strings.TrimSpace(f.String())
+				f.Set(reflect.ValueOf(trimValue))
+			}
 		}
 	}
 

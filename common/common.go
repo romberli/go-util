@@ -45,7 +45,7 @@ func ConvertMapToInterface(in interface{}) (map[interface{}]interface{}, error) 
 	return mapInterface, nil
 }
 
-func ValueInSlice(v interface{}, s interface{}) (bool, error) {
+func ElementInSlice(v interface{}, s interface{}) (bool, error) {
 	sType := reflect.TypeOf(s)
 	sValue := reflect.ValueOf(s)
 

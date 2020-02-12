@@ -45,16 +45,16 @@ func ConvertMapToInterface(in interface{}) (map[interface{}]interface{}, error) 
 	return mapInterface, nil
 }
 
-func ElementInSlice(v interface{}, s interface{}) (bool, error) {
-	sType := reflect.TypeOf(s)
-	sValue := reflect.ValueOf(s)
+func ElementInSlice(e interface{}, s interface{}) (bool, error) {
+	eType := reflect.TypeOf(e)
+	eValue := reflect.ValueOf(e)
 
-	if sType.Kind() != reflect.Slice {
+	if eType.Kind() != reflect.Slice {
 		return false, errors.New("second argument must be array or slice")
 	}
 
-	for i := 0; i < sValue.Len(); i++ {
-		if reflect.DeepEqual(v, sValue.Index(i).Interface()) {
+	for i := 0; i < eValue.Len(); i++ {
+		if reflect.DeepEqual(e, eValue.Index(i).Interface()) {
 			return true, nil
 		}
 	}

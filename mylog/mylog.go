@@ -18,8 +18,6 @@ import (
 	"github.com/romber2001/go-util/common"
 )
 
-var MyLogger *zap.Logger
-
 const (
 	DefaultLogFileName   = "run.log"
 	defaultLogTimeFormat = "2006-01-02T15:04:05.000"
@@ -31,6 +29,8 @@ const (
 	DefaultLogFormat = "text"
 	defaultLogLevel  = log.InfoLevel
 )
+
+var MyLogger *zap.Logger
 
 // EmptyFileLogConfig is an empty FileLogConfig.
 var EmptyFileLogConfig = FileLogConfig{}
@@ -272,11 +272,19 @@ func L() *zap.Logger {
 	return _globalL
 }
 
+// S returns the global SugaredLogger, which can be reconfigured with
+// ReplaceGlobals. It's safe for concurrent use.
+func S() *zap.SugaredLogger {
+	return _globalS
+}
+
 func ReplaceGlobals(logger *zap.Logger, props *zaplog.ZapProperties) {
 	_globalL = logger
+	_globalS = logger.Sugar()
 	_globalP = props
 }
 
 var (
 	_globalL, _globalP = newZapLogger()
+	_globalS           = _globalL.Sugar()
 )

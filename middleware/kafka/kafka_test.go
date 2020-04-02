@@ -3,17 +3,12 @@ package kafka
 import (
 	"context"
 	"github.com/stretchr/testify/assert"
-	"log"
-	"os"
-	"os/signal"
-	"sync"
-	"syscall"
 	"testing"
 	"time"
 )
 
 const (
-	DefaultConsumeSeconds = 10
+	DefaultConsumeSeconds = 5 * time.Second
 )
 
 func TestConsume(t *testing.T) {
@@ -30,37 +25,22 @@ func TestConsume(t *testing.T) {
 	topicName := "topic001"
 	ctx, cancel := context.WithCancel(context.Background())
 	handler := DefaultConsumerGroupHandler{}
-	startTime := time.Now().Unix()
 
 	cg, err = NewConsumerGroup(ctx, kafkaVersion, brokerList, groupName)
 	assert.Nil(err, "create consumer group failed.")
 
-	wg := &sync.WaitGroup{}
 	go func() {
-		wg.Add(1)
-		defer wg.Done()
+		err = cg.Consume(topicName, handler)
+		assert.Nil(err, "consume failed. group: %s, topic: %s")
 
-		for {
-			if time.Now().Unix() >= startTime+DefaultConsumeSeconds {
-				cancel()
-			}
-
-			err = cg.Consume(topicName, handler)
-			assert.Nil(err, "consume failed. group: %s, topic: %s")
-
-			err = cg.Ctx.Err()
-			assert.Nil(err, "context error is not nil. group: %s, topic: %s")
-		}
+		err = cg.Ctx.Err()
+		assert.Nil(err, "context error is not nil. group: %s, topic: %s")
 	}()
 
-	sigterm := make(chan os.Signal, 1)
-	signal.Notify(sigterm, syscall.SIGINT, syscall.SIGTERM)
-	select {
-	case <-ctx.Done():
-		log.Println("terminating: context cancelled")
-	case <-sigterm:
-		log.Println("terminating: via signal")
-	}
+	time.Sleep(DefaultConsumeSeconds)
+
 	cancel()
-	wg.Wait()
+
+	err = cg.Ctx.Err()
+	assert.Nil(err, "context error is not nil. group: %s, topic: %s")
 }

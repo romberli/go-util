@@ -74,11 +74,16 @@ func (cg *ConsumerGroup) Consume(topicName string, handler sarama.ConsumerGroupH
 
 	// Iterate over consumer sessions.
 	for {
-		topics := []string{topicName}
+		select {
+		case <-cg.Ctx.Done():
+			return cg.Ctx.Err()
+		default:
+			topics := []string{topicName}
 
-		err = cg.Group.Consume(cg.Ctx, topics, handler)
-		if err != nil {
-			return err
+			err = cg.Group.Consume(cg.Ctx, topics, handler)
+			if err != nil {
+				return err
+			}
 		}
 	}
 }

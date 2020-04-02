@@ -20,7 +20,7 @@ func TestConsume(t *testing.T) {
 	assert := assert.New(t)
 
 	kafkaVersion := "V1.0.0.0"
-	brokerList := []string{"192.168.137.11:9092"}
+	brokerList := []string{"10.0.0.63:9092", "10.0.0.84:9092", "10.0.0.92:9092"}
 	groupName := "group001"
 	topicName := "topic001"
 	ctx, cancel := context.WithCancel(context.Background())

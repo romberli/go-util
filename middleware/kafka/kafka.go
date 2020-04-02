@@ -43,7 +43,12 @@ func NewConsumerGroup(ctx context.Context, kafkaVersion string, brokerList []str
 	if err != nil {
 		return nil, err
 	}
-	defer func() { _ = client.Close() }()
+
+	defer func() {
+		err = cg.Client.Close()
+		log.Errorf("got error when closing consumer group. group: %s, message: %s",
+			cg.GroupName, err.Error())
+	}()
 
 	// Start a new consumer group
 	group, err := sarama.NewConsumerGroupFromClient(groupName, client)
@@ -64,6 +69,12 @@ func NewConsumerGroup(ctx context.Context, kafkaVersion string, brokerList []str
 }
 
 func (cg *ConsumerGroup) Consume(topicName string, handler sarama.ConsumerGroupHandler) (err error) {
+	defer func() {
+		err = cg.Group.Close()
+		log.Errorf("got error when closing consumer group. group: %s, topic: %s, message: %s",
+			cg.GroupName, topicName, err.Error())
+	}()
+
 	// Track errors
 	go func() {
 		for err = range cg.Group.Errors() {
@@ -74,16 +85,11 @@ func (cg *ConsumerGroup) Consume(topicName string, handler sarama.ConsumerGroupH
 
 	// Iterate over consumer sessions.
 	for {
-		select {
-		case <-cg.Ctx.Done():
-			return cg.Ctx.Err()
-		default:
-			topics := []string{topicName}
+		topics := []string{topicName}
 
-			err = cg.Group.Consume(cg.Ctx, topics, handler)
-			if err != nil {
-				return err
-			}
+		err = cg.Group.Consume(cg.Ctx, topics, handler)
+		if err != nil {
+			return err
 		}
 	}
 }

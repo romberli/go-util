@@ -10,7 +10,6 @@ type AsyncProducer struct {
 	Ctx          context.Context
 	KafkaVersion sarama.KafkaVersion
 	BrokerList   []string
-	TopicName    string
 	Config       *sarama.Config
 	Client       sarama.Client
 	Producer     sarama.AsyncProducer
@@ -50,22 +49,21 @@ func NewAsyncProducer(ctx context.Context, kafkaVersion string, brokerList []str
 		Ctx:          ctx,
 		KafkaVersion: config.Version,
 		BrokerList:   brokerList,
-		TopicName:    topicName,
 		Config:       config,
 		Client:       client,
 		Producer:     producer,
 	}, nil
 }
 
-func (p *AsyncProducer) Produce(message string) (err error) {
+func (p *AsyncProducer) Produce(topicName string, message string) (err error) {
 	defer func() {
 		err = p.Producer.Close()
 		log.Errorf("got error when closing producer. group: %s, topic: %s, message: %s",
-			p.TopicName, err.Error())
+			topicName, err.Error())
 	}()
 
 	// Produce message to kafka
-	producerMessage := &sarama.ProducerMessage{Topic: p.TopicName, Key: nil, Value: sarama.StringEncoder(message), Metadata: 0}
+	producerMessage := &sarama.ProducerMessage{Topic: topicName, Key: nil, Value: sarama.StringEncoder(message), Metadata: 0}
 	p.Producer.Input() <- producerMessage
 
 	return nil

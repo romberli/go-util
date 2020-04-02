@@ -43,11 +43,10 @@ func NewConsumerGroup(ctx context.Context, kafkaVersion string, brokerList []str
 	if err != nil {
 		return nil, err
 	}
-
 	defer func() {
-		err = cg.Client.Close()
-		log.Errorf("got error when closing consumer group. group: %s, message: %s",
-			cg.GroupName, err.Error())
+		err = client.Close()
+		log.Errorf("got error when closing client. group: %s, message: %s",
+			groupName, err.Error())
 	}()
 
 	// Start a new consumer group
@@ -55,6 +54,12 @@ func NewConsumerGroup(ctx context.Context, kafkaVersion string, brokerList []str
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		err = group.Close()
+		log.Errorf("got error when closing group. group: %s, message: %s",
+			groupName, err.Error())
+	}()
+
 	defer func() { _ = group.Close() }()
 
 	return &ConsumerGroup{

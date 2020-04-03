@@ -56,9 +56,9 @@ func (p *AsyncProducer) Produce(topicName string, message string) (err error) {
 		for {
 			select {
 			case success := <-p.Producer.Successes():
-				log.Infof("offset: %d, timestamp: %s, partitions: %d", success.Offset, success.Timestamp.String(), success.Partition)
+				log.Debugf("offset: %d, timestamp: %s, partitions: %d", success.Offset, success.Timestamp.String(), success.Partition)
 			case fail := <-p.Producer.Errors():
-				log.Infof("err: ", fail.Err)
+				log.Errorf("err: ", fail.Err)
 			}
 		}
 	}()

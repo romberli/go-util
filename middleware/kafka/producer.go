@@ -15,9 +15,14 @@ type AsyncProducer struct {
 	Producer     sarama.AsyncProducer
 }
 
-func NewAsyncProducer(ctx context.Context, kafkaVersion string, brokerList []string, topicName string) (p *AsyncProducer, err error) {
+func NewAsyncProducer(ctx context.Context, kafkaVersion string, brokerList []string) (p *AsyncProducer, err error) {
 	// Init config, specify appropriate version
 	config := sarama.NewConfig()
+	config.Producer.RequiredAcks = sarama.WaitForAll
+	config.Producer.Flush.Messages = 1
+	config.Producer.Return.Successes = true
+	config.Producer.Return.Errors = true
+
 	config.Version, err = sarama.ParseKafkaVersion(kafkaVersion)
 	if err != nil {
 		return nil, err
@@ -28,22 +33,12 @@ func NewAsyncProducer(ctx context.Context, kafkaVersion string, brokerList []str
 	if err != nil {
 		return nil, err
 	}
-	defer func() {
-		err = client.Close()
-		log.Errorf("got error when closing client. topic: %s, message: %s",
-			topicName, err.Error())
-	}()
 
 	// Start a new consumer group
 	producer, err := sarama.NewAsyncProducerFromClient(client)
 	if err != nil {
 		return nil, err
 	}
-	defer func() {
-		err = producer.Close()
-		log.Errorf("got error when closing producer. topic: %s, message: %s",
-			topicName, err.Error())
-	}()
 
 	return &AsyncProducer{
 		Ctx:          ctx,
@@ -56,14 +51,20 @@ func NewAsyncProducer(ctx context.Context, kafkaVersion string, brokerList []str
 }
 
 func (p *AsyncProducer) Produce(topicName string, message string) (err error) {
-	defer func() {
-		err = p.Producer.Close()
-		log.Errorf("got error when closing producer. group: %s, topic: %s, message: %s",
-			topicName, err.Error())
+	// Track error
+	go func() {
+		for {
+			select {
+			case success := <-p.Producer.Successes():
+				log.Infof("offset: %d, timestamp: %s, partitions: %d", success.Offset, success.Timestamp.String(), success.Partition)
+			case fail := <-p.Producer.Errors():
+				log.Infof("err: ", fail.Err)
+			}
+		}
 	}()
 
 	// Produce message to kafka
-	producerMessage := &sarama.ProducerMessage{Topic: topicName, Key: nil, Value: sarama.StringEncoder(message), Metadata: 0}
+	producerMessage := &sarama.ProducerMessage{Topic: topicName, Key: sarama.StringEncoder(message), Value: sarama.StringEncoder(message), Metadata: 0}
 	p.Producer.Input() <- producerMessage
 
 	return nil

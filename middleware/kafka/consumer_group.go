@@ -63,13 +63,19 @@ func NewConsumerGroup(ctx context.Context, kafkaVersion string, brokerList []str
 	}, nil
 }
 
+func (cg *ConsumerGroup) Close() error {
+	if cg.Group != nil {
+		return cg.Group.Close()
+	}
+
+	return nil
+}
+
 func (cg *ConsumerGroup) Consume(topicName string, handler sarama.ConsumerGroupHandler) (err error) {
 	defer func() {
-		if cg.Group != nil {
-			err = cg.Group.Close()
-			if err != nil {
-				log.Errorf("close consumer failed. group: %s, topic: %s, message: %s", cg.GroupName, topicName, err.Error())
-			}
+		err = cg.Close()
+		if err != nil {
+			log.Errorf("close consumer failed. topic: %s, message: %s", topicName, err.Error())
 		}
 	}()
 

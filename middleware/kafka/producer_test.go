@@ -30,7 +30,7 @@ func TestProduce(t *testing.T) {
 	assert.Nil(err, "create producer failed.")
 
 	defer func() {
-		err = p.Producer.Close()
+		err = p.Close()
 		if err != nil {
 			log.Errorf("close producer failed. topic: %s, message: %s", topicName, err.Error())
 		}
@@ -43,7 +43,7 @@ func TestProduce(t *testing.T) {
 			assert.Nil(err, "produce failed. topic: %s, message: %s", topicName, ts)
 
 			err = p.Ctx.Err()
-			assert.EqualError(err, "context canceled", "context error is not nil. topic: %s", topicName)
+			assert.Nil(err, "context error is not nil. topic: %s, errMessage: %v", topicName, err)
 		}
 	}()
 

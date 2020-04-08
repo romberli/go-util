@@ -50,21 +50,43 @@ func NewAsyncProducer(ctx context.Context, kafkaVersion string, brokerList []str
 	}, nil
 }
 
+func (p *AsyncProducer) Close() error {
+	if p.Producer != nil {
+		return p.Producer.Close()
+	}
+
+	return nil
+}
+
 func (p *AsyncProducer) Produce(topicName string, message string) (err error) {
 	// Track error
 	go func() {
 		for {
+			if p.Producer == nil {
+				break
+			}
+
 			select {
 			case success := <-p.Producer.Successes():
-				log.Debugf("offset: %d, timestamp: %s, partitions: %d", success.Offset, success.Timestamp.String(), success.Partition)
+				if success != nil {
+					log.Debugf("offset: %d, timestamp: %s, partitions: %d",
+						success.Offset, success.Timestamp.String(), success.Partition)
+				}
 			case fail := <-p.Producer.Errors():
-				log.Errorf("err: ", fail.Err)
+				if fail != nil {
+					log.Errorf("err: ", fail.Err)
+				}
 			}
 		}
 	}()
 
 	// Produce message to kafka
-	producerMessage := &sarama.ProducerMessage{Topic: topicName, Key: sarama.StringEncoder(message), Value: sarama.StringEncoder(message), Metadata: 0}
+	producerMessage := &sarama.ProducerMessage{
+		Topic:    topicName,
+		Key:      sarama.StringEncoder(message),
+		Value:    sarama.StringEncoder(message),
+		Metadata: 0,
+	}
 	p.Producer.Input() <- producerMessage
 
 	return nil

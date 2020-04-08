@@ -1,8 +1,12 @@
 package kafka
 
 import (
+	"errors"
+	"fmt"
 	"github.com/Shopify/sarama"
 	"github.com/romber2001/log"
+	"reflect"
+	"time"
 )
 
 type AsyncProducer struct {
@@ -55,7 +59,29 @@ func (p *AsyncProducer) Close() error {
 	return nil
 }
 
-func (p *AsyncProducer) Produce(topicName string, message string) (err error) {
+func (p *AsyncProducer) BuildProducerMessageHeader(key string, value string) sarama.RecordHeader {
+	return sarama.RecordHeader{
+		Key:   []byte(key),
+		Value: []byte(value),
+	}
+}
+
+func (p *AsyncProducer) BuildProducerMessage(topicName string, key string, message string, headers []sarama.RecordHeader) *sarama.ProducerMessage {
+	return &sarama.ProducerMessage{
+		Topic:     topicName,
+		Key:       sarama.StringEncoder(key),
+		Value:     sarama.StringEncoder(message),
+		Headers:   headers,
+		Metadata:  nil,
+		Timestamp: time.Now(),
+	}
+}
+
+func (p *AsyncProducer) Produce(topicName string, message interface{}) (err error) {
+	var (
+		producerMessage *sarama.ProducerMessage
+	)
+
 	// Track error
 	go func() {
 		for {
@@ -77,13 +103,18 @@ func (p *AsyncProducer) Produce(topicName string, message string) (err error) {
 		}
 	}()
 
-	// Produce message to kafka
-	producerMessage := &sarama.ProducerMessage{
-		Topic:    topicName,
-		Key:      sarama.StringEncoder(""),
-		Value:    sarama.StringEncoder(message),
-		Metadata: 0,
+	switch message.(type) {
+	case string:
+		producerMessage = p.BuildProducerMessage(topicName, "", message.(string), nil)
+	case *sarama.ProducerMessage:
+		producerMessage = message.(*sarama.ProducerMessage)
+	default:
+		return errors.New(
+			fmt.Sprintf("message must be either string type or *sarama.ProducerMessage type, but got %s",
+				reflect.TypeOf(message).Name()))
 	}
+
+	// Produce message to kafka
 	p.Producer.Input() <- producerMessage
 
 	return nil

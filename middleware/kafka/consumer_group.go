@@ -14,7 +14,13 @@ func (DefaultConsumerGroupHandler) Cleanup(_ sarama.ConsumerGroupSession) error 
 
 func (h DefaultConsumerGroupHandler) ConsumeClaim(sess sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
 	for message := range claim.Messages() {
-		log.Infof("topic: %s, partition: %d, offset: %d, key: %s, value: %s", message.Topic, message.Partition, message.Offset, string(message.Key), string(message.Value))
+		var headers []map[string]string
+		for _, header := range message.Headers {
+			headers = append(headers, ConvertHeaderToMap(*header))
+		}
+
+		log.Infof("topic: %s, partition: %d, offset: %d, key: %s, value: %s, headers: %v",
+			message.Topic, message.Partition, message.Offset, string(message.Key), string(message.Value), headers)
 		sess.MarkMessage(message, "")
 	}
 

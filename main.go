@@ -2,9 +2,12 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/Shopify/sarama"
+	"github.com/romber2001/go-util/linux"
 	"github.com/romber2001/go-util/middleware/kafka"
 	"github.com/romber2001/log"
+	"strconv"
 	"time"
 )
 
@@ -15,10 +18,13 @@ const (
 
 func main() {
 	var (
-		err error
-		ts  string
-		p   *kafka.AsyncProducer
-		cg  *kafka.ConsumerGroup
+		err     error
+		ts      string
+		hostIP  string
+		headers []sarama.RecordHeader
+		message *sarama.ProducerMessage
+		p       *kafka.AsyncProducer
+		cg      *kafka.ConsumerGroup
 	)
 
 	kafkaVersion := "2.2.0"
@@ -26,9 +32,16 @@ func main() {
 	groupName := "group001"
 	topicName := "test001"
 	ctx, cancel := context.WithCancel(context.Background())
+	clusterNameHeader := p.BuildProducerMessageHeader("clusterName", "main01")
+	hostIP, err = linux.GetDefaultIP()
+	if err != nil {
+		log.Errorf("get host ip failed. message: %s", err.Error())
+	}
+	addrHeader := p.BuildProducerMessageHeader("addr", fmt.Sprintf("%s:%d", hostIP, 3306))
+	headers = append(headers, clusterNameHeader, addrHeader)
 	handler := kafka.DefaultConsumerGroupHandler{}
 
-	p, err = kafka.NewAsyncProducer(ctx, kafkaVersion, brokerList)
+	p, err = kafka.NewAsyncProducer(kafkaVersion, brokerList)
 	if err != nil {
 		log.Errorf("create producer failed. topic: %s, errMessage: %s", topicName, err.Error())
 	}
@@ -36,18 +49,17 @@ func main() {
 	go func() {
 		for i := 0; i < 10; i++ {
 			ts = time.Now().String()
-			//ts = strconv.Itoa(i)
 			log.Infof("message: %s", ts)
-			err = p.Produce(topicName, ts)
+			message = p.BuildProducerMessage(topicName, strconv.Itoa(i), ts, headers)
+			err = p.Produce(topicName, message)
 			if err != nil {
 				log.Errorf("produce message failed. topic: %s, message: %s, errMessage: %s", topicName, ts, err.Error())
 			}
 
-			err = p.Ctx.Err()
+			err = ctx.Err()
 			if err != nil {
 				log.Errorf("produce message failed. topic: %s, message: %s, errMessage: %s", topicName, ts, err.Error())
 			}
-
 		}
 	}()
 
@@ -55,34 +67,34 @@ func main() {
 
 	cancel()
 
-	err = p.Ctx.Err()
+	err = ctx.Err()
 	if err != nil {
 		log.Errorf("context error not nil. group: %s, topic: %s, errMessage: %s", groupName, topicName, err.Error())
 	}
 
 	ctx, cancel = context.WithCancel(context.Background())
-	cg, err = kafka.NewConsumerGroup(ctx, kafkaVersion, brokerList, groupName, sarama.OffsetNewest)
+	cg, err = kafka.NewConsumerGroup(kafkaVersion, brokerList, groupName, sarama.OffsetNewest)
 	if err != nil {
 		log.Errorf("create consumer group failed. group: %s, topic: %s, errMessage: %s", groupName, topicName, err.Error())
 	}
 
 	go func() {
-		err = cg.Consume(topicName, handler)
+		err = cg.Consume(ctx, topicName, handler)
 		if err != nil {
 			log.Errorf("consume topic failed. group: %s, topic: %s, errMessage: %s", groupName, topicName, err.Error())
 		}
 
-		err = cg.Ctx.Err()
+		err = ctx.Err()
 		if err != nil {
 			log.Errorf("context error not nil. group: %s, topic: %s, errMessage: %s", groupName, topicName, err.Error())
 		}
 	}()
 
-	time.Sleep(DefaultConsumeSeconds * 3)
+	time.Sleep(DefaultConsumeSeconds * 5)
 
 	cancel()
 
-	err = cg.Ctx.Err()
+	err = ctx.Err()
 	if err != nil {
 		log.Errorf("context error not nil. group: %s, topic: %s, errMessage: %s", groupName, topicName, err.Error())
 	}

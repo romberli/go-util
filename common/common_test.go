@@ -44,67 +44,67 @@ func TestCommon(t *testing.T) {
 		"             s    ",
 	}
 
-	// test ConvertSliceToInterface()
-	t.Log("==========test ConvertSliceToInterface() started==========")
-	sliceInterface, err = ConvertSliceToInterface(sliceInt)
-	assert.Nil(err, "test ConvertSliceToInterface sliceInt failed")
+	// test ConvertInterfaceToSliceInterface()
+	t.Log("==========test ConvertInterfaceToSliceInterface() started==========")
+	sliceInterface, err = ConvertInterfaceToSliceInterface(sliceInt)
+	assert.Nil(err, "test ConvertInterfaceToSliceInterface sliceInt failed")
 	for _, v := range sliceInterface {
 		switch v.(type) {
 		case interface{}:
 		default:
-			assert.True(false, "test ConvertSliceToInterface sliceInt failed")
+			assert.True(false, "test ConvertInterfaceToSliceInterface sliceInt failed")
 		}
 	}
-	t.Logf("sliceInt convert to %v", sliceInt)
+	t.Logf("sliceInt convert to %v", sliceInterface)
 
-	sliceInterface, err = ConvertSliceToInterface(sliceStr)
-	assert.Nil(err, "test ConvertSliceToInterface sliceStr failed")
+	sliceInterface, err = ConvertInterfaceToSliceInterface(sliceStr)
+	assert.Nil(err, "test ConvertInterfaceToSlice sliceStr failed")
 	for _, v := range sliceInterface {
 		switch v.(type) {
 		case interface{}:
 		default:
-			assert.True(false, "test ConvertSliceToInterface sliceStr failed")
+			assert.True(false, "test ConvertInterfaceToSliceInterface sliceStr failed")
 		}
 	}
-	t.Logf("sliceStr convert to %v", mapStrStr)
-	t.Log("==========test StringInSlice() completed==========")
+	t.Logf("sliceStr convert to %v", sliceInterface)
+	t.Log("==========test ConvertInterfaceToSliceInterface() completed==========")
 
-	// test ConvertMapToInterface()
-	t.Log("==========test ConvertMapToInterface() started==========")
-	mapInterface, err = ConvertMapToInterface(mapStrInt)
-	assert.Nil(err, "test ConvertMapToInterface mapStrInt failed")
+	// test ConvertInterfaceToMapInterfaceInterface()
+	t.Log("==========test ConvertInterfaceToMapInterfaceInterface() started==========")
+	mapInterface, err = ConvertInterfaceToMapInterfaceInterface(mapStrInt)
+	assert.Nil(err, "test ConvertInterfaceToMapInterfaceInterface mapStrInt failed")
 	for k, v := range mapInterface {
 		switch k.(type) {
 		case interface{}:
 		default:
-			assert.True(false, "test ConvertMapToInterface mapStrInt failed")
+			assert.True(false, "test ConvertInterfaceToMapInterfaceInterface mapStrInt failed")
 		}
 
 		switch v.(type) {
 		case interface{}:
 		default:
-			assert.True(false, "test ConvertMapToInterface mapStrInt failed")
+			assert.True(false, "test ConvertInterfaceToMapInterfaceInterface mapStrInt failed")
 		}
 	}
 	t.Logf("mapStrInt convert to %v", mapInterface)
 
-	mapInterface, err = ConvertMapToInterface(mapStrStr)
-	assert.Nil(err, "test ConvertMapToInterface mapStrStr failed")
+	mapInterface, err = ConvertInterfaceToMapInterfaceInterface(mapStrStr)
+	assert.Nil(err, "test ConvertInterfaceToMapInterfaceInterface mapStrStr failed")
 	for k, v := range mapInterface {
 		switch k.(type) {
 		case interface{}:
 		default:
-			assert.True(false, "test ConvertMapToInterface mapStrStr failed")
+			assert.True(false, "test ConvertInterfaceToMapInterfaceInterface mapStrStr failed")
 		}
 
 		switch v.(type) {
 		case interface{}:
 		default:
-			assert.True(false, "test ConvertMapToInterface mapStrStr failed")
+			assert.True(false, "test ConvertInterfaceToMapInterfaceInterface mapStrStr failed")
 		}
 	}
 	t.Logf("mapStrStr convert to %v", mapInterface)
-	t.Log("==========test ConvertMapToInterface() completed==========")
+	t.Log("==========test ConvertInterfaceToMapInterfaceInterface() completed==========")
 
 	t.Log("==========test ElementInSlice() started==========")
 	exists, err = ElementInSlice(str1, sliceStr)

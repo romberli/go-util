@@ -10,7 +10,7 @@ import (
 	"github.com/pkg/sftp"
 )
 
-func ConvertSliceToInterface(in interface{}) ([]interface{}, error) {
+func ConvertInterfaceToSliceInterface(in interface{}) ([]interface{}, error) {
 	inType := reflect.TypeOf(in)
 	inValue := reflect.ValueOf(in)
 
@@ -28,7 +28,7 @@ func ConvertSliceToInterface(in interface{}) ([]interface{}, error) {
 	return sliceInterface, nil
 }
 
-func ConvertMapToInterface(in interface{}) (map[interface{}]interface{}, error) {
+func ConvertInterfaceToMapInterfaceInterface(in interface{}) (map[interface{}]interface{}, error) {
 	inType := reflect.TypeOf(in)
 	inValue := reflect.ValueOf(in)
 

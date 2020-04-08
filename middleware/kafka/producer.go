@@ -63,7 +63,7 @@ func (p *AsyncProducer) Produce(topicName string, message string) (err error) {
 	go func() {
 		for {
 			if p.Producer == nil {
-				break
+				return
 			}
 
 			select {
@@ -83,7 +83,7 @@ func (p *AsyncProducer) Produce(topicName string, message string) (err error) {
 	// Produce message to kafka
 	producerMessage := &sarama.ProducerMessage{
 		Topic:    topicName,
-		Key:      sarama.StringEncoder(message),
+		Key:      sarama.StringEncoder(""),
 		Value:    sarama.StringEncoder(message),
 		Metadata: 0,
 	}

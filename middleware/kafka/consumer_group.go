@@ -22,7 +22,6 @@ func (h DefaultConsumerGroupHandler) ConsumeClaim(sess sarama.ConsumerGroupSessi
 }
 
 type ConsumerGroup struct {
-	Ctx          context.Context
 	KafkaVersion sarama.KafkaVersion
 	BrokerList   []string
 	GroupName    string
@@ -31,7 +30,7 @@ type ConsumerGroup struct {
 	Group        sarama.ConsumerGroup
 }
 
-func NewConsumerGroup(ctx context.Context, kafkaVersion string, brokerList []string, groupName string, initOffset int64) (cg *ConsumerGroup, err error) {
+func NewConsumerGroup(kafkaVersion string, brokerList []string, groupName string, initOffset int64) (cg *ConsumerGroup, err error) {
 	// Init config, specify appropriate version
 	config := sarama.NewConfig()
 	config.Consumer.Offsets.Initial = initOffset
@@ -53,7 +52,6 @@ func NewConsumerGroup(ctx context.Context, kafkaVersion string, brokerList []str
 	}
 
 	return &ConsumerGroup{
-		Ctx:          ctx,
 		KafkaVersion: config.Version,
 		BrokerList:   brokerList,
 		GroupName:    groupName,
@@ -71,7 +69,7 @@ func (cg *ConsumerGroup) Close() error {
 	return nil
 }
 
-func (cg *ConsumerGroup) Consume(topicName string, handler sarama.ConsumerGroupHandler) (err error) {
+func (cg *ConsumerGroup) Consume(ctx context.Context, topicName string, handler sarama.ConsumerGroupHandler) (err error) {
 	defer func() {
 		err = cg.Close()
 		if err != nil {
@@ -95,7 +93,7 @@ func (cg *ConsumerGroup) Consume(topicName string, handler sarama.ConsumerGroupH
 	topics := []string{topicName}
 
 	for {
-		err = cg.Group.Consume(cg.Ctx, topics, handler)
+		err = cg.Group.Consume(ctx, topics, handler)
 		if err != nil {
 			return err
 		}

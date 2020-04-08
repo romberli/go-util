@@ -1,13 +1,11 @@
 package kafka
 
 import (
-	"context"
 	"github.com/Shopify/sarama"
 	"github.com/romber2001/log"
 )
 
 type AsyncProducer struct {
-	Ctx          context.Context
 	KafkaVersion sarama.KafkaVersion
 	BrokerList   []string
 	Config       *sarama.Config
@@ -15,7 +13,7 @@ type AsyncProducer struct {
 	Producer     sarama.AsyncProducer
 }
 
-func NewAsyncProducer(ctx context.Context, kafkaVersion string, brokerList []string) (p *AsyncProducer, err error) {
+func NewAsyncProducer(kafkaVersion string, brokerList []string) (p *AsyncProducer, err error) {
 	// Init config, specify appropriate version
 	config := sarama.NewConfig()
 	config.Producer.RequiredAcks = sarama.WaitForAll
@@ -41,7 +39,6 @@ func NewAsyncProducer(ctx context.Context, kafkaVersion string, brokerList []str
 	}
 
 	return &AsyncProducer{
-		Ctx:          ctx,
 		KafkaVersion: config.Version,
 		BrokerList:   brokerList,
 		Config:       config,

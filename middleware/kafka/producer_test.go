@@ -26,7 +26,7 @@ func TestProduce(t *testing.T) {
 	topicName := "test001"
 	ctx, cancel := context.WithCancel(context.Background())
 
-	p, err = NewAsyncProducer(ctx, kafkaVersion, brokerList)
+	p, err = NewAsyncProducer(kafkaVersion, brokerList)
 	assert.Nil(err, "create producer failed.")
 
 	defer func() {
@@ -42,7 +42,7 @@ func TestProduce(t *testing.T) {
 			err = p.Produce(topicName, ts)
 			assert.Nil(err, "produce failed. topic: %s, message: %s", topicName, ts)
 
-			err = p.Ctx.Err()
+			err = ctx.Err()
 			assert.Nil(err, "context error is not nil. topic: %s, errMessage: %v", topicName, err)
 		}
 	}()
@@ -51,6 +51,6 @@ func TestProduce(t *testing.T) {
 
 	cancel()
 
-	err = p.Ctx.Err()
+	err = ctx.Err()
 	assert.EqualError(err, "context canceled", "context error is not nil. topic: %s", topicName)
 }

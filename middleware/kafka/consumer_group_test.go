@@ -27,14 +27,14 @@ func TestConsume(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	handler := DefaultConsumerGroupHandler{}
 
-	cg, err = NewConsumerGroup(ctx, kafkaVersion, brokerList, groupName, sarama.OffsetNewest)
+	cg, err = NewConsumerGroup(kafkaVersion, brokerList, groupName, sarama.OffsetNewest)
 	assert.Nil(err, "create consumer group failed. group: %s, topic: %s", groupName, topicName)
 
 	go func() {
-		err = cg.Consume(topicName, handler)
+		err = cg.Consume(ctx, topicName, handler)
 		assert.Nil(err, "consume failed. group: %s, topic: %s", groupName, topicName)
 
-		err = cg.Ctx.Err()
+		err = ctx.Err()
 		assert.EqualError(err, "context canceled", "context error is not nil. group: %s, topic: %s, message: %s", groupName, topicName, err.Error())
 	}()
 
@@ -42,6 +42,6 @@ func TestConsume(t *testing.T) {
 
 	cancel()
 
-	err = cg.Ctx.Err()
+	err = ctx.Err()
 	assert.EqualError(err, "context canceled", "context error is not nil. group: %s, topic: %s, message: %s", groupName, topicName, err.Error())
 }

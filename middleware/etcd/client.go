@@ -93,7 +93,7 @@ func (conn *EtcdConn) GetLeaseRespByKey(key string) (*clientv3.LeaseGrantRespons
 }
 
 // LockEtcdMutex tries to get a distributed mutex from etcd, if success, return true, nil
-func (conn *EtcdConn) LockEtcdMutex(ctx context.Context, mutexKey string, mutexValue string, ttl int64) (bool, error) {
+func (conn *EtcdConn) LockEtcdMutex(ctx context.Context, mutexKey, mutexValue string, ttl int64) (bool, error) {
 	lease := conn.NewLease()
 	leaseResp, err := conn.NewLeaseGrantResponse(ctx, lease, ttl)
 	if err != nil {
@@ -146,4 +146,81 @@ func (conn *EtcdConn) UnlockEtcdMutex(ctx context.Context, mutexKey string) erro
 	delete(conn.KeyLeaseRespMap, mutexKey)
 
 	return err
+}
+
+func (conn *EtcdConn) PutWithTTLAndKeepAliveOnce(ctx context.Context, key, value string, ttl int64) (*clientv3.PutResponse, *clientv3.LeaseKeepAliveResponse, error) {
+	lease, err := conn.GetLeaseByKey(key)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if lease == nil {
+		lease = conn.NewLease()
+		conn.KeyLeaseMap[key] = lease
+	}
+
+	leaseResp, err := conn.GetLeaseRespByKey(key)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if leaseResp == nil {
+		leaseResp, err = conn.NewLeaseGrantResponse(ctx, lease, ttl)
+	}
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	conn.KeyLeaseRespMap[key] = leaseResp
+
+	putResp, err := conn.Client.Put(ctx, key, value, clientv3.WithLease(leaseResp.ID))
+	leaseKeepAliveResp, err := lease.KeepAliveOnce(ctx, leaseResp.ID)
+
+	return putResp, leaseKeepAliveResp, err
+}
+
+func (conn *EtcdConn) PutWithTTLAndKeepAlive(ctx context.Context, key, value string, ttl int64) (*clientv3.PutResponse, <-chan *clientv3.LeaseKeepAliveResponse, error) {
+	putResp, leaseKeepAliveResp, err := conn.PutWithTTLAndKeepAliveOnce(ctx, key, value, ttl)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	lease, err := conn.GetLeaseByKey(key)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	leaseKeepAliveRespChan, err := lease.KeepAlive(ctx, leaseKeepAliveResp.ID)
+
+	return putResp, leaseKeepAliveRespChan, err
+}
+
+func (conn *EtcdConn) Delete(ctx context.Context, key string) (*clientv3.DeleteResponse, error) {
+	lease, err := conn.GetLeaseByKey(key)
+	if err != nil {
+		return nil, err
+	}
+
+	if lease == nil {
+		return conn.Client.Delete(ctx, key)
+	}
+
+	leaseResp, err := conn.GetLeaseRespByKey(key)
+	if err != nil {
+		return nil, err
+	}
+
+	if leaseResp == nil {
+		return conn.Client.Delete(ctx, key)
+	}
+
+	delete(conn.KeyLeaseMap, key)
+	delete(conn.KeyLeaseRespMap, key)
+
+	return conn.Client.Delete(ctx, key)
+}
+
+func (conn *EtcdConn) PutWithTTL(ctx context.Context, key, value string, ttl int64) (*clientv3.PutResponse, *clientv3.LeaseKeepAliveResponse, error) {
+	return conn.PutWithTTLAndKeepAliveOnce(ctx, key, value, ttl)
 }

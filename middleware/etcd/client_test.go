@@ -21,7 +21,7 @@ func TestEtcdConnection(t *testing.T) {
 	var (
 		err  error
 		ok   bool
-		conn *EtcdConn
+		conn *Conn
 	)
 
 	assert := assert.New(t)
@@ -60,6 +60,6 @@ func TestEtcdConnection(t *testing.T) {
 	assert.Nil(err, "got error when trying to lock the mutex from etcd.")
 	assert.False(ok, "this is the second time to get mutex and should success.")
 
-	err = conn.UnlockEtcdMutex(ctx, DefaultMutexKey)
+	_, err = conn.UnlockEtcdMutex(ctx, DefaultMutexKey)
 	assert.Nil(err, "got error when trying to unlock the mutex")
 }

@@ -1,6 +1,5 @@
 package etcd
 
-import "C"
 import (
 	"context"
 	"errors"
@@ -15,8 +14,8 @@ import (
 const (
 	DefaultConnectTimeOut    = 10 * time.Second
 	DefaultMutexLeaseSeconds = 3600
-	DefaultLeaseID           = 0
 	MaxTTL                   = 3600 * 24
+	ZeroRevision             = 0
 )
 
 type Conn struct {
@@ -57,14 +56,14 @@ func (conn *Conn) Close() error {
 func (conn *Conn) GetLeaseIDByKey(key string) (clientv3.LeaseID, error) {
 	keyExists, err := common.KeyInMap(key, conn.KeyLeaseIDMap)
 	if err != nil {
-		return 0, err
+		return clientv3.NoLease, err
 	}
 
 	if keyExists {
 		return conn.KeyLeaseIDMap[key], nil
 	}
 
-	return 0, nil
+	return clientv3.NoLease, nil
 }
 
 // LockEtcdMutex tries to get a distributed mutex from etcd, if success, return true, nil
@@ -79,7 +78,7 @@ func (conn *Conn) LockEtcdMutex(ctx context.Context, mutexKey, mutexValue string
 	}
 
 	txn := clientv3.NewKV(&conn.Client).Txn(ctx)
-	txn.If(clientv3.Compare(clientv3.CreateRevision(mutexKey), "=", 0)).
+	txn.If(clientv3.Compare(clientv3.CreateRevision(mutexKey), "=", ZeroRevision)).
 		Then(clientv3.OpPut(mutexKey, mutexValue, clientv3.WithLease(leaseResp.ID))).
 		Else()
 	txnResp, err := txn.Commit()
@@ -117,7 +116,7 @@ func (conn *Conn) PutWithTTLAndKeepAliveOnce(ctx context.Context, key, value str
 		return nil, nil, err
 	}
 
-	if leaseID == 0 {
+	if leaseID == clientv3.NoLease {
 		leaseResp, err := conn.Grant(ctx, ttl)
 		if err != nil {
 			return nil, nil, err
@@ -153,7 +152,7 @@ func (conn *Conn) Delete(ctx context.Context, key string) (*clientv3.DeleteRespo
 		return nil, err
 	}
 
-	if leaseID == 0 {
+	if leaseID == clientv3.NoLease {
 		return conn.Client.Delete(ctx, key)
 	}
 

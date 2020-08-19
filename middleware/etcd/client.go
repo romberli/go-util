@@ -47,11 +47,6 @@ func NewEtcdConn(endpoints []string) (*Conn, error) {
 	}, nil
 }
 
-// Close close the etcd connection
-func (conn *Conn) Close() error {
-	return conn.Client.Close()
-}
-
 // GetLeaseRespByKey returns lease response by mutex key name which was maintained when successfully get the mutex
 func (conn *Conn) GetLeaseIDByKey(key string) (clientv3.LeaseID, error) {
 	keyExists, err := common.KeyInMap(key, conn.KeyLeaseIDMap)

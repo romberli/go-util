@@ -14,6 +14,7 @@ const (
 	DefaultConnectTimeOut    = 10 * time.Second
 	DefaultMutexLeaseSeconds = 3600
 	MaxTTL                   = 3600 * 24
+	MinimumTTL               = 2
 	ZeroRevision             = 0
 )
 
@@ -58,6 +59,23 @@ func (conn *Conn) GetLeaseIDByKey(key string) (clientv3.LeaseID, error) {
 	}
 
 	return leaseID.(clientv3.LeaseID), nil
+}
+
+func (conn *Conn) CheckLeaseGrantExists(ctx context.Context, leaseID clientv3.LeaseID) (bool, error) {
+	if leaseID == clientv3.NoLease {
+		return false, nil
+	}
+
+	leaseResp, err := conn.TimeToLive(ctx, leaseID)
+	if err != nil {
+		return false, err
+	}
+
+	if leaseResp.TTL <= MinimumTTL {
+		return false, nil
+	}
+
+	return true, nil
 }
 
 // LockEtcdMutex tries to get a distributed mutex from etcd, if success, return true, nil
@@ -110,18 +128,26 @@ func (conn *Conn) PutWithTTLAndKeepAliveOnce(ctx context.Context, key, value str
 		return nil, nil, err
 	}
 
-	if leaseID == clientv3.NoLease {
+	leaseGrantExists, err := conn.CheckLeaseGrantExists(ctx, leaseID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if !leaseGrantExists {
 		leaseResp, err := conn.Grant(ctx, ttl)
 		if err != nil {
 			return nil, nil, err
 		}
 
 		leaseID = leaseResp.ID
+		conn.KeyLeaseIDMap.Store(key, leaseID)
 	}
 
-	conn.KeyLeaseIDMap.Store(key, leaseID)
-
 	putResp, err := conn.Client.Put(ctx, key, value, clientv3.WithLease(leaseID))
+	if err != nil {
+		return nil, nil, err
+	}
+
 	leaseKeepAliveResp, err := conn.KeepAliveOnce(ctx, leaseID)
 
 	return putResp, leaseKeepAliveResp, err
@@ -153,6 +179,23 @@ func (conn *Conn) Delete(ctx context.Context, key string) (*clientv3.DeleteRespo
 	conn.KeyLeaseIDMap.Delete(key)
 
 	return conn.Client.Delete(ctx, key)
+}
+
+// DeleteWithPrefix delete the keys of which name started with the given key,
+// but does NOT revoke the concerned lease because the lease may be assigned to other keys.
+func (conn *Conn) DeleteWithPrefix(ctx context.Context, key string) (*clientv3.DeleteResponse, error) {
+	leaseID, err := conn.GetLeaseIDByKey(key)
+	if err != nil {
+		return nil, err
+	}
+
+	if leaseID == clientv3.NoLease {
+		return conn.Client.Delete(ctx, key)
+	}
+
+	conn.KeyLeaseIDMap.Delete(key)
+
+	return conn.Client.Delete(ctx, key, clientv3.WithPrefix())
 }
 
 // PutWithTTL is an alias of PutWithTTLAndKeepAliveOnce

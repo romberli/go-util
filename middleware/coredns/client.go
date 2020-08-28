@@ -10,7 +10,7 @@ import (
 
 	"go.etcd.io/etcd/clientv3"
 
-	"github.com/romber2001/go-util/middleware/etcd"
+	"github.com/romberli/go-util/middleware/etcd"
 )
 
 const (

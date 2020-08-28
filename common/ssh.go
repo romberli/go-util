@@ -21,10 +21,13 @@ type CloseConn interface {
 }
 
 const (
-	DefaultSshPortNum     = 22
-	DefaultSshUserName    = "root"
-	DefaultSshUserPass    = "shit"
-	DefaultByteBufferSize = 1024 * 1024 // 1MB
+	DefaultStringZeroValue = ""
+	DefaultIntZeroValue    = 0
+	DefaultSSHTimeout      = 10 * time.Second
+	DefaultSSHPortNum      = 22
+	DefaultSSHUserName     = "root"
+	DefaultSSHUserPass     = "shit"
+	DefaultByteBufferSize  = 1024 * 1024 // 1MB
 
 	copyFromDefault int = iota
 	copyToDefault
@@ -49,21 +52,21 @@ func NewMyConn(hostIp string, portNum int, userName string, userPass string) (co
 func NewMyConnWithDefaultValue(hostIp string) (conn *MyConn) {
 	return &MyConn{
 		hostIp,
-		DefaultSshPortNum,
-		DefaultSshUserName,
-		DefaultSshUserPass,
+		DefaultSSHPortNum,
+		DefaultSSHUserName,
+		DefaultSSHUserPass,
 	}
 }
 
-type MySshConn struct {
+type MySSHConn struct {
 	MyConn
-	SshClient  *ssh.Client
-	SshSession *ssh.Session
+	SSHClient  *ssh.Client
+	SSHSession *ssh.Session
 }
 
-// NewMySshConn returns *MySshConn and error, first argument is mandatory which presents host ip,
+// NewMySSHConn returns *MySSHConn and error, first argument is mandatory which presents host ip,
 // and the 3 flowing optional arguments which should be in exact order of port number, user name and user password
-func NewMySshConn(hostIp string, in ...interface{}) (sshConn *MySshConn, err error) {
+func NewMySSHConn(hostIp string, in ...interface{}) (sshConn *MySSHConn, err error) {
 	var (
 		myConn       *MyConn
 		auth         []ssh.AuthMethod
@@ -95,7 +98,7 @@ func NewMySshConn(hostIp string, in ...interface{}) (sshConn *MySshConn, err err
 
 		switch portNum.(type) {
 		case nil:
-			portNumValue = DefaultSshPortNum
+			portNumValue = DefaultSSHPortNum
 		case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
 			portNumValue = portNum.(int)
 		default:
@@ -106,11 +109,11 @@ func NewMySshConn(hostIp string, in ...interface{}) (sshConn *MySshConn, err err
 
 		switch userName.(type) {
 		case nil:
-			userNameValue = DefaultSshUserName
+			userNameValue = DefaultSSHUserName
 		case string:
 			userNameValue = strings.TrimSpace(userName.(string))
 			if userNameValue == "" {
-				userNameValue = DefaultSshUserName
+				userNameValue = DefaultSSHUserName
 			}
 		default:
 			return nil, errors.New(
@@ -120,11 +123,11 @@ func NewMySshConn(hostIp string, in ...interface{}) (sshConn *MySshConn, err err
 
 		switch userPass.(type) {
 		case nil:
-			userPassValue = DefaultSshUserPass
+			userPassValue = DefaultSSHUserPass
 		case string:
 			userPassValue = strings.TrimSpace(userPass.(string))
 			if userPassValue == "" {
-				userPassValue = DefaultSshUserPass
+				userPassValue = DefaultSSHUserPass
 			}
 		default:
 			return nil, errors.New(
@@ -138,7 +141,6 @@ func NewMySshConn(hostIp string, in ...interface{}) (sshConn *MySshConn, err err
 	}
 
 	// get auth method
-	auth = make([]ssh.AuthMethod, 0)
 	auth = append(auth, ssh.Password(myConn.UserPass))
 
 	// 这个是问你要不要验证远程主机，以保证安全性。这里不验证
@@ -149,23 +151,24 @@ func NewMySshConn(hostIp string, in ...interface{}) (sshConn *MySshConn, err err
 	clientConfig = &ssh.ClientConfig{
 		User:            myConn.UserName,
 		Auth:            auth,
-		Timeout:         10 * time.Second,
+		Timeout:         DefaultSSHTimeout,
 		HostKeyCallback: hostKeyCallBack,
 	}
 
 	// connect to ssh
 	addr = fmt.Sprintf("%s:%d", myConn.HostIp, myConn.PortNum)
-
-	if sshClient, err = ssh.Dial("tcp", addr, clientConfig); err != nil {
+	sshClient, err = ssh.Dial("tcp", addr, clientConfig)
+	if err != nil {
 		return nil, err
 	}
 
 	// create ssh session
-	if sshSession, err = sshClient.NewSession(); err != nil {
+	sshSession, err = sshClient.NewSession()
+	if err != nil {
 		return nil, err
 	}
 
-	sshConn = &MySshConn{
+	sshConn = &MySSHConn{
 		*myConn,
 		sshClient,
 		sshSession,
@@ -174,7 +177,7 @@ func NewMySshConn(hostIp string, in ...interface{}) (sshConn *MySshConn, err err
 	return sshConn, nil
 }
 
-func NewMySshConnWithDefaultValue(hostIp string) (sshConn *MySshConn, err error) {
+func NewMySSHConnWithDefaultValue(hostIp string) (sshConn *MySSHConn, err error) {
 	var (
 		auth         []ssh.AuthMethod
 		addr         string
@@ -186,7 +189,6 @@ func NewMySshConnWithDefaultValue(hostIp string) (sshConn *MySshConn, err error)
 	myConn := NewMyConnWithDefaultValue(hostIp)
 
 	// get auth method
-	auth = make([]ssh.AuthMethod, 0)
 	auth = append(auth, ssh.Password(myConn.UserPass))
 
 	// 这个是问你要不要验证远程主机，以保证安全性。这里不验证
@@ -197,23 +199,24 @@ func NewMySshConnWithDefaultValue(hostIp string) (sshConn *MySshConn, err error)
 	clientConfig = &ssh.ClientConfig{
 		User:            myConn.UserName,
 		Auth:            auth,
-		Timeout:         10 * time.Second,
+		Timeout:         DefaultSSHTimeout,
 		HostKeyCallback: hostKeyCallBack,
 	}
 
 	// connect to ssh
 	addr = fmt.Sprintf("%s:%d", myConn.HostIp, myConn.PortNum)
-
-	if sshClient, err = ssh.Dial("tcp", addr, clientConfig); err != nil {
+	sshClient, err = ssh.Dial("tcp", addr, clientConfig)
+	if err != nil {
 		return nil, err
 	}
 
 	// create ssh session
-	if sshSession, err = sshClient.NewSession(); err != nil {
+	sshSession, err = sshClient.NewSession()
+	if err != nil {
 		return nil, err
 	}
 
-	sshConn = &MySshConn{
+	sshConn = &MySSHConn{
 		*myConn,
 		sshClient,
 		sshSession,
@@ -222,36 +225,33 @@ func NewMySshConnWithDefaultValue(hostIp string) (sshConn *MySshConn, err error)
 	return sshConn, nil
 }
 
-func (conn *MySshConn) ExecuteCommand(cmd string) (result int, stdOut string, stdErr string, err error) {
+func (conn *MySSHConn) ExecuteCommand(cmd string) (result int, stdOut string, stdErr string, err error) {
 	var stdOutBuffer, stdErrBuffer bytes.Buffer
 
-	conn.SshSession.Stdout = &stdOutBuffer
-	conn.SshSession.Stderr = &stdErrBuffer
+	conn.SSHSession.Stdout = &stdOutBuffer
+	conn.SSHSession.Stderr = &stdErrBuffer
 
 	// run command
-	conn.SshSession.Run(cmd)
+	err = conn.SSHSession.Run(cmd)
+	if err != nil {
+		result = 1
+	}
 
 	return result, stdOutBuffer.String(), stdErrBuffer.String(), err
 }
 
-func (conn *MySshConn) GetHostName() (hostName string, err error) {
-	if _, hostName, _, err = conn.ExecuteCommand("hostname"); err != nil {
-		return "", err
-	}
+func (conn *MySSHConn) GetHostName() (hostName string, err error) {
+	_, hostName, _, err = conn.ExecuteCommand("hostname")
 
 	return hostName, err
 }
 
-func (conn *MySshConn) CloseConn() (err error) {
-	if err = conn.SshSession.Close(); err != nil {
-		return err
-	}
-
-	return nil
+func (conn *MySSHConn) CloseConn() error {
+	return conn.SSHSession.Close()
 }
 
 type MySftpConn struct {
-	MySshConn
+	MySSHConn
 	SftpClient *sftp.Client
 }
 
@@ -259,20 +259,20 @@ type MySftpConn struct {
 // and the 3 flowing optional arguments which should be in exact order of port number, user name and user password
 func NewMySftpConn(hostIp string, in ...interface{}) (sftpConn *MySftpConn, err error) {
 	var (
-		mySshConn  *MySshConn
+		mySSHConn  *MySSHConn
 		sftpClient *sftp.Client
 	)
 
-	if mySshConn, err = NewMySshConn(hostIp, in...); err != nil {
+	if mySSHConn, err = NewMySSHConn(hostIp, in...); err != nil {
 		return nil, err
 	}
 
-	if sftpClient, err = sftp.NewClient(mySshConn.SshClient); err != nil {
+	if sftpClient, err = sftp.NewClient(mySSHConn.SSHClient); err != nil {
 		return nil, err
 	}
 
 	sftpConn = &MySftpConn{
-		*mySshConn,
+		*mySSHConn,
 		sftpClient,
 	}
 
@@ -280,19 +280,21 @@ func NewMySftpConn(hostIp string, in ...interface{}) (sftpConn *MySftpConn, err 
 }
 
 func NewMySftpConnWithDefaultValue(hostIp string) (sftpConn *MySftpConn, err error) {
-	var mySshConn *MySshConn
+	var mySSHConn *MySSHConn
 	var sftpClient *sftp.Client
 
-	if mySshConn, err = NewMySshConn(hostIp); err != nil {
+	mySSHConn, err = NewMySSHConn(hostIp)
+	if err != nil {
 		return nil, err
 	}
 
-	if sftpClient, err = sftp.NewClient(mySshConn.SshClient); err != nil {
+	sftpClient, err = sftp.NewClient(mySSHConn.SSHClient)
+	if err != nil {
 		return nil, err
 	}
 
 	sftpConn = &MySftpConn{
-		*mySshConn,
+		*mySSHConn,
 		sftpClient,
 	}
 
@@ -309,7 +311,8 @@ func (conn *MySftpConn) CopyFile(fileSource io.Reader, fileDest io.Writer, buffe
 	buf := make([]byte, bufferSize)
 
 	for {
-		if n, err = fileSource.Read(buf); err != nil && err != io.EOF {
+		n, err = fileSource.Read(buf)
+		if err != nil && err != io.EOF {
 			return err
 		}
 
@@ -317,7 +320,8 @@ func (conn *MySftpConn) CopyFile(fileSource io.Reader, fileDest io.Writer, buffe
 			break
 		}
 
-		if _, err = fileDest.Write(buf[0:n]); err != nil {
+		_, err = fileDest.Write(buf[0:n])
+		if err != nil {
 			return err
 		}
 	}
@@ -338,17 +342,20 @@ func (conn *MySftpConn) CopySingleFileFromRemote(fileNameSource string, fileName
 		fileNameDest = fileNameSource
 	}
 
-	if fileSource, err = conn.SftpClient.Open(fileNameSource); err != nil {
+	fileSource, err = conn.SftpClient.Open(fileNameSource)
+	if err != nil {
 		return err
 	}
-	defer fileSource.Close()
+	defer func() { _ = fileSource.Close() }()
 
-	if fileDest, err = os.Create(fileNameDest); err != nil {
+	fileDest, err = os.Create(fileNameDest)
+	if err != nil {
 		return err
 	}
-	defer fileDest.Close()
+	defer func() { _ = fileDest.Close() }()
 
-	if err = conn.CopyFile(fileSource, fileDest, DefaultByteBufferSize); err != nil {
+	err = conn.CopyFile(fileSource, fileDest, DefaultByteBufferSize)
+	if err != nil {
 		return err
 	}
 
@@ -368,17 +375,20 @@ func (conn *MySftpConn) CopySingleFileToRemote(fileNameSource string, fileNameDe
 		fileNameDest = fileNameSource
 	}
 
-	if fileSource, err = os.Open(fileNameSource); err != nil {
+	fileSource, err = os.Open(fileNameSource)
+	if err != nil {
 		return err
 	}
-	defer fileSource.Close()
+	defer func() { _ = fileSource.Close() }()
 
-	if fileDest, err = conn.SftpClient.Create(fileNameDest); err != nil {
+	fileDest, err = conn.SftpClient.Create(fileNameDest)
+	if err != nil {
 		return err
 	}
-	defer fileSource.Close()
+	defer func() { _ = fileDest.Close() }()
 
-	if err = conn.CopyFile(fileSource, fileDest, DefaultByteBufferSize); err != nil {
+	err = conn.CopyFile(fileSource, fileDest, DefaultByteBufferSize)
+	if err != nil {
 		return err
 	}
 
@@ -390,16 +400,18 @@ func (conn *MySftpConn) CopyFileListFromRemote(fileListSource []string, FileDirD
 
 	FileDirDest = strings.TrimSpace(FileDirDest)
 
-	if FileDirDest == "" {
+	if FileDirDest == DefaultStringZeroValue {
 		return errors.New("file destination directory should NOT an empty string.")
 	}
 
-	if exists, err = PathExistsLocal(FileDirDest); err != nil {
+	exists, err = PathExistsLocal(FileDirDest)
+	if err != nil {
 		return err
 	}
 
 	if !exists {
-		if _, err = os.Create(FileDirDest); err != nil {
+		_, err = os.Create(FileDirDest)
+		if err != nil {
 			return err
 		}
 	}
@@ -408,7 +420,8 @@ func (conn *MySftpConn) CopyFileListFromRemote(fileListSource []string, FileDirD
 		fileNameSource = strings.TrimSpace(fileNameSource)
 		fileNameDest := path.Base(fileNameSource)
 
-		if err = conn.CopySingleFileFromRemote(fileNameSource, path.Join(FileDirDest, fileNameDest)); err != nil {
+		err = conn.CopySingleFileFromRemote(fileNameSource, path.Join(FileDirDest, fileNameDest))
+		if err != nil {
 			return err
 		}
 	}
@@ -427,11 +440,12 @@ func (conn *MySftpConn) CopyFileListFromRemoteWithNewName(fileListSource []strin
 		fileNameDest := FileListDest[i]
 		fileNameDest = strings.TrimSpace(fileNameDest)
 
-		if fileNameDest == "" {
+		if fileNameDest == DefaultStringZeroValue {
 			return errors.New("destination file name should not be an empty string")
 		}
 
-		if err = conn.CopySingleFileFromRemote(fileNameSource, fileNameDest); err != nil {
+		err = conn.CopySingleFileFromRemote(fileNameSource, fileNameDest)
+		if err != nil {
 			return err
 		}
 	}
@@ -440,9 +454,5 @@ func (conn *MySftpConn) CopyFileListFromRemoteWithNewName(fileListSource []strin
 }
 
 func (conn *MySftpConn) CloseConn() (err error) {
-	if err = conn.SftpClient.Close(); err != nil {
-		return err
-	}
-
-	return nil
+	return conn.SftpClient.Close()
 }

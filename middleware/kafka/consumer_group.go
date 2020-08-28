@@ -3,7 +3,7 @@ package kafka
 import (
 	"context"
 	"github.com/Shopify/sarama"
-	"github.com/romber2001/log"
+	"github.com/romberli/log"
 )
 
 type DefaultConsumerGroupHandler struct{}

@@ -151,8 +151,8 @@ github.com/rcrowley/go-metrics v0.0.0-20190826022208-cac0b30c2563 h1:dY6ETXrvDG7
 github.com/rcrowley/go-metrics v0.0.0-20190826022208-cac0b30c2563/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
 github.com/rogpeppe/fastuuid v0.0.0-20150106093220-6724a57986af/go.mod h1:XWv6SoW27p1b0cqNHllgS5HIMJraePCO15w5zCzIWYg=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
-github.com/romber2001/log v0.0.0-20200331124037-16d5e7c74d0d h1:N8UDeRfCKs++XVdqloYbAP8epayT9KzJikRGOyHBYU0=
-github.com/romber2001/log v0.0.0-20200331124037-16d5e7c74d0d/go.mod h1:xvtkV0B2vT8HRMpZ71AwpdByNOfIWjhEM2pMRwjuFgs=
+github.com/romberli/log v1.0.2 h1:sYlKOvm/pYlY2q1TjXX4PAQud7696xL7NSbtJlQ1mmk=
+github.com/romberli/log v1.0.2/go.mod h1:BemgRKqJi2Qm7Rj6EjtkQzXPkbpsUoH2Ey1l/e3bDcc=
 github.com/satori/go.uuid v1.2.0 h1:0uYX9dsZ2yD7q2RtLRtPSdGDWzjeM3TbMJP9utgA0ww=
 github.com/satori/go.uuid v1.2.0/go.mod h1:dA0hQrYB0VpLJoorglMZABFdXlWrHn1NEOzdhQKdks0=
 github.com/shopspring/decimal v0.0.0-20180709203117-cd690d0c9e24/go.mod h1:M+9NzErvs504Cn4c5DxATwIqPbtswREoFCre64PpcG4=

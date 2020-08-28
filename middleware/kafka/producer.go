@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Shopify/sarama"
-	"github.com/romber2001/log"
+	"github.com/romberli/log"
 	"reflect"
 	"time"
 )

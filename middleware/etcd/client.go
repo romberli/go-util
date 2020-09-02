@@ -46,6 +46,26 @@ func NewEtcdConn(endpoints []string) (*Conn, error) {
 	}, nil
 }
 
+// NewEtcdConn returns connection to etcd, it uses client v3 library api
+func NewEtcdConnWithConnectTimeout(endpoints []string, timeout time.Duration) (*Conn, error) {
+	cfg := clientv3.Config{
+		Endpoints:   endpoints,
+		DialTimeout: timeout,
+	}
+
+	client, err := clientv3.New(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Conn{
+		Endpoints: endpoints,
+		Config:    cfg,
+		Client:    *client,
+		Lease:     clientv3.NewLease(client),
+	}, nil
+}
+
 // Close close the connection
 func (conn *Conn) Close() error {
 	return conn.Client.Close()

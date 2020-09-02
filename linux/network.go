@@ -50,18 +50,3 @@ func getAddrDefaultIP(addr net.Addr) string {
 
 	return ip.String()
 }
-
-// IsValidHost judge the host is a valid host or not.
-func IsValidHost(host string) bool {
-	if len(host) == 0 {
-		return false
-	}
-
-	if ip := net.ParseIP(host); ip != nil {
-		if ip.IsLoopback() {
-			return false
-		}
-	}
-
-	return host != "localhost"
-}

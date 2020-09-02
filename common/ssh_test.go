@@ -17,7 +17,7 @@ func TestSsh(t *testing.T) {
 		result         int
 		stdOut         string
 		stdErr         string
-		sshConn        *MySshConn
+		sshConn        *MySSHConn
 		sftpConn       *MySftpConn
 		fileNameSource string
 		fileNameDest   string
@@ -33,7 +33,7 @@ func TestSsh(t *testing.T) {
 
 	// create ssh connection
 	t.Log("==========create ssh connection started.==========")
-	if sshConn, err = NewMySshConn(hostIp); err != nil {
+	if sshConn, err = NewMySSHConn(hostIp); err != nil {
 		assert.Nil(err, "create new ssh connection failed")
 		panic(t)
 	}

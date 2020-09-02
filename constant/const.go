@@ -1,4 +1,4 @@
-package common
+package constant
 
 const (
 	MinUInt uint = 0

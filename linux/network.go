@@ -9,12 +9,12 @@ import (
 func GetDefaultIP() (ip string, err error) {
 	ip = "127.0.0.1"
 
-	ifaces, err := net.Interfaces()
+	interfaces, err := net.Interfaces()
 	if err != nil {
 		return
 	}
 
-	for _, i := range ifaces {
+	for _, i := range interfaces {
 		addrs, err := i.Addrs()
 		if err != nil {
 			continue
@@ -27,17 +27,19 @@ func GetDefaultIP() (ip string, err error) {
 		}
 	}
 
-	err = errors.New("no ip found")
-	return
+	return "", errors.New("no ip found.")
 }
 
 func getAddrDefaultIP(addr net.Addr) string {
 	var ip net.IP
+
 	switch v := addr.(type) {
 	case *net.IPNet:
 		ip = v.IP
 	case *net.IPAddr:
 		ip = v.IP
+	default:
+		return ""
 	}
 	if ip.IsUnspecified() || ip.IsLoopback() {
 		return ""

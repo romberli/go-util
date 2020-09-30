@@ -118,9 +118,10 @@ func PathExistsRemote(path string, client *sftp.Client) (bool, error) {
 }
 
 func PathExists(in ...interface{}) (bool, error) {
-	if len(in) == 0 {
-		return false, errors.New("argument could not be nil")
-	} else if len(in) == 1 {
+	switch len(in) {
+	case 0:
+		return false, errors.New("argument could NOT be nil")
+	case 1:
 		path := in[0]
 
 		switch path.(type) {
@@ -129,7 +130,7 @@ func PathExists(in ...interface{}) (bool, error) {
 		default:
 			return false, errors.New("first argument must be string type, which presents a file or directory")
 		}
-	} else {
+	default:
 		path := in[0]
 		client := in[1]
 
@@ -141,7 +142,7 @@ func PathExists(in ...interface{}) (bool, error) {
 
 		switch client.(type) {
 		case nil:
-			return false, errors.New("second argument could not be nil")
+			return false, errors.New("second argument could not be nil, maybe you should NOT input the second argument")
 		case *sftp.Client:
 			return PathExistsRemote(path.(string), client.(*sftp.Client))
 		default:

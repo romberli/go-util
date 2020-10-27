@@ -75,20 +75,3 @@ func HandleSignalsWithPIDFileAndLog(pidFile string) {
 		}
 	}
 }
-
-//forkDaemon,当checkPid为true时，检查是否有存活的，有则不执行
-func forkDaemon() error {
-	args := os.Args
-	os.Setenv("__Daemon", "true")
-	procAttr := &syscall.ProcAttr{
-		Env:   os.Environ(),
-		Files: []uintptr{os.Stdin.Fd(), os.Stdout.Fd(), os.Stderr.Fd()},
-	}
-	pid, err := syscall.ForkExec(os.Args[0], args, procAttr)
-	if err != nil {
-		return err
-	}
-	log.Printf("[%d] %s start daemon\n", pid, appName)
-	savePid(pid)
-	return nil
-}

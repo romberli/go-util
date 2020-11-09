@@ -8,10 +8,13 @@ import (
 )
 
 const (
-	DefaultCharSet    = "utf8mb4"
-	ReplicationMaster = "master"
-	ReplicationSlave  = "slave"
-	ReplicationRelay  = "relay" // it has master and slave roles at the same time
+	DefaultCharSet     = "utf8mb4"
+	ReplicationMaster  = "master"
+	ReplicationSlave   = "slave"
+	ReplicationRelay   = "relay" // it has master and slave roles at the same time
+	HostString         = "host"
+	PortString         = "port"
+	ShowSlaveStatusSQL = "show slave status"
 )
 
 type Conn struct {
@@ -65,18 +68,18 @@ func (conn *Conn) GetReplicationSlaveList() (slaveList []string, err error) {
 
 	slaveList = []string{}
 
-	result, err = conn.Execute("show slave hosts ;")
+	result, err = conn.Execute(ShowSlaveStatusSQL)
 	if err != nil {
 		return nil, err
 	}
 
 	for i := 0; i < result.RowNumber(); i++ {
-		host, err = result.GetStringByName(i, "Host")
+		host, err = result.GetStringByName(i, HostString)
 		if err != nil {
 			return nil, err
 		}
 
-		port, err = result.GetIntByName(i, "Port")
+		port, err = result.GetIntByName(i, PortString)
 		if err != nil {
 			return nil, err
 		}
@@ -89,7 +92,7 @@ func (conn *Conn) GetReplicationSlaveList() (slaveList []string, err error) {
 }
 
 func (conn *Conn) GetReplicationSlavesStatus() (result *mysql.Result, err error) {
-	result, err = conn.Execute("show slave status ;")
+	result, err = conn.Execute(ShowSlaveStatusSQL)
 	if err != nil {
 		return nil, err
 	}

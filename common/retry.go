@@ -62,21 +62,21 @@ func RetryWithRetryOption(doFunc func() error, opts ...RetryOption) (err error) 
 	for attemptCount = 0; attemptCount <= retryOption.Attempts; attemptCount++ {
 		err := doFunc()
 		if err == nil {
-			return
+			return err
 		}
 		// if attempts or timeout equal to 0, then not to retry
 		if retryOption.Attempts == 0 || retryOption.Timeout == 0 {
-			return
+			return err
 		}
 
 		// check for timeout
 		select {
 		case <-timeoutChan:
-			return
+			return err
 		default:
 			time.Sleep(retryOption.Delay)
 		}
 	}
 
-	return
+	return err
 }

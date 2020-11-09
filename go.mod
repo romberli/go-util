@@ -5,6 +5,7 @@ go 1.15
 require (
 	github.com/Shopify/sarama v1.26.1
 	github.com/asaskevich/govalidator v0.0.0-20200819183940-29e1ff8eb0bb
+	github.com/pingcap/errors v0.11.4
 	github.com/pkg/errors v0.8.1
 	github.com/pkg/sftp v1.11.0
 	github.com/romberli/log v1.0.2

@@ -210,6 +210,9 @@ func (conn *MySSHConn) ExecuteCommand(cmd string) (result int, output string, er
 	err = sshSession.Run(cmd)
 	if err != nil {
 		result = DefaultFailedReturnValue
+		if stdErrBuffer.String() != constant.EmptyString {
+			err = errors.New(fmt.Sprintf("%s\n%s", err.Error(), stdErrBuffer.String()))
+		}
 	}
 
 	output = stdOutBuffer.String() + stdErrBuffer.String()

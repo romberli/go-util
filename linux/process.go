@@ -3,15 +3,13 @@ package linux
 import (
 	"errors"
 	"fmt"
-
-	"github.com/romberli/log"
-
-	"github.com/romberli/go-util/common"
 	"io/ioutil"
 	"os"
 	"os/signal"
 	"strconv"
 	"syscall"
+
+	"github.com/romberli/log"
 )
 
 // IsRunningWithPID returns if given pid is running
@@ -31,7 +29,7 @@ func IsRunningWithPID(pid int) bool {
 // IsRunningWithPIDFile returns if process of which pid was saved in given pid file is running
 func IsRunningWithPIDFile(pidFile string) (bool, error) {
 	// check if pid file exists
-	exists, err := common.PathExistsLocal(pidFile)
+	exists, err := PathExists(pidFile)
 	if err != nil {
 		return false, err
 	}

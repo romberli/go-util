@@ -16,7 +16,6 @@ import (
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
 
-	"github.com/romberli/go-util/common"
 	"github.com/romberli/go-util/constant"
 )
 
@@ -210,7 +209,7 @@ func (conn *MySSHConn) ExecuteCommand(cmd string) (result int, output string, er
 	// run command
 	err = sshSession.Run(cmd)
 	if err != nil {
-		result = 1
+		result = DefaultFailedReturnValue
 	}
 
 	output = stdOutBuffer.String() + stdErrBuffer.String()
@@ -224,17 +223,18 @@ func (conn *MySSHConn) GetHostName() (hostName string, err error) {
 	return hostName, err
 }
 
-// Stat returns fileInfo of given file on remote host
-func (conn *MySSHConn) Stat(path string) (fileInfo os.FileInfo, err error) {
-	path = strings.TrimSpace(path)
-
-	file, err := conn.Open(path)
-	if err != nil {
-		return nil, err
+// PathExists returns if given path exists
+func (conn *MySSHConn) PathExists(path string) (bool, error) {
+	_, err := conn.Stat(path)
+	if err == nil {
+		return true, nil
 	}
-	defer func() { _ = file.Close() }()
 
-	return file.Stat()
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+
+	return false, err
 }
 
 // IsDir returns if given path on the remote host is a directory or not
@@ -359,7 +359,7 @@ func (conn *MySSHConn) IsEmptyDir(dirName string) (isEmpty bool, err error) {
 func (conn *MySSHConn) CopyFile(fileSource io.Reader, fileDest io.Writer, bufferSize int) (err error) {
 	var n int
 
-	if bufferSize <= 0 {
+	if bufferSize <= int(constant.MinUInt) {
 		bufferSize = DefaultByteBufferSize
 	}
 
@@ -394,8 +394,27 @@ func (conn *MySSHConn) CopySingleFileFromRemote(fileNameSource string, fileNameD
 	fileNameSource = strings.TrimSpace(fileNameSource)
 	fileNameDest = strings.TrimSpace(fileNameDest)
 
-	if fileNameDest == "" {
+	if fileNameDest == constant.EmptyString {
 		fileNameDest = fileNameSource
+	}
+
+	// check if source path is a directory
+	isDir, err := conn.IsDir(fileNameSource)
+	if err != nil {
+		return err
+	}
+	if isDir {
+		return errors.New(fmt.Sprintf("it's NOT a file. file name: %s", fileNameSource))
+	}
+
+	// check if parent path of destination exists
+	fileNameDestParent := filepath.Dir(fileNameDest)
+	pathExists, err := PathExists(fileNameDestParent)
+	if err != nil {
+		return nil
+	}
+	if !pathExists {
+		return errors.New(fmt.Sprintf("parent path of destination does NOT exsists. path: %s", fileNameDest))
 	}
 
 	fileSource, err = conn.Open(fileNameSource)
@@ -428,8 +447,27 @@ func (conn *MySSHConn) CopySingleFileToRemote(fileNameSource string, fileNameDes
 	fileNameSource = strings.TrimSpace(fileNameSource)
 	fileNameDest = strings.TrimSpace(fileNameDest)
 
-	if fileNameDest == "" {
+	if fileNameDest == constant.EmptyString {
 		fileNameDest = fileNameSource
+	}
+
+	// check if source path is a directory
+	isDir, err := IsDir(fileNameSource)
+	if err != nil {
+		return err
+	}
+	if isDir {
+		return errors.New(fmt.Sprintf("it's NOT a file. file name: %s", fileNameSource))
+	}
+
+	// check if parent path of destination exists
+	fileNameDestParent := filepath.Dir(fileNameDest)
+	pathExists, err := conn.PathExists(fileNameDestParent)
+	if err != nil {
+		return nil
+	}
+	if !pathExists {
+		return errors.New(fmt.Sprintf("parent path of destination does NOT exsists. path: %s", fileNameDest))
 	}
 
 	fileSource, err = os.Open(fileNameSource)
@@ -454,19 +492,17 @@ func (conn *MySSHConn) CopySingleFileToRemote(fileNameSource string, fileNameDes
 
 // CopyFileListFromRemote copies given files from remote to local
 func (conn *MySSHConn) CopyFileListFromRemote(fileListSource []string, FileDirDest string) (err error) {
-	var exists bool
-
 	FileDirDest = strings.TrimSpace(FileDirDest)
 	if FileDirDest == DefaultStringZeroValue {
 		return errors.New("file destination directory should NOT an empty string")
 	}
 
-	exists, err = common.PathExistsLocal(FileDirDest)
+	pathExists, err := PathExists(FileDirDest)
 	if err != nil {
 		return err
 	}
 
-	if !exists {
+	if !pathExists {
 		_, err = os.Create(FileDirDest)
 		if err != nil {
 			return err
@@ -512,10 +548,10 @@ func (conn *MySSHConn) CopyFileListFromRemoteWithNewName(fileListSource []string
 	return nil
 }
 
-// GetFileDirMapRemote reads all subdirectories and files of given directory on the remote host
+// GetPathDirMapRemote reads all subdirectories and files of given directory on the remote host
 // and calculate the relative path of rootPath,
 // then map the absolute path of subdirectory names and file names as keys, relative paths as values to fileDirMap
-func (conn *MySSHConn) GetFileDirMapRemote(fileDirMap map[string]string, dirName, rootPath string) (err error) {
+func (conn *MySSHConn) GetPathDirMapRemote(fileDirMap map[string]string, dirName, rootPath string) (err error) {
 	dirName = strings.TrimSpace(dirName)
 	rootPath = strings.TrimSpace(rootPath)
 
@@ -534,11 +570,13 @@ func (conn *MySSHConn) GetFileDirMapRemote(fileDirMap map[string]string, dirName
 		fileNameAbs := filepath.Join(dirName, fileName)
 
 		if fileInfo.IsDir() {
-			err = conn.GetFileDirMapRemote(fileDirMap, fileNameAbs, rootPath)
+			// call recursively
+			err = conn.GetPathDirMapRemote(fileDirMap, fileNameAbs, rootPath)
 			if err != nil {
 				return err
 			}
 		} else {
+			// get relative path with root path
 			fileNameRel, err := filepath.Rel(rootPath, fileNameAbs)
 			if err != nil {
 				return err
@@ -556,15 +594,58 @@ func (conn *MySSHConn) CopyDirFromRemote(dirNameSource, dirNameDest string) (err
 	dirNameSource = strings.TrimSpace(dirNameSource)
 	dirNameDest = strings.TrimSpace(dirNameDest)
 
-	fileDirMap := make(map[string]string)
-	err = conn.GetFileDirMapRemote(fileDirMap, dirNameSource, dirNameSource)
+	// check if source path is a directory
+	isDir, err := conn.IsDir(dirNameSource)
+	if err != nil {
+		return err
+	}
+	if !isDir {
+		return errors.New(fmt.Sprintf("it's NOT a directory. dir name: %s", dirNameSource))
+	}
+
+	// check if parent path of destination exists
+	dirNameDestParent := filepath.Dir(dirNameDest)
+	pathExists, err := PathExists(dirNameDestParent)
+	if err != nil {
+		return nil
+	}
+	if !pathExists {
+		return errors.New(fmt.Sprintf("parent path of destination does NOT exsists. path: %s", dirNameDest))
+	}
+
+	pathSourceBase := filepath.Base(dirNameSource)
+	pathDestBase := filepath.Base(dirNameDest)
+
+	// get new destination path to act like shell command "scp -r"
+	if pathSourceBase != pathDestBase {
+		pathExists, err := PathExists(dirNameDest)
+		if err != nil {
+			return err
+		}
+		if pathExists {
+			isDir, err := IsDir(dirNameDest)
+			if err != nil {
+				return err
+			}
+			if !isDir {
+				return errors.New(fmt.Sprintf("it's NOT a directory. dir name: %s", dirNameDest))
+			}
+
+			dirNameDest = filepath.Join(dirNameDest, pathSourceBase)
+		}
+	}
+
+	pathDirMap := make(map[string]string)
+	// get map of source path and relative path with destination directory
+	err = conn.GetPathDirMapRemote(pathDirMap, dirNameSource, dirNameSource)
 	if err != nil {
 		return err
 	}
 
-	for fileName, relDir := range fileDirMap {
+	for pathName, relDir := range pathDirMap {
 		if relDir == constant.EmptyString {
-			relDirSource, err := filepath.Rel(dirNameSource, fileName)
+			// it's an empty directory, we just need to create it
+			relDirSource, err := filepath.Rel(dirNameSource, pathName)
 			if err != nil {
 				return err
 			}
@@ -581,8 +662,9 @@ func (conn *MySSHConn) CopyDirFromRemote(dirNameSource, dirNameDest string) (err
 			return err
 		}
 
-		fileNameDest := GetFileNameDest(fileName, DirDestAbs)
-		err = conn.CopySingleFileFromRemote(fileName, fileNameDest)
+		fileNameDest := GetFileNameDest(pathName, DirDestAbs)
+		// copy file from remote
+		err = conn.CopySingleFileFromRemote(pathName, fileNameDest)
 		if err != nil {
 			return err
 		}
@@ -596,15 +678,58 @@ func (conn *MySSHConn) CopyDirToRemote(dirNameSource, dirNameDest string) (err e
 	dirNameSource = strings.TrimSpace(dirNameSource)
 	dirNameDest = strings.TrimSpace(dirNameDest)
 
-	fileDirMap := make(map[string]string)
-	err = GetFileDirMapLocal(fileDirMap, dirNameSource, dirNameSource)
+	// check if source path is a directory
+	isDir, err := IsDir(dirNameSource)
+	if err != nil {
+		return err
+	}
+	if !isDir {
+		return errors.New(fmt.Sprintf("it's NOT a directory. dir name: %s", dirNameSource))
+	}
+
+	// check if parent path of destination exists
+	dirNameDestParent := filepath.Dir(dirNameDest)
+	pathExists, err := conn.PathExists(dirNameDestParent)
+	if err != nil {
+		return nil
+	}
+	if !pathExists {
+		return errors.New(fmt.Sprintf("parent path of destination does NOT exsists. path: %s", dirNameDest))
+	}
+
+	pathSourceBase := filepath.Base(dirNameSource)
+	pathDestBase := filepath.Base(dirNameDest)
+
+	// get new destination path to act like shell command "scp -r"
+	if pathSourceBase != pathDestBase {
+		pathExists, err := conn.PathExists(dirNameDest)
+		if err != nil {
+			return err
+		}
+		if pathExists {
+			isDir, err := conn.IsDir(dirNameDest)
+			if err != nil {
+				return err
+			}
+			if !isDir {
+				return errors.New(fmt.Sprintf("it's NOT a directory. dir name: %s", dirNameDest))
+			}
+
+			dirNameDest = filepath.Join(dirNameDest, pathSourceBase)
+		}
+	}
+
+	pathDirMap := make(map[string]string)
+	// get map of source path and relative path with destination directory
+	err = GetPathDirMapLocal(pathDirMap, dirNameSource, dirNameSource)
 	if err != nil {
 		return err
 	}
 
-	for fileName, relDir := range fileDirMap {
+	for pathName, relDir := range pathDirMap {
 		if relDir == constant.EmptyString {
-			relDirSource, err := filepath.Rel(dirNameSource, fileName)
+			//
+			relDirSource, err := filepath.Rel(dirNameSource, pathName)
 			if err != nil {
 				return err
 			}
@@ -621,8 +746,8 @@ func (conn *MySSHConn) CopyDirToRemote(dirNameSource, dirNameDest string) (err e
 			return err
 		}
 
-		fileNameDest := GetFileNameDest(fileName, DirDestAbs)
-		err = conn.CopySingleFileToRemote(fileName, fileNameDest)
+		fileNameDest := GetFileNameDest(pathName, DirDestAbs)
+		err = conn.CopySingleFileToRemote(pathName, fileNameDest)
 		if err != nil {
 			return err
 		}
@@ -636,6 +761,7 @@ func (conn *MySSHConn) CopyFromRemote(pathSource, pathDest string) (err error) {
 	pathSource = strings.TrimSpace(pathSource)
 	pathDest = strings.TrimSpace(pathDest)
 
+	// check if source path is a directory
 	isDir, err := conn.IsDir(pathSource)
 	if err != nil {
 		return err

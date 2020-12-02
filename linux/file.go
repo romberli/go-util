@@ -36,15 +36,23 @@ func SyscallMode(fileMode os.FileMode) (fileModeSys uint32) {
 	return
 }
 
+// PathExists returns if given path exists
+func PathExists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+
+	return false, err
+}
+
 // IsDir returns if given path is a directory or not
 func IsDir(path string) (isDir bool, err error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return false, err
-	}
-	defer func() { _ = file.Close() }()
-
-	fileInfo, err := file.Stat()
+	fileInfo, err := os.Stat(path)
 	if err != nil {
 		return false, err
 	}
@@ -89,34 +97,34 @@ func IsEmptyDir(dirName string) (isEmpty bool, err error) {
 	return isEmpty, nil
 }
 
-// GetFileDirMapLocal reads all subdirectories and files of given directory and calculate the relative path of rootPath,
+// GetPathDirMapLocal reads all subdirectories and files of given directory and calculate the relative path of rootPath,
 // then map the absolute path of subdirectory names and file names as keys, relative paths as values to fileDirMap
-func GetFileDirMapLocal(fileDirMap map[string]string, dirName, rootPath string) (err error) {
-	fileInfoList, err := Readdir(dirName)
+func GetPathDirMapLocal(pathDirMap map[string]string, dirName, rootPath string) (err error) {
+	pathInfoList, err := Readdir(dirName)
 	if err != nil {
 		return err
 	}
-	if len(fileInfoList) == 0 {
+	if len(pathInfoList) == 0 {
 		// it's an empty directory
-		fileDirMap[dirName] = constant.EmptyString
+		pathDirMap[dirName] = constant.EmptyString
 	}
 
-	for _, fileInfo := range fileInfoList {
-		fileName := fileInfo.Name()
-		fileNameAbs := filepath.Join(dirName, fileName)
+	for _, pathInfo := range pathInfoList {
+		pathName := pathInfo.Name()
+		pathNameAbs := filepath.Join(dirName, pathName)
 
-		if fileInfo.IsDir() {
-			err = GetFileDirMapLocal(fileDirMap, fileNameAbs, rootPath)
+		if pathInfo.IsDir() {
+			err = GetPathDirMapLocal(pathDirMap, pathNameAbs, rootPath)
 			if err != nil {
 				return err
 			}
 		} else {
-			fileNameRel, err := filepath.Rel(rootPath, fileNameAbs)
+			pathRel, err := filepath.Rel(rootPath, pathNameAbs)
 			if err != nil {
 				return err
 			}
 
-			fileDirMap[fileNameAbs] = fileNameRel
+			pathDirMap[pathNameAbs] = pathRel
 		}
 	}
 

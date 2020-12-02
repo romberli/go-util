@@ -10,19 +10,24 @@ import (
 func TestFile(t *testing.T) {
 	var (
 		err                error
+		dirExists          string
+		dirNotExists       string
 		dirName            string
 		empDirName         string
 		fileName           string
+		pathExists         bool
 		isDir              bool
 		isEmpty            bool
 		fileInfoList       []os.FileInfo
 		expectedFileNum    int
 		expectedElementNum int
-		fileDirMap         map[string]string
+		pathDirMap         map[string]string
 		fileNameDest       string
 		expectedFileName   string
 	)
 
+	dirExists = "/Users/romber"
+	dirNotExists = "/Users/romber/xxxxdasfdsafas"
 	dirName = "/Users/romber/test"
 	fileName = "/Users/romber/test/1.txt"
 	expectedFileNum = 4
@@ -34,6 +39,17 @@ func TestFile(t *testing.T) {
 	expectedFileName = "/Users/romber/test/subdir2/1.txt"
 
 	asst := assert.New(t)
+
+	// test PathExists()
+	t.Log("==========test PathExists() started.==========")
+	pathExists, err = PathExists(dirExists)
+	asst.Nil(err, "test PathExists() failed")
+	asst.True(pathExists, "test PathExists() failed")
+
+	pathExists, err = PathExists(dirNotExists)
+	asst.Nil(err, "test PathExists() failed")
+	asst.False(pathExists, "test PathExists() failed")
+	t.Log("==========test PathExists() completed.==========\n")
 
 	// test IsDir()
 	t.Log("==========test IsDir() started.==========")
@@ -70,13 +86,13 @@ func TestFile(t *testing.T) {
 	asst.NotNil(err, "test IsEmptyDir() failed")
 	t.Log("==========test IsEmptyDir() completed.==========\n")
 
-	// test GetFileDirMapLocal()
-	t.Log("==========test GetFileDirMapLocal() started.==========")
-	fileDirMap = make(map[string]string)
-	err = GetFileDirMapLocal(fileDirMap, dirName, dirName)
-	asst.Nil(err, "test GetFileDirMapLocal() failed")
-	asst.Equal(len(fileDirMap), expectedElementNum, "test GetFileDirMapLocal() failed")
-	t.Log("==========test GetFileDirMapLocal() completed.==========\n")
+	// test GetPathDirMapLocal()
+	t.Log("==========test GetPathDirMapLocal() started.==========")
+	pathDirMap = make(map[string]string)
+	err = GetPathDirMapLocal(pathDirMap, dirName, dirName)
+	asst.Nil(err, "test GetPathDirMapLocal() failed")
+	asst.Equal(len(pathDirMap), expectedElementNum, "test GetPathDirMapLocal() failed")
+	t.Log("==========test GetPathDirMapLocal() completed.==========\n")
 
 	// test GetFileNameDest()
 	t.Log("==========test GetFileNameDest() started.==========")

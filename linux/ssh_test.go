@@ -1,7 +1,6 @@
 package linux
 
 import (
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -59,8 +58,8 @@ func TestSSH(t *testing.T) {
 	// test copy a directory from remote
 	t.Log("==========copy a directory from remote started.==========")
 	fileNameSource = "/tmp/test"
-	fileNameDest = "/Users/romber/test"
-	err = os.RemoveAll(fileNameDest)
+	fileNameDest = "/Users/romber/test2"
+	// err = os.RemoveAll(fileNameDest)
 	asst.Nil(err, "remove directory on local host failed")
 	err = sshConn.CopyFromRemote(fileNameSource, fileNameDest)
 	asst.Nil(err, "copy directory from remote failed")

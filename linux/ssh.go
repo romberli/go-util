@@ -27,7 +27,7 @@ const (
 	DefaultSSHTimeout         = 10 * time.Second
 	DefaultSSHPortNum         = 22
 	DefaultSSHUserName        = "root"
-	DefaultSSHUserPass        = "shit"
+	DefaultSSHUserPass        = "root"
 	DefaultByteBufferSize     = 1024 * 1024 // 1MB
 )
 
@@ -378,7 +378,7 @@ func (conn *MySSHConn) CopyFile(fileSource io.Reader, fileDest io.Writer, buffer
 			break
 		}
 
-		_, err = fileDest.Write(buf[0:n])
+		_, err = fileDest.Write(buf[int(constant.MinUInt):n])
 		if err != nil {
 			return err
 		}

@@ -25,7 +25,7 @@ func TestSSH(t *testing.T) {
 	hostIP = "192.168.137.11"
 	portNum = 22
 	userName = "root"
-	userPass = "shit"
+	userPass = "root"
 
 	asst := assert.New(t)
 

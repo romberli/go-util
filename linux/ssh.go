@@ -417,6 +417,22 @@ func (conn *MySSHConn) CopySingleFileFromRemote(fileNameSource string, fileNameD
 		return errors.New(fmt.Sprintf("parent path of destination does NOT exsists. path: %s", fileNameDest))
 	}
 
+	// check if destination path is a directory
+	pathExists, err = PathExists(fileNameDest)
+	if err != nil {
+		return err
+	}
+	if pathExists {
+		isDir, err = IsDir(fileNameDest)
+		if err != nil {
+			return err
+		}
+		if isDir {
+			fileNameSourceBase := filepath.Base(fileNameSource)
+			fileNameDest = filepath.Join(fileNameDest, fileNameSourceBase)
+		}
+	}
+
 	fileSource, err = conn.Open(fileNameSource)
 	if err != nil {
 		return err
@@ -468,6 +484,22 @@ func (conn *MySSHConn) CopySingleFileToRemote(fileNameSource string, fileNameDes
 	}
 	if !pathExists {
 		return errors.New(fmt.Sprintf("parent path of destination does NOT exsists. path: %s", fileNameDest))
+	}
+
+	// check if destination path is a directory
+	pathExists, err = conn.PathExists(fileNameDest)
+	if err != nil {
+		return err
+	}
+	if pathExists {
+		isDir, err = conn.IsDir(fileNameDest)
+		if err != nil {
+			return err
+		}
+		if isDir {
+			fileNameSourceBase := filepath.Base(fileNameSource)
+			fileNameDest = filepath.Join(fileNameDest, fileNameSourceBase)
+		}
 	}
 
 	fileSource, err = os.Open(fileNameSource)

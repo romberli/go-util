@@ -51,7 +51,15 @@ func TestSSH(t *testing.T) {
 	t.Log("==========copy single file from remote started.==========")
 	fileNameSource = "/root/common.go"
 	fileNameDest = "/Users/romber/common.go"
-	err = sshConn.CopySingleFileFromRemote(fileNameSource, fileNameDest)
+	err = sshConn.CopyFromRemote(fileNameSource, fileNameDest)
+	asst.Nil(err, "copy single file from remote failed")
+	t.Log("==========copy single file from remote completed.==========\n")
+
+	// test copy single file to remote
+	t.Log("==========copy single file from remote started.==========")
+	fileNameSource = "/Users/romber/common.go"
+	fileNameDest = "/root"
+	err = sshConn.CopyToRemote(fileNameSource, fileNameDest)
 	asst.Nil(err, "copy single file from remote failed")
 	t.Log("==========copy single file from remote completed.==========\n")
 
@@ -73,5 +81,8 @@ func TestSSH(t *testing.T) {
 	asst.Nil(err, "remove directory on remote host failed")
 	err = sshConn.CopyToRemote(fileNameSource, fileNameDest)
 	asst.Nil(err, "copy directory to remote failed")
+	fileNameSource = "/Users/romber/test/1.txt"
+	fileNameDest = "/tmp/test2"
 	t.Log("==========copy a directory to remote completed.==========\n")
+
 }

@@ -57,7 +57,7 @@ func TestSSH(t *testing.T) {
 
 	// test copy single file to remote
 	t.Log("==========copy single file from remote started.==========")
-	fileNameSource = "/Users/romber/common.go"
+	fileNameSource = "/Users/romber/common2.go"
 	fileNameDest = "/root"
 	err = sshConn.CopyToRemote(fileNameSource, fileNameDest)
 	asst.Nil(err, "copy single file from remote failed")

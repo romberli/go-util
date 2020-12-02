@@ -1,8 +1,9 @@
 package linux
 
 import (
-	"github.com/pkg/errors"
 	"net"
+
+	"github.com/pkg/errors"
 )
 
 // GetDefaultIP get a default non local ip, err is not nil, ip return 127.0.0.1
@@ -30,6 +31,7 @@ func GetDefaultIP() (ip string, err error) {
 	return "", errors.New("no ip found.")
 }
 
+// getAddrDefaultIP returns default IP of host
 func getAddrDefaultIP(addr net.Addr) string {
 	var ip net.IP
 

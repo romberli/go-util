@@ -362,7 +362,7 @@ func (conn *MySSHConn) IsEmptyDir(dirName string) (isEmpty bool, err error) {
 func (conn *MySSHConn) CopyFile(fileSource io.Reader, fileDest io.Writer, bufferSize int) (err error) {
 	var n int
 
-	if bufferSize <= int(constant.MinUInt) {
+	if bufferSize <= constant.ZeroInt {
 		bufferSize = DefaultByteBufferSize
 	}
 
@@ -378,7 +378,7 @@ func (conn *MySSHConn) CopyFile(fileSource io.Reader, fileDest io.Writer, buffer
 			break
 		}
 
-		_, err = fileDest.Write(buf[int(constant.MinUInt):n])
+		_, err = fileDest.Write(buf[constant.ZeroInt:n])
 		if err != nil {
 			return err
 		}

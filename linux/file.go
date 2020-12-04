@@ -76,7 +76,7 @@ func Readdir(dirName string) (fileInfoList []os.FileInfo, err error) {
 	}
 	defer func() { _ = file.Close() }()
 
-	fileInfoList, err = file.Readdir(int(constant.MinUInt))
+	fileInfoList, err = file.Readdir(constant.ZeroInt)
 	if err != nil {
 		return nil, err
 	}

@@ -2,9 +2,47 @@ package common
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"strings"
+	"unsafe"
+
+	"github.com/romberli/go-util/constant"
 )
+
+func StringToBytes(s string) []byte {
+	x := (*[2]uintptr)(unsafe.Pointer(&s))
+	h := [3]uintptr{x[0], x[1], x[1]}
+
+	return *(*[]byte)(unsafe.Pointer(&h))
+}
+
+func BytesToString(b []byte) string {
+	return *(*string)(unsafe.Pointer(&b))
+}
+
+func ConvertToString(in interface{}) (string, error) {
+	inType := reflect.TypeOf(in)
+
+	switch inType.Kind() {
+	case reflect.String:
+		return in.(string), nil
+	case reflect.Bool:
+		if in.(bool) == true {
+			return constant.TrueString, nil
+		}
+
+		return constant.FalseString, nil
+	case reflect.Float32, reflect.Float64,
+		reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return fmt.Sprintf("%v", in), nil
+	default:
+		return constant.EmptyString, errors.New(
+			fmt.Sprintf("convert %s to string is not supported. ONLY accept string, float, int, bool.",
+				inType.String()))
+	}
+}
 
 func ConvertInterfaceToSliceInterface(in interface{}) ([]interface{}, error) {
 	inType := reflect.TypeOf(in)

@@ -10,6 +10,7 @@ import (
 	"github.com/romberli/go-util/constant"
 )
 
+// StringToBytes converts string type to byte slice
 func StringToBytes(s string) []byte {
 	x := (*[2]uintptr)(unsafe.Pointer(&s))
 	h := [3]uintptr{x[0], x[1], x[1]}
@@ -17,11 +18,14 @@ func StringToBytes(s string) []byte {
 	return *(*[]byte)(unsafe.Pointer(&h))
 }
 
+// BytesToString converts byte slice type to string
 func BytesToString(b []byte) string {
 	return *(*string)(unsafe.Pointer(&b))
 }
 
-func ConvertToString(in interface{}) (string, error) {
+// ConvertNumberToString tries to convert number to string,
+// if input is neither number type nor string, it will return error
+func ConvertNumberToString(in interface{}) (string, error) {
 	inType := reflect.TypeOf(in)
 
 	switch inType.Kind() {
@@ -44,6 +48,8 @@ func ConvertToString(in interface{}) (string, error) {
 	}
 }
 
+// ConvertInterfaceToSliceInterface converts input data which must be slice type to interface slice,
+// it means each element in the slice is interface type.
 func ConvertInterfaceToSliceInterface(in interface{}) ([]interface{}, error) {
 	inType := reflect.TypeOf(in)
 	inValue := reflect.ValueOf(in)
@@ -62,6 +68,8 @@ func ConvertInterfaceToSliceInterface(in interface{}) ([]interface{}, error) {
 	return sliceInterface, nil
 }
 
+// ConvertInterfaceToMapInterfaceInterface converts input data which must be map type to map interface interface,
+// it means each pair of key and value in the map will be interface type
 func ConvertInterfaceToMapInterfaceInterface(in interface{}) (map[interface{}]interface{}, error) {
 	inType := reflect.TypeOf(in)
 	inValue := reflect.ValueOf(in)
@@ -80,6 +88,7 @@ func ConvertInterfaceToMapInterfaceInterface(in interface{}) (map[interface{}]in
 	return mapInterface, nil
 }
 
+// ElementInSlice checks if given element is in the slice
 func ElementInSlice(e interface{}, s interface{}) (bool, error) {
 	sType := reflect.TypeOf(s)
 	sValue := reflect.ValueOf(s)
@@ -97,6 +106,7 @@ func ElementInSlice(e interface{}, s interface{}) (bool, error) {
 	return false, nil
 }
 
+// KeyInMap checks if given key is in the map
 func KeyInMap(k interface{}, m interface{}) (bool, error) {
 	if reflect.TypeOf(m).Kind() != reflect.Map {
 		return false, errors.New("second argument must be map")
@@ -112,6 +122,7 @@ func KeyInMap(k interface{}, m interface{}) (bool, error) {
 	return false, nil
 }
 
+// ValueInMap checks if given value is in the map
 func ValueInMap(v interface{}, m interface{}) (bool, error) {
 	if reflect.TypeOf(m).Kind() != reflect.Map {
 		return false, errors.New("second argument must be map")
@@ -127,6 +138,7 @@ func ValueInMap(v interface{}, m interface{}) (bool, error) {
 	return false, nil
 }
 
+// TrimSpaceOfStructString trims spaces of each member variable of the struct
 func TrimSpaceOfStructString(in interface{}) error {
 	inType := reflect.TypeOf(in)
 	inVal := reflect.ValueOf(in)

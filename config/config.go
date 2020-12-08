@@ -62,7 +62,7 @@ func WriteToBuffer(in interface{}, buffer *bytes.Buffer, tagType ...string) (err
 			}
 
 			fieldInterface := field.Interface()
-			fieldStr, err = common.ConvertToString(fieldInterface)
+			fieldStr, err = common.ConvertNumberToString(fieldInterface)
 			if err != nil {
 				return err
 			}

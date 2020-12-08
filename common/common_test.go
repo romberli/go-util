@@ -46,21 +46,21 @@ func TestCommon(t *testing.T) {
 
 	// test ConvertInterfaceToString()
 	t.Log("==========test ConvertInterfaceToString() started==========")
-	s, err = ConvertToString(str1)
+	s, err = ConvertNumberToString(str1)
 	asst.Nil(err, "convert string to string failed")
 	asst.Equal(str1, s, "convert string to string failed")
 
 	intStr := "1234"
-	s, err = ConvertToString(int1)
+	s, err = ConvertNumberToString(int1)
 	asst.Nil(err, "convert string to string failed")
 	asst.Equal(intStr, s, "convert string to string failed")
 
 	floatStr := "1.234"
-	s, err = ConvertToString(float1)
+	s, err = ConvertNumberToString(float1)
 	asst.Nil(err, "convert string to string failed")
 	asst.Equal(floatStr, s, "convert string to string failed")
 
-	s, err = ConvertToString(true)
+	s, err = ConvertNumberToString(true)
 	asst.Nil(err, "convert string to string failed")
 	asst.Equal(constant.TrueString, s, "convert string to string failed")
 	t.Log("==========test ConvertInterfaceToString() completed==========")

@@ -13,8 +13,13 @@ import (
 
 // WriteToBuffer loops each member of given input struct recursively,
 // converts member variable names and concerning values to "key = value" string,
-// and then write the string into buffer,
-// if tag type is specified, which is optional, "key" will be replaced by the tag name
+// and then write the string into buffer, it follows some rules:
+// 1. if tag type is specified, which is optional, "key" will be replaced by the tag name
+// 2. toml and ini type config files requires each key should has a value(but could be empty),
+//    but some toml/ini like config files(for example: my.cnf) allows variables are only keys instead of key value pairs,
+//    (for example: skip-name-resolve), in this case, you can specify constant.DefaultRandomString or
+//    constant.DefaultRandomInt to those keys not having values, therefore when this function find out those constant values,
+//    it will convert to key string ignore the value and also the equal mark
 func WriteToBuffer(in interface{}, buffer *bytes.Buffer, tagType ...string) (err error) {
 	var (
 		tagTypeStr string

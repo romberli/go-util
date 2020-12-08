@@ -5,6 +5,7 @@ import (
 	"os/exec"
 )
 
+// ExecuteCommand executes shell command
 func ExecuteCommand(command string) (output string, err error) {
 	var stdoutBuffer bytes.Buffer
 

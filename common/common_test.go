@@ -48,21 +48,21 @@ func TestCommon(t *testing.T) {
 	t.Log("==========test ConvertInterfaceToString() started==========")
 	s, err = ConvertToString(str1)
 	asst.Nil(err, "convert string to string failed")
-	asst.Equal(s, str1, "convert string to string failed")
+	asst.Equal(str1, s, "convert string to string failed")
 
 	intStr := "1234"
 	s, err = ConvertToString(int1)
 	asst.Nil(err, "convert string to string failed")
-	asst.Equal(s, intStr, "convert string to string failed")
+	asst.Equal(intStr, s, "convert string to string failed")
 
 	floatStr := "1.234"
 	s, err = ConvertToString(float1)
 	asst.Nil(err, "convert string to string failed")
-	asst.Equal(s, floatStr, "convert string to string failed")
+	asst.Equal(floatStr, s, "convert string to string failed")
 
 	s, err = ConvertToString(true)
 	asst.Nil(err, "convert string to string failed")
-	asst.Equal(s, constant.TrueString, "convert string to string failed")
+	asst.Equal(constant.TrueString, s, "convert string to string failed")
 	t.Log("==========test ConvertInterfaceToString() completed==========")
 
 	// test ConvertInterfaceToSliceInterface()

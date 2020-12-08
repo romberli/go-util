@@ -1,6 +1,7 @@
 package config
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -17,11 +18,12 @@ type Mysqld struct {
 
 func TestConvertToString(t *testing.T) {
 	var (
-		err     error
-		mysqld  *Mysqld
-		tagType string
-		title   string
-		s       string
+		err       error
+		mysqld    *Mysqld
+		mysqldStr string
+		tagType   string
+		title     string
+		s         string
 	)
 
 	asst := assert.New(t)
@@ -34,10 +36,13 @@ func TestConvertToString(t *testing.T) {
 	}
 	tagType = "ini"
 	title = "[mysqld]"
+	mysqldStr = "[mysqld]\ninnodb_buffer_pool_size = 100\nreport_host = 192.168.137.11\nreport_port = 3306\nskip-name-resolve\n"
 
-	t.Log("==========test ConvertToString started.==========")
+	t.Log("==========test ConvertToStringWithTitle started.==========")
 	s, err = ConvertToStringWithTitle(mysqld, title, tagType)
 	asst.Nil(err, "test mysqld failed")
+	asst.Equal(strings.TrimSpace(mysqldStr), strings.TrimSpace(s), "test converting mysqld failed")
 	t.Logf("mysqld:\n%s", s)
-	t.Log("==========test ConvertToString completed.==========")
+	t.Logf("mysqldStr:\n%s", mysqldStr)
+	t.Log("==========test ConvertToStringWithTitle completed.==========")
 }

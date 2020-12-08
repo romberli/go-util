@@ -11,6 +11,10 @@ import (
 	"github.com/romberli/go-util/constant"
 )
 
+// WriteToBuffer loops each member of given input struct recursively,
+// converts member variable names and concerning values to "key = value" string,
+// and then write the string into buffer,
+// if tag type is specified, which is optional, "key" will be replaced by the tag name
 func WriteToBuffer(in interface{}, buffer *bytes.Buffer, tagType ...string) (err error) {
 	var (
 		tagTypeStr string
@@ -47,7 +51,7 @@ func WriteToBuffer(in interface{}, buffer *bytes.Buffer, tagType ...string) (err
 		fieldType := reflect.TypeOf(field)
 
 		if fieldType.Kind() == reflect.Ptr {
-			// this filed is a struct, we need to call recursively
+			// this filed is also a struct, we need to call recursively
 			err = WriteToBuffer(field, buffer, tagType...)
 			if err != nil {
 				return err
@@ -62,14 +66,16 @@ func WriteToBuffer(in interface{}, buffer *bytes.Buffer, tagType ...string) (err
 			}
 
 			fieldInterface := field.Interface()
+			// convert field value to string
 			fieldStr, err = common.ConvertNumberToString(fieldInterface)
 			if err != nil {
 				return err
 			}
 
-			line = fmt.Sprintf("%s", tagName)
+			line = tagName
 			if fieldStr != constant.DefaultRandomString && fieldStr != strconv.Itoa(constant.DefaultRandomInt) {
-				line = fmt.Sprintf("%s = %s", tagName, fieldStr)
+				// this field has a value
+				line += fmt.Sprintf(" = %s", fieldStr)
 			}
 			line += constant.CRLFString
 			_, err = buffer.WriteString(line)
@@ -82,6 +88,7 @@ func WriteToBuffer(in interface{}, buffer *bytes.Buffer, tagType ...string) (err
 	return nil
 }
 
+// ConvertToString convert struct to string
 func ConvertToString(in interface{}, tagType ...string) (s string, err error) {
 	var buffer bytes.Buffer
 
@@ -93,6 +100,7 @@ func ConvertToString(in interface{}, tagType ...string) (s string, err error) {
 	return buffer.String(), nil
 }
 
+// ConvertToStringWithTitle convert struct to string with given title
 func ConvertToStringWithTitle(in interface{}, title string, tagType ...string) (s string, err error) {
 	s, err = ConvertToString(in, tagType...)
 	if err != nil {

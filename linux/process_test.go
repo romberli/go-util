@@ -11,9 +11,10 @@ import (
 	"github.com/romberli/go-util/constant"
 )
 
-func KillProcess(pid int, sleep time.Duration) {
+func killProcess(pid int, sleep time.Duration) {
+	command := fmt.Sprintf("kill %d", pid)
 	time.Sleep(sleep * time.Second)
-	_, _ = ExecuteCommand(fmt.Sprintf("kill %d", pid))
+	_, _ = ExecuteCommand(command)
 }
 
 func TestProcess(t *testing.T) {
@@ -29,7 +30,7 @@ func TestProcess(t *testing.T) {
 
 	pid = os.Getpid()
 	pidFile = "go-util.pid"
-	sleep = 2
+	sleep = 1
 
 	t.Log("==========SavePid started.==========")
 	err = SavePid(pid, pidFile, constant.DefaultFileMode)
@@ -52,9 +53,10 @@ func TestProcess(t *testing.T) {
 	asst.Nil(err, "GetPIDFromPidFile failed.\n%v", err)
 	t.Log("==========GetPIDFromPidFile completed.==========")
 
-	t.Log("==========HandleSignalsWithPIDFileAndLog started.==========")
-	go KillProcess(pid, sleep)
-	err = HandleSignalsWithPidFile(pidFile)
-	asst.Nil(err, "HandleSignalsWithPIDFileAndLog failed.\n%v", err)
-	t.Log("==========HandleSignalsWithPIDFileAndLog completed.==========")
+	t.Log("==========HandleSignalsWithPidFile started.==========")
+	go killProcess(pid, sleep)
+	time.Sleep(sleep * time.Second)
+	HandleSignalsWithPidFile(pidFile)
+	asst.Nil(err, "HandleSignalsWithPidFile failed.")
+	t.Log("==========HandleSignalsWithPidFile completed.==========")
 }

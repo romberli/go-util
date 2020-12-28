@@ -72,9 +72,7 @@ func GetPIDFromPidFile(pidFile string) (int, error) {
 }
 
 // HandleSignalsWithPidFile handles operating system signals
-func HandleSignalsWithPidFile(pidFile string) error {
-	var err error
-
+func HandleSignalsWithPidFile(pidFile string) {
 	signals := make(chan os.Signal)
 
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGHUP, syscall.SIGKILL, syscall.SIGTERM)
@@ -85,14 +83,15 @@ func HandleSignalsWithPidFile(pidFile string) error {
 		case syscall.SIGINT, syscall.SIGHUP, syscall.SIGKILL, syscall.SIGTERM:
 			log.Info(fmt.Sprintf("got operating system signal %d, this process will exit soon.", sig))
 
-			err = os.Remove(pidFile)
+			err := os.Remove(pidFile)
 			if err != nil {
-				return err
+				log.Error(fmt.Sprintf("got wrong when removing pid file. pid file: %s", pidFile))
+				os.Exit(constant.DefaultAbnormalExitCode)
 			}
 
 			os.Exit(constant.DefaultNormalExitCode)
 		default:
-			return errors.New(fmt.Sprintf("got wrong signal %d, only accept %d, %d, %d, %d",
+			log.Error(fmt.Sprintf("got wrong signal %d, only accept %d, %d, %d, %d",
 				sig, syscall.SIGINT, syscall.SIGHUP, syscall.SIGKILL, syscall.SIGTERM))
 		}
 	}

@@ -14,8 +14,8 @@ import (
 	"github.com/romberli/go-util/constant"
 )
 
-// IsRunningWithPID returns if given pid is running
-func IsRunningWithPID(pid int) bool {
+// IsRunningWithPid returns if given pid is running
+func IsRunningWithPid(pid int) bool {
 	if pid > 0 {
 		err := syscall.Kill(pid, syscall.Signal(constant.ZeroInt))
 		if err != nil {
@@ -28,13 +28,13 @@ func IsRunningWithPID(pid int) bool {
 	return false
 }
 
-// SavePID saves pid to pid file with given file mode
-func SavePID(pid int, pidFile string, fileMode os.FileMode) error {
+// SavePid saves pid to pid file with given file mode
+func SavePid(pid int, pidFile string, fileMode os.FileMode) error {
 	return ioutil.WriteFile(pidFile, []byte(fmt.Sprintf("%d", pid)), fileMode)
 }
 
-// IsRunningWithPIDFile returns if process of which pid was saved in given pid file is running
-func IsRunningWithPIDFile(pidFile string) (bool, error) {
+// IsRunningWithPidFile returns if process of which pid was saved in given pid file is running
+func IsRunningWithPidFile(pidFile string) (bool, error) {
 	// check if pid file exists
 	exists, err := PathExists(pidFile)
 	if err != nil {
@@ -54,11 +54,11 @@ func IsRunningWithPIDFile(pidFile string) (bool, error) {
 		return false, err
 	}
 
-	return IsRunningWithPID(pid), nil
+	return IsRunningWithPid(pid), nil
 }
 
 // GetPID reads pid file and returns pid
-func GetPIDFromPIDFile(pidFile string) (int, error) {
+func GetPIDFromPidFile(pidFile string) (int, error) {
 	pidBytes, err := ioutil.ReadFile(pidFile)
 	if err != nil {
 		return constant.ZeroInt, err
@@ -71,8 +71,8 @@ func GetPIDFromPIDFile(pidFile string) (int, error) {
 	return pid, nil
 }
 
-// HandleSignals handles operating system signals
-func HandleSignalsWithPIDFile(pidFile string) error {
+// HandleSignalsWithPidFile handles operating system signals
+func HandleSignalsWithPidFile(pidFile string) error {
 	var err error
 
 	signals := make(chan os.Signal)

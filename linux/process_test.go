@@ -31,30 +31,30 @@ func TestProcess(t *testing.T) {
 	pidFile = "go-util.pid"
 	sleep = 2
 
-	t.Log("==========SavePID started.==========")
-	err = SavePID(pid, pidFile, constant.DefaultFileMode)
-	asst.Nil(err, "SavePID failed.\n%v", err)
-	t.Log("==========SavePID completed.==========")
+	t.Log("==========SavePid started.==========")
+	err = SavePid(pid, pidFile, constant.DefaultFileMode)
+	asst.Nil(err, "SavePid failed.\n%v", err)
+	t.Log("==========SavePid completed.==========")
 
-	t.Log("==========IsRunningWithPID started.==========")
-	isRunning = IsRunningWithPID(pid)
-	asst.True(isRunning, "IsRunningWithPID failed.")
-	t.Log("==========IsRunningWithPID completed.==========")
+	t.Log("==========IsRunningWithPid started.==========")
+	isRunning = IsRunningWithPid(pid)
+	asst.True(isRunning, "IsRunningWithPid failed.")
+	t.Log("==========IsRunningWithPid completed.==========")
 
-	t.Log("==========IsRunningWithPIDFile started.==========")
-	isRunning, err = IsRunningWithPIDFile(pidFile)
-	asst.Nil(err, "IsRunningWithPIDFile failed.\n%v", err)
-	asst.True(isRunning, "IsRunningWithPIDFile failed.")
-	t.Log("==========IsRunningWithPIDFile completed.==========")
+	t.Log("==========IsRunningWithPidFile started.==========")
+	isRunning, err = IsRunningWithPidFile(pidFile)
+	asst.Nil(err, "IsRunningWithPidFile failed.\n%v", err)
+	asst.True(isRunning, "IsRunningWithPidFile failed.")
+	t.Log("==========IsRunningWithPidFile completed.==========")
 
-	t.Log("==========GetPIDFromPIDFile started.==========")
-	pid, err = GetPIDFromPIDFile(pidFile)
-	asst.Nil(err, "GetPIDFromPIDFile failed.\n%v", err)
-	t.Log("==========GetPIDFromPIDFile completed.==========")
+	t.Log("==========GetPIDFromPidFile started.==========")
+	pid, err = GetPIDFromPidFile(pidFile)
+	asst.Nil(err, "GetPIDFromPidFile failed.\n%v", err)
+	t.Log("==========GetPIDFromPidFile completed.==========")
 
 	t.Log("==========HandleSignalsWithPIDFileAndLog started.==========")
 	go KillProcess(pid, sleep)
-	err = HandleSignalsWithPIDFile(pidFile)
+	err = HandleSignalsWithPidFile(pidFile)
 	asst.Nil(err, "HandleSignalsWithPIDFileAndLog failed.\n%v", err)
 	t.Log("==========HandleSignalsWithPIDFileAndLog completed.==========")
 }

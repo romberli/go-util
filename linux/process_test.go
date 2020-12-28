@@ -55,6 +55,7 @@ func TestProcess(t *testing.T) {
 
 	t.Log("==========HandleSignalsWithPidFile started.==========")
 	go killProcess(pid, sleep)
+	// pidFile = "/tmp123"
 	time.Sleep(sleep * time.Second)
 	HandleSignalsWithPidFile(pidFile)
 	asst.Nil(err, "HandleSignalsWithPidFile failed.")

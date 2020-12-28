@@ -9,13 +9,14 @@ import (
 	"strconv"
 	"syscall"
 
+	"github.com/romberli/go-util/constant"
 	"github.com/romberli/log"
 )
 
 // IsRunningWithPID returns if given pid is running
 func IsRunningWithPID(pid int) bool {
 	if pid > 0 {
-		err := syscall.Kill(pid, 0)
+		err := syscall.Kill(pid, constant.ZeroInt)
 		if err != nil {
 			return false
 		}
@@ -50,8 +51,22 @@ func IsRunningWithPIDFile(pidFile string) (bool, error) {
 	return IsRunningWithPID(pid), nil
 }
 
-// SavePid saves pid to pid file with given file mode
-func SavePid(pid int, pidFile string, fileMode os.FileMode) error {
+// GetPID reads pid file and returns pid
+func GetPIDFromPIDFile(pidFile string) (int, error) {
+	pidBytes, err := ioutil.ReadFile(pidFile)
+	if err != nil {
+		return constant.ZeroInt, err
+	}
+	pid, err := strconv.Atoi(string(pidBytes))
+	if err != nil {
+		return constant.ZeroInt, err
+	}
+
+	return pid, nil
+}
+
+// SavePID saves pid to pid file with given file mode
+func SavePID(pid int, pidFile string, fileMode os.FileMode) error {
 	return ioutil.WriteFile(pidFile, []byte(fmt.Sprintf("%d", pid)), fileMode)
 }
 
@@ -64,11 +79,11 @@ func HandleSignalsWithPIDFileAndLog(pidFile string) {
 		sig := <-signals
 		switch sig {
 		case syscall.SIGINT, syscall.SIGHUP, syscall.SIGTERM:
-			log.Infof("got operating system signal %d, will")
+			log.Infof("got operating system signal %d, will exit soon.")
 			err = os.Remove(pidFile)
 			if err != nil {
 				log.Errorf("remove pid file failed. pid file: %s", pidFile)
-				os.Exit(2)
+				os.Exit(constant.DefaultAbnormalExitCode)
 			}
 		}
 	}

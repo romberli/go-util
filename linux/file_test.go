@@ -26,19 +26,16 @@ func TestFile(t *testing.T) {
 		expectedFileName   string
 	)
 
+	asst := assert.New(t)
+
 	dirExists = "/Users/romber"
 	dirNotExists = "/Users/romber/xxxxdasfdsafas"
 	dirName = "/Users/romber/test"
 	fileName = "/Users/romber/test/1.txt"
 	expectedFileNum = 4
-
 	empDirName = "/Users/romber/test/subdir2"
-
 	expectedElementNum = 5
-
 	expectedFileName = "/Users/romber/test/subdir2/1.txt"
-
-	asst := assert.New(t)
 
 	// test PathExists()
 	t.Log("==========test PathExists() started.==========")

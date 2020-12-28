@@ -14,14 +14,14 @@ func TestCommand(t *testing.T) {
 		stdout string
 	)
 
-	cmd = "ls -l /tmp; ls -l /tmp/1234"
-
 	asst := assert.New(t)
+
+	cmd = "ls -l /tmp;ls -l /tmp/1234"
 
 	// test command
 	t.Log("==========test command started.==========")
 	stdout, err = ExecuteCommand(cmd)
 	t.Log(fmt.Sprintf("stdout: %s", stdout))
-	asst.Nil(err, "test command failed.\ncmd: %s\n%s", cmd, err.Error())
+	asst.Nil(err, "test command failed.\ncmd: %s\n%v", cmd, err)
 	t.Log("==========test command completed.==========\n")
 }

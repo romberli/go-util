@@ -7,9 +7,9 @@ import (
 )
 
 func TestIsValidHost(t *testing.T) {
-	assert := assert.New(t)
+	asst := assert.New(t)
 
-	host_ip, err := GetDefaultIP()
-	t.Logf("host ip: %s", host_ip)
-	assert.Nil(err, "test GetDefaultIP failed")
+	hostIP, err := GetDefaultIP()
+	t.Logf("host ip: %s", hostIP)
+	asst.Nil(err, "test GetDefaultIP failed")
 }

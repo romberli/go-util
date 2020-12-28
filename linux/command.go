@@ -6,10 +6,10 @@ import (
 )
 
 // ExecuteCommand executes shell command
-func ExecuteCommand(command string, arg ...string) (output string, err error) {
+func ExecuteCommand(command string) (output string, err error) {
 	var stdoutBuffer bytes.Buffer
 
-	cmd := exec.Command(command, arg...)
+	cmd := exec.Command("/bin/sh", "-c", command)
 	cmd.Stdout = &stdoutBuffer
 	cmd.Stderr = &stdoutBuffer
 

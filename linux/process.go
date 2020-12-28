@@ -9,14 +9,15 @@ import (
 	"strconv"
 	"syscall"
 
-	"github.com/romberli/go-util/constant"
 	"github.com/romberli/log"
+
+	"github.com/romberli/go-util/constant"
 )
 
 // IsRunningWithPID returns if given pid is running
 func IsRunningWithPID(pid int) bool {
 	if pid > 0 {
-		err := syscall.Kill(pid, constant.ZeroInt)
+		err := syscall.Kill(pid, syscall.Signal(constant.ZeroInt))
 		if err != nil {
 			return false
 		}
@@ -25,6 +26,11 @@ func IsRunningWithPID(pid int) bool {
 	}
 
 	return false
+}
+
+// SavePID saves pid to pid file with given file mode
+func SavePID(pid int, pidFile string, fileMode os.FileMode) error {
+	return ioutil.WriteFile(pidFile, []byte(fmt.Sprintf("%d", pid)), fileMode)
 }
 
 // IsRunningWithPIDFile returns if process of which pid was saved in given pid file is running
@@ -65,26 +71,28 @@ func GetPIDFromPIDFile(pidFile string) (int, error) {
 	return pid, nil
 }
 
-// SavePID saves pid to pid file with given file mode
-func SavePID(pid int, pidFile string, fileMode os.FileMode) error {
-	return ioutil.WriteFile(pidFile, []byte(fmt.Sprintf("%d", pid)), fileMode)
-}
-
 // HandleSignals handles operating system signals
-func HandleSignalsWithPIDFileAndLog(pidFile string) {
-	signals := make(chan os.Signal)
-	signal.Notify(signals, syscall.SIGHUP, syscall.SIGTERM, syscall.SIGINT)
+func HandleSignalsWithPIDFile(pidFile string) error {
 	var err error
+
+	signals := make(chan os.Signal)
+
+	signal.Notify(signals, syscall.SIGINT, syscall.SIGHUP, syscall.SIGKILL, syscall.SIGTERM)
+
 	for {
 		sig := <-signals
 		switch sig {
-		case syscall.SIGINT, syscall.SIGHUP, syscall.SIGTERM:
-			log.Infof("got operating system signal %d, will exit soon.")
+		case syscall.SIGINT, syscall.SIGHUP, syscall.SIGKILL, syscall.SIGTERM:
+			log.Info(fmt.Sprintf("got operating system signal %d, this process will exit soon.", sig))
 			err = os.Remove(pidFile)
 			if err != nil {
-				log.Errorf("remove pid file failed. pid file: %s", pidFile)
-				os.Exit(constant.DefaultAbnormalExitCode)
+				return err
 			}
+
+			os.Exit(constant.DefaultNormalExitCode)
+		default:
+			return errors.New(fmt.Sprintf("got wrong signal %d, only accept %d, %d, %d, %d",
+				sig, syscall.SIGINT, syscall.SIGHUP, syscall.SIGKILL, syscall.SIGTERM))
 		}
 	}
 }

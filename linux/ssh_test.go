@@ -21,13 +21,13 @@ func TestSSH(t *testing.T) {
 		fileNameDest   string
 	)
 
+	asst := assert.New(t)
+
 	cmd = "date"
 	hostIP = "192.168.137.11"
 	portNum = 22
 	userName = "root"
 	userPass = "root"
-
-	asst := assert.New(t)
 
 	// create ssh connection
 	t.Log("==========create ssh connection started.==========")

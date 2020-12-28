@@ -57,8 +57,8 @@ func IsRunningWithPidFile(pidFile string) (bool, error) {
 	return IsRunningWithPid(pid), nil
 }
 
-// GetPID reads pid file and returns pid
-func GetPIDFromPidFile(pidFile string) (int, error) {
+// GetPidFromPidFile reads pid file and returns pid
+func GetPidFromPidFile(pidFile string) (int, error) {
 	pidBytes, err := ioutil.ReadFile(pidFile)
 	if err != nil {
 		return constant.ZeroInt, err

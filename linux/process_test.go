@@ -48,10 +48,10 @@ func TestProcess(t *testing.T) {
 	asst.True(isRunning, "IsRunningWithPidFile failed.")
 	t.Log("==========IsRunningWithPidFile completed.==========")
 
-	t.Log("==========GetPIDFromPidFile started.==========")
-	pid, err = GetPIDFromPidFile(pidFile)
-	asst.Nil(err, "GetPIDFromPidFile failed.\n%v", err)
-	t.Log("==========GetPIDFromPidFile completed.==========")
+	t.Log("==========GetPidFromPidFile started.==========")
+	pid, err = GetPidFromPidFile(pidFile)
+	asst.Nil(err, "GetPidFromPidFile failed.\n%v", err)
+	t.Log("==========GetPidFromPidFile completed.==========")
 
 	t.Log("==========HandleSignalsWithPidFile started.==========")
 	go killProcess(pid, sleep)

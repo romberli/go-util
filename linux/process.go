@@ -84,6 +84,7 @@ func HandleSignalsWithPIDFile(pidFile string) error {
 		switch sig {
 		case syscall.SIGINT, syscall.SIGHUP, syscall.SIGKILL, syscall.SIGTERM:
 			log.Info(fmt.Sprintf("got operating system signal %d, this process will exit soon.", sig))
+
 			err = os.Remove(pidFile)
 			if err != nil {
 				return err

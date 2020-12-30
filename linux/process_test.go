@@ -9,6 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/romberli/go-util/constant"
+
+	"github.com/shirou/gopsutil/v3/process"
 )
 
 func StartSandbox(cmd string) {
@@ -19,9 +21,12 @@ func StartSandbox(cmd string) {
 }
 
 func killProcess(pid int, sleep time.Duration) {
-	command := fmt.Sprintf("kill %d", pid)
-	time.Sleep(sleep * time.Second)
-	_, _ = ExecuteCommand(command)
+	p, err := process.NewProcess(int32(pid))
+	if err != nil {
+		fmt.Println(fmt.Sprintf("error: %s", err.Error()))
+	} else {
+		_ = p.Kill()
+	}
 }
 
 func TestProcess(t *testing.T) {
@@ -45,7 +50,8 @@ func TestProcess(t *testing.T) {
 	t.Log("==========SavePid completed.==========")
 
 	t.Log("==========IsRunningWithPid started.==========")
-	isRunning = IsRunningWithPid(pid)
+	isRunning, err = IsRunningWithPid(pid)
+	asst.Nil(err, "IsRunningWithPid failed.")
 	asst.True(isRunning, "IsRunningWithPid failed.")
 	t.Log("==========IsRunningWithPid completed.==========")
 

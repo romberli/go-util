@@ -13,20 +13,22 @@ import (
 	"github.com/romberli/log"
 
 	"github.com/romberli/go-util/constant"
+
+	"github.com/shirou/gopsutil/v3/process"
 )
 
 // IsRunningWithPid returns if given pid is running
-func IsRunningWithPid(pid int) bool {
-	if pid > 0 {
-		err := syscall.Kill(pid, syscall.Signal(constant.ZeroInt))
-		if err != nil {
-			return false
+func IsRunningWithPid(pid int) (bool, error) {
+	_, err := process.NewProcess(int32(pid))
+	if err != nil {
+		if err == process.ErrorProcessNotRunning {
+			return false, nil
 		}
 
-		return true
+		return false, err
 	}
 
-	return false
+	return true, nil
 }
 
 // SavePid saves pid to pid file with given file mode
@@ -55,17 +57,23 @@ func IsRunningWithPidFile(pidFile string) (bool, error) {
 		return false, err
 	}
 
-	return IsRunningWithPid(pid), nil
+	return IsRunningWithPid(pid)
 }
 
 // GetPidFromPidFile reads pid file and returns pid
 func GetPidFromPidFile(pidFile string) (int, error) {
-	pidBytes, err := ioutil.ReadFile(pidFile)
+	var (
+		err      error
+		pidBytes []byte
+		pidStr   string
+		pid      int
+	)
+	pidBytes, err = ioutil.ReadFile(pidFile)
 	if err != nil {
 		return constant.ZeroInt, err
 	}
-	pidStr := strings.TrimSpace(string(pidBytes))
-	pid, err := strconv.Atoi(pidStr)
+	pidStr = strings.TrimSpace(string(pidBytes))
+	pid, err = strconv.Atoi(pidStr)
 	if err != nil {
 		return constant.ZeroInt, err
 	}
@@ -73,18 +81,63 @@ func GetPidFromPidFile(pidFile string) (int, error) {
 	return pid, nil
 }
 
-// KillServer kills process with given pid, it will remove pid file if pid file path is specified as opts
-func KillServer(pid int, opts ...string) (err error) {
+func RemovePidFile(pidFile string) error {
 	var (
-		isRunning     bool
+		err           error
 		pidFileExists bool
 	)
-	// kill process
-	isRunning = IsRunningWithPid(pid)
-	if !isRunning {
-		return errors.New(fmt.Sprintf("process is not running, please have a check. pid: %d", pid))
+
+	pidFileExists, err = PathExists(pidFile)
+	if err != nil {
+		return err
 	}
-	_, err = ExecuteCommand(fmt.Sprintf("kill %d", pid))
+	if !pidFileExists {
+		return errors.New(fmt.Sprintf("pid file does not exists, please have a check. pid file: %s", pidFile))
+	}
+
+	return os.Remove(pidFile)
+}
+
+// KillServerWithSignal kills process with given pid and signal,
+// it will also remove pid file if pid file path is specified as opts,
+// as this function accepts signal as argument, it is only worked on unix-like system
+func KillServerWithSignal(pid, signal int, opts ...string) error {
+	var (
+		err     error
+		p       *process.Process
+		pidFile string
+	)
+
+	p, err = process.NewProcess(int32(pid))
+	if err != nil {
+		return err
+	}
+
+	// kill process with signal
+	err = p.SendSignal(syscall.Signal(signal))
+	if err != nil {
+		return err
+	}
+
+	// remove pid file
+	if len(opts) > constant.ZeroInt {
+		pidFile = opts[constant.ZeroInt]
+		return RemovePidFile(pidFile)
+	}
+
+	return nil
+}
+
+// KillServer kills process with given pid,
+// it will also remove pid file if pid file path is specified as opts
+func KillServer(pid int, opts ...string) (err error) {
+	p, err := process.NewProcess(int32(pid))
+	if err != nil {
+		return err
+	}
+
+	// kill process
+	err = p.Kill()
 	if err != nil {
 		return err
 	}
@@ -92,17 +145,7 @@ func KillServer(pid int, opts ...string) (err error) {
 	// remove pid file
 	if len(opts) > constant.ZeroInt {
 		pidFile := opts[constant.ZeroInt]
-		pidFileExists, err = PathExists(pidFile)
-		if err != nil {
-			return err
-		}
-		if !pidFileExists {
-			return errors.New(fmt.Sprintf("pid file does not exists, please have a check. pid file: %s", pidFile))
-		}
-		_, err = ExecuteCommand(fmt.Sprintf("rm -f %s", pidFile))
-		if err != nil {
-			return err
-		}
+		return RemovePidFile(pidFile)
 	}
 
 	return nil

@@ -5,6 +5,7 @@ import (
 )
 
 const (
+	DefaultKillSignal                   = 15
 	DefaultNormalExitCode               = 0
 	DefaultAbnormalExitCode             = 1
 	ZeroInt                             = 0

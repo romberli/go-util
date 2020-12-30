@@ -11,6 +11,13 @@ import (
 	"github.com/romberli/go-util/constant"
 )
 
+func StartSandbox(cmd string) {
+	_, err := ExecuteCommand(cmd)
+	if err != nil {
+		fmt.Println(fmt.Sprintf("error: %s", err.Error()))
+	}
+}
+
 func killProcess(pid int, sleep time.Duration) {
 	command := fmt.Sprintf("kill %d", pid)
 	time.Sleep(sleep * time.Second)
@@ -53,9 +60,22 @@ func TestProcess(t *testing.T) {
 	asst.Nil(err, "GetPidFromPidFile failed.\n%v", err)
 	t.Log("==========GetPidFromPidFile completed.==========")
 
+	t.Log("==========KillServer started.==========")
+	binPath := "/Users/romber/work/source_code/go/src/github.com/romberli/go-util/linux/test/bin/go-sandbox"
+	count := 100
+	pidFileSandbox := "/tmp/go-sandbox.pid"
+	cmd := fmt.Sprintf("%s --count=%d --pid-file=%s", binPath, count, pidFileSandbox)
+	go StartSandbox(cmd)
+	time.Sleep(sleep * time.Second)
+	asst.Nil(err, "start go-sandbox failed.")
+	pidSandbox, err := GetPidFromPidFile(pidFileSandbox)
+	asst.Nil(err, "get pid of go-sandbox failed.")
+	err = KillServer(pidSandbox, pidFileSandbox)
+	asst.Nil(err, "KillServer failed.\n%v", err)
+	t.Log("==========KillServer completed.==========")
+
 	t.Log("==========HandleSignalsWithPidFile started.==========")
 	go killProcess(pid, sleep)
-	// pidFile = "/tmp123"
 	time.Sleep(sleep * time.Second)
 	HandleSignalsWithPidFile(pidFile)
 	asst.Nil(err, "HandleSignalsWithPidFile failed.")

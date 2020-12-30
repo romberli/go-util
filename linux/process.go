@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 
 	"github.com/romberli/log"
@@ -63,12 +64,48 @@ func GetPidFromPidFile(pidFile string) (int, error) {
 	if err != nil {
 		return constant.ZeroInt, err
 	}
-	pid, err := strconv.Atoi(string(pidBytes))
+	pidStr := strings.TrimSpace(string(pidBytes))
+	pid, err := strconv.Atoi(pidStr)
 	if err != nil {
 		return constant.ZeroInt, err
 	}
 
 	return pid, nil
+}
+
+// KillServer kills process with given pid, it will remove pid file if pid file path is specified as opts
+func KillServer(pid int, opts ...string) (err error) {
+	var (
+		isRunning     bool
+		pidFileExists bool
+	)
+	// kill process
+	isRunning = IsRunningWithPid(pid)
+	if !isRunning {
+		return errors.New(fmt.Sprintf("process is not running, please have a check. pid: %d", pid))
+	}
+	_, err = ExecuteCommand(fmt.Sprintf("kill %d", pid))
+	if err != nil {
+		return err
+	}
+
+	// remove pid file
+	if len(opts) > constant.ZeroInt {
+		pidFile := opts[constant.ZeroInt]
+		pidFileExists, err = PathExists(pidFile)
+		if err != nil {
+			return err
+		}
+		if !pidFileExists {
+			return errors.New(fmt.Sprintf("pid file does not exists, please have a check. pid file: %s", pidFile))
+		}
+		_, err = ExecuteCommand(fmt.Sprintf("rm -f %s", pidFile))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // HandleSignalsWithPidFile handles operating system signals

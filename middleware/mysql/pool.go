@@ -16,8 +16,8 @@ const (
 	DefaultMaxConnections     = 20
 	DefaultInitConnections    = 5
 	DefaultMaxIdleConnections = 10
-	DefaultMaxIdleTime        = 600 // Seconds
-	DefaultKeepAliveInterval  = 1   // Seconds
+	DefaultMaxIdleTime        = 1800 // Seconds
+	DefaultKeepAliveInterval  = 300  // Seconds
 	DefaultKeepAliveChunkSize = 5
 	DefaultSleepTime          = 1 // Seconds
 )
@@ -180,7 +180,7 @@ func NewMySQLPoolWithConfig(config Config, maxConnections, initConnections, maxI
 	return NewMySQLPoolWithPoolConfig(cfg)
 }
 
-// NewMySQLPoolWithDefault returns a new *Pool with a PoolConfig object
+// NewMySQLPoolWithPoolConfig returns a new *Pool with a PoolConfig object
 func NewMySQLPoolWithPoolConfig(config PoolConfig) (*Pool, error) {
 	p := &Pool{
 		PoolConfig:      config,
@@ -208,13 +208,13 @@ func (p *Pool) init() error {
 	}
 
 	// start a new routine to maintain free connection channel
-	go p.MaintainFreeChan()
+	go p.maintainFreeChan()
 
 	return nil
 }
 
-// GetUsedConnections returns used connection number
-func (p *Pool) GetUsedConnections() int {
+// UsedConnections returns used connection number
+func (p *Pool) UsedConnections() int {
 	return p.usedConnections
 }
 
@@ -231,7 +231,7 @@ func (p *Pool) Supply(num int) error {
 	return p.supply(num)
 }
 
-// supply creates given number of connections and add them to free connection channel,
+// supply creates given number of connections and add them to free connection channel
 func (p *Pool) supply(num int) error {
 	if p.isClosed {
 		return nil
@@ -329,11 +329,11 @@ func (p *Pool) get() (*PoolConn, error) {
 	return pc, nil
 }
 
-// MaintainFreeChan maintains free connection channel, if there are insufficient connection in the free connection channel,
+// maintainFreeChan maintains free connection channel, if there are insufficient connection in the free connection channel,
 // it will add some connections, otherwise it will release some.
 // for saving disk purpose, if there are errors when maintaining free channel,
 // it will log with debug level
-func (p *Pool) MaintainFreeChan() {
+func (p *Pool) maintainFreeChan() {
 	var (
 		err error
 		num int
@@ -412,8 +412,7 @@ func (p *Pool) Release(num int) error {
 	return p.release(num)
 }
 
-// release releases given number of connections, each connection will disconnect with database,
-// this function ignore error when performing disconnecting.
+// release releases given number of connections, each connection will disconnect with database
 func (p *Pool) release(num int) error {
 	merr := &multierror.Error{}
 

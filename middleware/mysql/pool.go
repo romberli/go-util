@@ -275,7 +275,7 @@ func (p *Pool) getFromFreeChan() (*PoolConn, bool) {
 	return pc, ok
 }
 
-// addToFreeChan adds given PoolConn to free connection channel
+// addToFreeChan adds given *PoolConn to free connection channel
 func (p *Pool) addToFreeChan(pc *PoolConn) {
 	p.freeConnChan <- pc
 }

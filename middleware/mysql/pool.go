@@ -269,6 +269,12 @@ func (p *Pool) put(pc *PoolConn) {
 	p.usedConnections--
 }
 
+// getFromFreeChan get a *PoolConn from free connection channel
+func (p *Pool) getFromFreeChan() (*PoolConn, bool) {
+	pc, ok := <-p.freeConnChan
+	return pc, ok
+}
+
 // addToFreeChan add given PoolConn to free connection channel
 func (p *Pool) addToFreeChan(pc *PoolConn) {
 	p.freeConnChan <- pc
@@ -298,9 +304,9 @@ func (p *Pool) get() (*PoolConn, error) {
 	freeChanLen := len(p.freeConnChan)
 	// try to get connection from free connection channel
 	for i := 0; i < freeChanLen; i++ {
-		pc := <-p.freeConnChan
+		pc, ok := p.getFromFreeChan()
 		// check if connection is still valid
-		if pc.IsValid() {
+		if ok && pc.IsValid() {
 			p.usedConnections++
 			return pc, nil
 		}
@@ -356,10 +362,9 @@ func (p *Pool) MaintainFreeChan() {
 			log.Debugf("got error when supplying connections to the pool. total: %d, failed: %d. nested error: %s",
 				num, err.(*multierror.Error).Len(), err.Error())
 		}
-
+		// release excessive connections
 		if now.After(p.expireTime) {
 			p.expireTime = now.Add(time.Duration(p.MaxIdleTime) * time.Second)
-			// release excessive connections
 			num = len(p.freeConnChan) + p.usedConnections - p.MaxIdleConnections
 			err = p.release(num)
 			if err != nil {
@@ -384,7 +389,7 @@ func (p *Pool) keepAlive(num int) error {
 		select {
 		case pc, ok := <-p.freeConnChan:
 			if ok && pc.IsValid() {
-				p.freeConnChan <- pc
+				p.addToFreeChan(pc)
 				continue
 			}
 

@@ -350,8 +350,7 @@ func (p *Pool) MaintainFreeChan() {
 			}
 		}
 		// supply enough connections
-		length := len(p.freeConnChan)
-		num = p.InitConnections - p.usedConnections - length
+		num = p.InitConnections - p.usedConnections - len(p.freeConnChan)
 		err = p.supply(num)
 		if err != nil {
 			log.Debugf("got error when supplying connections to the pool. total: %d, failed: %d. nested error: %s",

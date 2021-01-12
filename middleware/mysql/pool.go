@@ -269,13 +269,13 @@ func (p *Pool) put(pc *PoolConn) {
 	p.usedConnections--
 }
 
-// getFromFreeChan get a *PoolConn from free connection channel
+// getFromFreeChan gets a *PoolConn from free connection channel
 func (p *Pool) getFromFreeChan() (*PoolConn, bool) {
 	pc, ok := <-p.freeConnChan
 	return pc, ok
 }
 
-// addToFreeChan add given PoolConn to free connection channel
+// addToFreeChan adds given PoolConn to free connection channel
 func (p *Pool) addToFreeChan(pc *PoolConn) {
 	p.freeConnChan <- pc
 }

@@ -5,6 +5,8 @@ import (
 
 	"github.com/siddontang/go-mysql/client"
 	"github.com/siddontang/go-mysql/mysql"
+
+	"github.com/romberli/go-util/constant"
 )
 
 const (
@@ -17,11 +19,24 @@ const (
 	ShowSlaveStatusSQL = "show slave status"
 )
 
-type Conn struct {
+type Config struct {
 	Addr   string
 	DBName string
 	DBUser string
 	DBPass string
+}
+
+func NewMySQLConfig(addr string, dbName string, dbUser string, dbPass string) Config {
+	return Config{
+		Addr:   addr,
+		DBName: dbName,
+		DBUser: dbUser,
+		DBPass: dbPass,
+	}
+}
+
+type Conn struct {
+	Config
 	client.Conn
 }
 
@@ -31,6 +46,8 @@ func NewMySQLConn(addr string, dbName string, dbUser string, dbPass string) (*Co
 		err  error
 		conn *client.Conn
 	)
+
+	config := NewMySQLConfig(addr, dbName, dbUser, dbPass)
 
 	// connect to mysql
 	conn, err = client.Connect(addr, dbUser, dbPass, dbName)
@@ -51,12 +68,24 @@ func NewMySQLConn(addr string, dbName string, dbUser string, dbPass string) (*Co
 	}
 
 	return &Conn{
-		Addr:   addr,
-		DBName: dbName,
-		DBUser: dbUser,
-		DBPass: dbPass,
+		Config: config,
 		Conn:   *conn,
 	}, nil
+}
+
+func (conn *Conn) CheckInstanceStatus() bool {
+	sql := "select 1 as ok;"
+	result, err := conn.Execute(sql)
+	if err != nil {
+		return false
+	}
+
+	ok, err := result.GetIntByName(constant.ZeroInt, "ok")
+	if err != nil {
+		return false
+	}
+
+	return ok == 1
 }
 
 func (conn *Conn) GetReplicationSlaveList() (slaveList []string, err error) {

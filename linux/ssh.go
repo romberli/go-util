@@ -211,7 +211,7 @@ func (conn *MySSHConn) ExecuteCommand(cmd string) (result int, output string, er
 	if err != nil {
 		result = DefaultFailedReturnValue
 		if stdErrBuffer.String() != constant.EmptyString {
-			err = errors.New(fmt.Sprintf("%s\n%s", err.Error(), stdErrBuffer.String()))
+			err = fmt.Errorf("%s%w", stdErrBuffer.String(), err)
 		}
 	}
 
@@ -358,7 +358,7 @@ func (conn *MySSHConn) IsEmptyDir(dirName string) (isEmpty bool, err error) {
 	return isEmpty, nil
 }
 
-// CopyFile copy file content from source to destination, it doesn't care about which one local or remote
+// CopyFile copy file content from source to destination, it doesn't care about which one is local or remote
 func (conn *MySSHConn) CopyFile(fileSource io.Reader, fileDest io.Writer, bufferSize int) (err error) {
 	var n int
 
@@ -653,12 +653,12 @@ func (conn *MySSHConn) CopyDirFromRemote(dirNameSource, dirNameDest string) (err
 
 	// get new destination path to act like shell command "scp -r"
 	if pathSourceBase != pathDestBase {
-		pathExists, err := PathExists(dirNameDest)
+		pathExists, err = PathExists(dirNameDest)
 		if err != nil {
 			return err
 		}
 		if pathExists {
-			isDir, err := IsDir(dirNameDest)
+			isDir, err = IsDir(dirNameDest)
 			if err != nil {
 				return err
 			}

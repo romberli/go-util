@@ -246,7 +246,7 @@ func TestCommon(t *testing.T) {
 	ts.NSA = ns2
 	jets, err := json.Marshal(es)
 	asst.Nil(err, "test CopyStructWithFields() failed")
-	nts, err := CopyStructWithFields(ts, []string{"ID", "Name", "NSA"})
+	nts, err := CopyStructWithFields(ts, []string{"ID", "Name", "NSA"}...)
 	asst.Nil(err, "test CopyStructWithFields() failed")
 	err = SetValueOfStruct(nts, "Name", "bbb")
 	asst.Nil(err, "test CopyStructWithFields() failed")
@@ -254,4 +254,24 @@ func TestCommon(t *testing.T) {
 	asst.Nil(err, "test CopyStructWithFields() failed")
 	asst.Equal(jets, jnts, "test CopyStructWithFields() failed")
 	t.Log("==========test CopyStructWithFields() completed==========")
+
+	t.Log("==========test MarshalStructWithFields() started==========")
+	es = &expectStructA{
+		ID:   1,
+		Name: "aaa",
+		NSA:  ns2,
+	}
+	asst.Nil(err, "test MarshalStructWithFields() failed")
+	jets, err = json.Marshal(es)
+	asst.Nil(err, "test MarshalStructWithFields() failed")
+	jnts, err = MarshalStructWithFields(ts, []string{"ID", "Name", "NSA"}...)
+	asst.Nil(err, "test MarshalStructWithFields() failed")
+	asst.Equal(jets, jnts, "test MarshalStructWithFields() failed")
+	t.Log("==========test MarshalStructWithFields() completed==========")
+
+	t.Log("==========test MarshalStructWithoutFields() started==========")
+	jnts, err = MarshalStructWithoutFields(ts, []string{"B", "NSB"}...)
+	asst.Nil(err, "test MarshalStructWithoutFields() failed")
+	asst.Equal(jets, jnts, "test MarshalStructWithoutFields() failed")
+	t.Log("==========test MarshalStructWithoutFields() completed==========")
 }

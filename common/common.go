@@ -1,13 +1,14 @@
 package common
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
 	"strings"
 	"unsafe"
 
-	"github.com/romberli/dynamic-struct"
+	"github.com/ompluscator/dynamic-struct"
 
 	"github.com/romberli/go-util/constant"
 )
@@ -198,7 +199,11 @@ func SetValueOfStruct(in interface{}, field string, value interface{}) error {
 // 5. returning struct is totally a new data type, so you could not use any (*type) assertion
 // 6. technically, for convenience purpose, this function creates a new struct as same as input struct,
 //    then removes fields that does not exist in the given fields
-func CopyStructWithFields(in interface{}, fields []string) (interface{}, error) {
+func CopyStructWithFields(in interface{}, fields ...string) (interface{}, error) {
+	if len(fields) == 0 {
+		return in, nil
+	}
+
 	var removeFields []string
 
 	inType := reflect.TypeOf(in)
@@ -221,7 +226,7 @@ func CopyStructWithFields(in interface{}, fields []string) (interface{}, error) 
 		}
 	}
 
-	return CopyStructWithoutFields(in, removeFields)
+	return CopyStructWithoutFields(in, removeFields...)
 }
 
 // CopyStructWithoutFields returns a new struct without specified fields, there are something you should know.
@@ -231,7 +236,11 @@ func CopyStructWithFields(in interface{}, fields []string) (interface{}, error) 
 // 3. if any field in fields does not exist in the input struct, it simply ignores
 // 4. if values in input struct is a pointer, then value in the new struct will point to the same object
 // 5. returning struct is totally a new data type, so you could not use any (*type) assertion
-func CopyStructWithoutFields(in interface{}, fields []string) (interface{}, error) {
+func CopyStructWithoutFields(in interface{}, fields ...string) (interface{}, error) {
+	if len(fields) == 0 {
+		return in, nil
+	}
+
 	newStruct, err := dynamicstruct.MergeStructsWithSettableFields(in)
 	if err != nil {
 		return nil, err
@@ -256,4 +265,44 @@ func CopyStructWithoutFields(in interface{}, fields []string) (interface{}, erro
 	}
 
 	return newInstance, nil
+}
+
+// MarshalStructWithFields marshals input struct using json.Marshal() with given fields
+// first argument must be a pointer to struct, not the struct itself
+func MarshalStructWithFields(in interface{}, fields ...string) ([]byte, error) {
+	if reflect.TypeOf(in).Kind() != reflect.Ptr {
+		return nil, errors.New("first argument must be a pointer to struct")
+	}
+
+	if len(fields) == 0 {
+		return json.Marshal(in)
+	}
+
+	// generate a new struct with given fields
+	newInstance, err := CopyStructWithFields(in, fields...)
+	if err != nil {
+		return nil, err
+	}
+
+	return json.Marshal(newInstance)
+}
+
+// MarshalStructWithFields marshals input struct using json.Marshal() without given fields
+// first argument must be a pointer to struct, not the struct itself
+func MarshalStructWithoutFields(in interface{}, fields ...string) ([]byte, error) {
+	if reflect.TypeOf(in).Kind() != reflect.Ptr {
+		return nil, errors.New("first argument must be a pointer to struct")
+	}
+
+	if len(fields) == 0 {
+		return json.Marshal(in)
+	}
+
+	// generate a new struct with fields
+	newInstance, err := CopyStructWithoutFields(in, fields...)
+	if err != nil {
+		return nil, err
+	}
+
+	return json.Marshal(newInstance)
 }

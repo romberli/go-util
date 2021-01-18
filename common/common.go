@@ -7,6 +7,8 @@ import (
 	"strings"
 	"unsafe"
 
+	"github.com/romberli/dynamic-struct"
+
 	"github.com/romberli/go-util/constant"
 )
 
@@ -141,14 +143,12 @@ func ValueInMap(v interface{}, m interface{}) (bool, error) {
 // TrimSpaceOfStructString trims spaces of each member variable of the struct
 func TrimSpaceOfStructString(in interface{}) error {
 	inType := reflect.TypeOf(in)
-	inVal := reflect.ValueOf(in)
 
-	if inType.Kind() == reflect.Ptr {
-		inVal = inVal.Elem()
-		inType = inVal.Type()
-	} else {
+	if inType.Kind() != reflect.Ptr {
 		return errors.New("argument must be a pointer to struct")
 	}
+
+	inVal := reflect.ValueOf(in).Elem()
 
 	for i := 0; i < inVal.NumField(); i++ {
 		f := inVal.Field(i)
@@ -156,10 +156,102 @@ func TrimSpaceOfStructString(in interface{}) error {
 		case reflect.String:
 			if f.CanSet() {
 				trimValue := strings.TrimSpace(f.String())
-				f.Set(reflect.ValueOf(trimValue))
+				f.SetString(trimValue)
 			}
 		}
 	}
 
 	return nil
+}
+
+// SetValueOfStruct set value of specified field of input struct,
+// the field must exist and be exported, otherwise, it will return an error,
+// the first argument must be a pointer to struct
+func SetValueOfStruct(in interface{}, field string, value interface{}) error {
+	if reflect.TypeOf(in).Kind() != reflect.Ptr {
+		return errors.New("first argument must be a pointer to struct")
+	}
+
+	v := reflect.ValueOf(in).Elem().FieldByName(field)
+	if !v.CanSet() {
+		return errors.New(fmt.Sprintf("field %s can not be set, please check if this field is exported", field))
+	}
+
+	vType := v.Type()
+	valueType := reflect.TypeOf(value)
+	if vType != valueType {
+		return errors.New(fmt.Sprintf("types of field %s(%s) and value(%s) mismatched",
+			field, v.Type().String(), valueType.String()))
+	}
+
+	v.Set(reflect.ValueOf(value))
+
+	return nil
+}
+
+// NewStructWithFields returns a new struct with only specified fields
+// NOTE:
+// 1. tags and values of fields are exactly same
+// 2. if any field in fields does not exist in the input struct, it returns error
+// 3. if values in input struct is a pointer, then value in the new struct will point to the same object
+// 4. returning struct is totally a new data type, so you could not use any (*type) assertion
+// 5. technically, for convenience purpose, this function creates a new struct as same as input struct,
+//    then removes fields that does not exist in the given fields
+func NewStructWithFields(in interface{}, fields []string) (interface{}, error) {
+	var removeFields []string
+
+	inType := reflect.TypeOf(in)
+	inVal := reflect.ValueOf(in).Elem()
+
+	if inType.Kind() != reflect.Ptr {
+		return nil, errors.New("first argument must be a pointer to struct")
+	}
+
+	inType = inVal.Type()
+
+	for i := 0; i < inVal.NumField(); i++ {
+		inField := inType.Field(i).Name
+		ok, err := ElementInSlice(inField, fields)
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			removeFields = append(removeFields, inField)
+		}
+	}
+
+	return NewStructWithoutFields(in, removeFields)
+}
+
+// NewStructWithoutFields returns a new struct without specified fields, there are something you should know.
+// NOTE:
+// 1. tags and values of remaining fields are exactly same
+// 2. if any field in fields does not exist in the input struct, it simply ignores
+// 3. if values in input struct is a pointer, then value in the new struct will point to the same object
+// 4. returning struct is totally a new data type, so you could not use any (*type) assertion
+func NewStructWithoutFields(in interface{}, fields []string) (interface{}, error) {
+	newStruct, err := dynamicstruct.MergeStructsWithSettableFields(in)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, field := range fields {
+		newStruct = newStruct.RemoveField(field)
+	}
+
+	// generate new instance
+	newInstance := newStruct.Build().New()
+	newValue := reflect.ValueOf(newInstance).Elem()
+	newType := newValue.Type()
+
+	inputValue := reflect.ValueOf(in).Elem()
+
+	for i := 0; i < newValue.NumField(); i++ {
+		fType := newType.Field(i)
+		fValue := newValue.Field(i)
+		// set value
+		fValue.Set(inputValue.FieldByName(fType.Name))
+	}
+
+	return newInstance, nil
 }

@@ -164,6 +164,9 @@ github.com/rcrowley/go-metrics v0.0.0-20190826022208-cac0b30c2563 h1:dY6ETXrvDG7
 github.com/rcrowley/go-metrics v0.0.0-20190826022208-cac0b30c2563/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
 github.com/rogpeppe/fastuuid v0.0.0-20150106093220-6724a57986af/go.mod h1:XWv6SoW27p1b0cqNHllgS5HIMJraePCO15w5zCzIWYg=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
+github.com/romberli/dynamic-struct v1.2.0 h1:Y8siL5v8VvoFv8xDVmGRCOSTs966MEwchtwB0MbS28U=
+github.com/romberli/dynamic-struct v1.2.1-0.20210118054237-ef3886fff1f0 h1:i6W1cExaT5ccZDmerYnk44HRgU2QJtp1JgPakhFnKXc=
+github.com/romberli/dynamic-struct v1.2.1-0.20210118054237-ef3886fff1f0/go.mod h1:jU3KiO/1RelbT/TEpDJzHAFA7CNR3bKWldpZR62PFBU=
 github.com/romberli/log v1.0.11 h1:iWbRTU9j1ceJkSV1+XtbUAZr5MqnYPADmIEc0Sjxx08=
 github.com/romberli/log v1.0.11/go.mod h1:CYX9l+FfZo1JMk12wQLQbhKKzGXXxA6vuY+YyfbiujY=
 github.com/satori/go.uuid v1.2.0 h1:0uYX9dsZ2yD7q2RtLRtPSdGDWzjeM3TbMJP9utgA0ww=

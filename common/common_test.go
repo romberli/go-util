@@ -1,6 +1,7 @@
 package common
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -8,11 +9,24 @@ import (
 	"github.com/romberli/go-util/constant"
 )
 
+type nestStruct struct {
+	ID    int
+	slice []string
+}
+
 type trimStruct struct {
-	Id   int
+	ID   int
 	Name string
 	B    bool
 	s    string
+	NSA  *nestStruct
+	NSB  *nestStruct
+}
+
+type expectStructA struct {
+	ID   int
+	Name string
+	NSA  *nestStruct
 }
 
 func TestCommon(t *testing.T) {
@@ -22,6 +36,11 @@ func TestCommon(t *testing.T) {
 		exists         bool
 		sliceInterface []interface{}
 		mapInterface   map[interface{}]interface{}
+		ns1            *nestStruct
+		ns2            *nestStruct
+		ns3            *nestStruct
+		ts             *trimStruct
+		expectTs       *trimStruct
 	)
 
 	asst := assert.New(t)
@@ -37,11 +56,13 @@ func TestCommon(t *testing.T) {
 	mapStrInt := map[string]int{"a": 1, "b": 2, "c": 3}
 	mapStrStr := map[string]string{"a": "xxx", "b": "yyy", "c": "zzz"}
 
-	ts := &trimStruct{
+	ts = &trimStruct{
 		1,
 		"    a    b   ",
 		false,
 		"             s    ",
+		nil,
+		nil,
 	}
 
 	// test ConvertInterfaceToString()
@@ -168,8 +189,67 @@ func TestCommon(t *testing.T) {
 	t.Log("==========test TrimSpaceOfStructString() started==========")
 	t.Logf("old ts: %v", *ts)
 	err = TrimSpaceOfStructString(ts)
-	asst.Nil(err, "test TrimSpaceOfStructString failed")
+	asst.Nil(err, "test TrimSpaceOfStructString() failed")
 	t.Logf("new ts: %v", *ts)
 	t.Log("==========test TrimSpaceOfStructString() completed==========")
 
+	ns1 = &nestStruct{
+		ID:    100,
+		slice: []string{"a", "b", "c"},
+	}
+	ns2 = &nestStruct{
+		ID:    200,
+		slice: []string{"a", "b"},
+	}
+	ns3 = &nestStruct{
+		ID:    200,
+		slice: []string{"a", "b"},
+	}
+	ts = &trimStruct{
+		ID:   1,
+		Name: "aaa",
+		B:    true,
+		s:    "small",
+		NSA:  ns1,
+		NSB:  ns1,
+	}
+	expectTs = &trimStruct{
+		ID:  1,
+		B:   false,
+		s:   "big",
+		NSA: ns2,
+	}
+
+	t.Log("==========test SetValueOfStruct() started==========")
+	// set bool
+	err = SetValueOfStruct(ts, "B", false)
+	asst.Nil(err, "test SetValueOfStruct() failed")
+	asst.Equal(expectTs.B, ts.B, "test SetValueOfStruct() failed")
+	// set unexported field
+	err = SetValueOfStruct(ts, "s", "big")
+	asst.NotNil(err, "test SetValueOfStruct() failed")
+	// set struct
+	err = SetValueOfStruct(ts, "NSA", ns3)
+	asst.Nil(err, "test SetValueOfStruct() failed")
+	asst.Equal(expectTs.NSA.ID, ts.NSA.ID, "test SetValueOfStruct() failed")
+	asst.Equal(expectTs.NSA.slice, ts.NSA.slice, "test SetValueOfStruct() failed")
+	t.Logf("ts: %v", ts)
+	t.Log("==========test SetValueOfStruct() completed==========")
+
+	t.Log("==========test NewStructWithFields() started==========")
+	es := &expectStructA{
+		ID:   1,
+		Name: "bbb",
+		NSA:  ns2,
+	}
+	jets, err := json.Marshal(es)
+	asst.Nil(err, "test NewStructWithFields() failed")
+	nts, err := NewStructWithFields(ts, []string{"ID", "Name", "NSA"})
+	asst.Nil(err, "test NewStructWithFields() failed")
+	err = SetValueOfStruct(nts, "Name", "bbb")
+	asst.Nil(err, "test NewStructWithFields() failed")
+	jnts, err := json.Marshal(nts)
+	asst.Nil(err, "test NewStructWithFields() failed")
+	asst.Equal(jets, jnts, "test NewStructWithFields() failed")
+	t.Log("==========test NewStructWithFields() completed==========")
 }

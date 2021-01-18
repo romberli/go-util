@@ -89,7 +89,7 @@ func (cfg *PoolConfig) Validate() (bool, error) {
 }
 
 type PoolConn struct {
-	Conn
+	*Conn
 	Pool *Pool
 }
 
@@ -101,7 +101,7 @@ func NewPoolConn(addr, dbName, dbUser, dbPass string) (*PoolConn, error) {
 	}
 
 	return &PoolConn{
-		Conn: *conn,
+		Conn: conn,
 		Pool: nil,
 	}, nil
 }

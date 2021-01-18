@@ -14,7 +14,6 @@ func TestSSH(t *testing.T) {
 		portNum        int
 		userName       string
 		userPass       string
-		result         int
 		stdOut         string
 		sshConn        *MySSHConn
 		fileNameSource string
@@ -40,10 +39,9 @@ func TestSSH(t *testing.T) {
 
 	// test execute remote shell command
 	t.Log("==========execute remote shell command started.==========")
-	result, stdOut, err = sshConn.ExecuteCommand(cmd)
+	stdOut, err = sshConn.ExecuteCommand(cmd)
 	asst.Nil(err, "execute command failed.\ncommand: %s", cmd)
-	t.Logf("return code: %d\n\t\t\t\tstdOut: %s\n\t\t\t\t", result, stdOut)
-	asst.Zero(result, "return code is NOT ZERO\nreturn code: %d", result)
+	t.Logf("return code: stdOut: %s\n\t\t\t\t", stdOut)
 	asst.NotEmpty(stdOut, 0, "command output should NOT empty\nstdOut: %s", stdOut)
 	t.Log("==========execute remote shell command completed.==========\n")
 

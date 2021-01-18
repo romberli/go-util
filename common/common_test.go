@@ -236,20 +236,22 @@ func TestCommon(t *testing.T) {
 	t.Logf("ts: %v", ts)
 	t.Log("==========test SetValueOfStruct() completed==========")
 
-	t.Log("==========test NewStructWithFields() started==========")
+	t.Log("==========test CopyStructWithFields() started==========")
 	es := &expectStructA{
 		ID:   1,
 		Name: "bbb",
 		NSA:  ns2,
 	}
+	ns2.ID = 300
+	ts.NSA = ns2
 	jets, err := json.Marshal(es)
-	asst.Nil(err, "test NewStructWithFields() failed")
-	nts, err := NewStructWithFields(ts, []string{"ID", "Name", "NSA"})
-	asst.Nil(err, "test NewStructWithFields() failed")
+	asst.Nil(err, "test CopyStructWithFields() failed")
+	nts, err := CopyStructWithFields(ts, []string{"ID", "Name", "NSA"})
+	asst.Nil(err, "test CopyStructWithFields() failed")
 	err = SetValueOfStruct(nts, "Name", "bbb")
-	asst.Nil(err, "test NewStructWithFields() failed")
+	asst.Nil(err, "test CopyStructWithFields() failed")
 	jnts, err := json.Marshal(nts)
-	asst.Nil(err, "test NewStructWithFields() failed")
-	asst.Equal(jets, jnts, "test NewStructWithFields() failed")
-	t.Log("==========test NewStructWithFields() completed==========")
+	asst.Nil(err, "test CopyStructWithFields() failed")
+	asst.Equal(jets, jnts, "test CopyStructWithFields() failed")
+	t.Log("==========test CopyStructWithFields() completed==========")
 }

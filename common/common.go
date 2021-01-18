@@ -189,15 +189,16 @@ func SetValueOfStruct(in interface{}, field string, value interface{}) error {
 	return nil
 }
 
-// NewStructWithFields returns a new struct with only specified fields
+// CopyStructWithFields returns a new struct with only specified fields
 // NOTE:
 // 1. tags and values of fields are exactly same
-// 2. if any field in fields does not exist in the input struct, it returns error
-// 3. if values in input struct is a pointer, then value in the new struct will point to the same object
-// 4. returning struct is totally a new data type, so you could not use any (*type) assertion
-// 5. technically, for convenience purpose, this function creates a new struct as same as input struct,
+// 2. only exported and addressable fields will be copied
+// 3. if any field in fields does not exist in the input struct, it returns error
+// 4. if values in input struct is a pointer, then value in the new struct will point to the same object
+// 5. returning struct is totally a new data type, so you could not use any (*type) assertion
+// 6. technically, for convenience purpose, this function creates a new struct as same as input struct,
 //    then removes fields that does not exist in the given fields
-func NewStructWithFields(in interface{}, fields []string) (interface{}, error) {
+func CopyStructWithFields(in interface{}, fields []string) (interface{}, error) {
 	var removeFields []string
 
 	inType := reflect.TypeOf(in)
@@ -220,16 +221,17 @@ func NewStructWithFields(in interface{}, fields []string) (interface{}, error) {
 		}
 	}
 
-	return NewStructWithoutFields(in, removeFields)
+	return CopyStructWithoutFields(in, removeFields)
 }
 
-// NewStructWithoutFields returns a new struct without specified fields, there are something you should know.
+// CopyStructWithoutFields returns a new struct without specified fields, there are something you should know.
 // NOTE:
 // 1. tags and values of remaining fields are exactly same
-// 2. if any field in fields does not exist in the input struct, it simply ignores
-// 3. if values in input struct is a pointer, then value in the new struct will point to the same object
-// 4. returning struct is totally a new data type, so you could not use any (*type) assertion
-func NewStructWithoutFields(in interface{}, fields []string) (interface{}, error) {
+// 2. only exported and addressable fields will be copied
+// 3. if any field in fields does not exist in the input struct, it simply ignores
+// 4. if values in input struct is a pointer, then value in the new struct will point to the same object
+// 5. returning struct is totally a new data type, so you could not use any (*type) assertion
+func CopyStructWithoutFields(in interface{}, fields []string) (interface{}, error) {
 	newStruct, err := dynamicstruct.MergeStructsWithSettableFields(in)
 	if err != nil {
 		return nil, err

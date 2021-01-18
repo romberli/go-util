@@ -190,7 +190,7 @@ func (conn *MySSHConn) Close() (err error) {
 }
 
 // ExecuteCommand executes shell command on the remote host
-func (conn *MySSHConn) ExecuteCommand(cmd string) (result int, output string, err error) {
+func (conn *MySSHConn) ExecuteCommand(cmd string) (output string, err error) {
 	var (
 		stdOutBuffer bytes.Buffer
 		stdErrBuffer bytes.Buffer
@@ -199,7 +199,7 @@ func (conn *MySSHConn) ExecuteCommand(cmd string) (result int, output string, er
 	// create ssh session
 	sshSession, err := conn.SSHClient.NewSession()
 	if err != nil {
-		return DefaultFailedReturnValue, DefaultStringZeroValue, err
+		return DefaultStringZeroValue, err
 	}
 	defer func() { _ = sshSession.Close() }()
 
@@ -209,19 +209,18 @@ func (conn *MySSHConn) ExecuteCommand(cmd string) (result int, output string, er
 	// run command
 	err = sshSession.Run(cmd)
 	if err != nil {
-		result = DefaultFailedReturnValue
 		if stdErrBuffer.String() != constant.EmptyString {
 			err = fmt.Errorf("%s%w", stdErrBuffer.String(), err)
 		}
 	}
 
 	output = stdOutBuffer.String() + stdErrBuffer.String()
-	return result, output, err
+	return output, err
 }
 
 // GetHostName returns hostname of remote host
 func (conn *MySSHConn) GetHostName() (hostName string, err error) {
-	_, hostName, err = conn.ExecuteCommand(HostNameCommand)
+	hostName, err = conn.ExecuteCommand(HostNameCommand)
 
 	return hostName, err
 }
@@ -257,7 +256,7 @@ func (conn *MySSHConn) ListPath(path string) (subPathList []string, err error) {
 	path = strings.TrimSpace(path)
 
 	cmd := fmt.Sprintf("%s %s", LsCommand, path)
-	_, subPathStr, err := conn.ExecuteCommand(cmd)
+	subPathStr, err := conn.ExecuteCommand(cmd)
 	if err != nil {
 		return nil, err
 	}

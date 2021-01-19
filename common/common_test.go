@@ -252,7 +252,7 @@ func TestCommon(t *testing.T) {
 	asst.Nil(err, "test CopyStructWithFields() failed")
 	jnts, err := json.Marshal(nts)
 	asst.Nil(err, "test CopyStructWithFields() failed")
-	asst.Equal(jets, jnts, "test CopyStructWithFields() failed")
+	asst.Equal(string(jets), string(jnts), "test CopyStructWithFields() failed")
 	t.Log("==========test CopyStructWithFields() completed==========")
 
 	t.Log("==========test MarshalStructWithFields() started==========")
@@ -266,12 +266,12 @@ func TestCommon(t *testing.T) {
 	asst.Nil(err, "test MarshalStructWithFields() failed")
 	jnts, err = MarshalStructWithFields(ts, []string{"ID", "Name", "NSA"}...)
 	asst.Nil(err, "test MarshalStructWithFields() failed")
-	asst.Equal(jets, jnts, "test MarshalStructWithFields() failed")
+	asst.Equal(string(jets), string(jnts), "test MarshalStructWithFields() failed")
 	t.Log("==========test MarshalStructWithFields() completed==========")
 
 	t.Log("==========test MarshalStructWithoutFields() started==========")
 	jnts, err = MarshalStructWithoutFields(ts, []string{"B", "NSB"}...)
 	asst.Nil(err, "test MarshalStructWithoutFields() failed")
-	asst.Equal(jets, jnts, "test MarshalStructWithoutFields() failed")
+	asst.Equal(string(jets), string(jnts), "test MarshalStructWithoutFields() failed")
 	t.Log("==========test MarshalStructWithoutFields() completed==========")
 }

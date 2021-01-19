@@ -8,7 +8,7 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/ompluscator/dynamic-struct"
+	"github.com/romberli/dynamic-struct"
 
 	"github.com/romberli/go-util/constant"
 )

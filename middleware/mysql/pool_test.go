@@ -8,13 +8,15 @@ import (
 	"github.com/siddontang/go-mysql/mysql"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap/zapcore"
+
+	"github.com/romberli/go-util/middleware"
 )
 
 func TestMySQLPool(t *testing.T) {
 	var (
 		err       error
 		pool      *Pool
-		conn      *PoolConn
+		conn      middleware.PoolConn
 		repRole   string
 		slaveList []string
 		result    *mysql.Result
@@ -38,7 +40,7 @@ func TestMySQLPool(t *testing.T) {
 	asst.Nil(err, "get connection from pool failed.")
 
 	// test connection
-	slaveList, err = conn.GetReplicationSlaveList()
+	slaveList, err = conn.(*PoolConn).GetReplicationSlaveList()
 	asst.Nil(err, "get replication slave list failed.")
 	t.Logf("replication slave list: %v", slaveList)
 
@@ -47,19 +49,19 @@ func TestMySQLPool(t *testing.T) {
 	conn, err = pool.Get()
 	asst.Nil(err, "get connection from pool failed.")
 
-	result, err = conn.GetReplicationSlavesStatus()
+	result, err = conn.(*PoolConn).GetReplicationSlavesStatus()
 	asst.Nil(err, "get replication slave status failed.")
 	if result.RowNumber() > 0 {
 		t.Logf("show slave status: %v", result.Values)
 	} else {
 		t.Logf("this is not a slave node.")
 	}
-	repRole, err = conn.GetReplicationRole()
+	repRole, err = conn.(*PoolConn).GetReplicationRole()
 	asst.Nil(err, "get replication role failed.")
 	t.Logf("replication role: %s", repRole)
 
 	// sleep to test maintain mechanism
-	time.Sleep(60 * time.Second)
+	time.Sleep(20 * time.Second)
 
 	err = pool.Close()
 	asst.Nil(err, "close pool failed.")

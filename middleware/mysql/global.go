@@ -2,8 +2,6 @@ package mysql
 
 import (
 	"errors"
-
-	"github.com/siddontang/go-mysql/mysql"
 )
 
 var _globalPool *Pool
@@ -76,7 +74,12 @@ func Close() error {
 // Get get gets a connection from pool and validate it,
 // if there is no valid connection in the pool, it will create a new connection
 func Get() (*PoolConn, error) {
-	return _globalPool.Get()
+	conn, err := _globalPool.Get()
+	if err != nil {
+		return nil, err
+	}
+
+	return conn.(*PoolConn), nil
 }
 
 // Release releases given number of connections of global pool, each connection will disconnect with database
@@ -85,7 +88,7 @@ func Release(num int) error {
 }
 
 // Execute execute given sql statement
-func Execute(sql string, args ...interface{}) (*mysql.Result, error) {
+func Execute(sql string, args ...interface{}) (interface{}, error) {
 	if _globalPool == nil {
 		return nil, errors.New("global pool is nil, please initiate it first")
 	}

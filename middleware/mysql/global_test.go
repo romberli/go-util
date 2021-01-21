@@ -15,7 +15,7 @@ func TestMySQLGlobalPool(t *testing.T) {
 		err       error
 		conn      *PoolConn
 		slaveList []string
-		result    *mysql.Result
+		result    interface{}
 	)
 
 	asst := assert.New(t)
@@ -43,15 +43,15 @@ func TestMySQLGlobalPool(t *testing.T) {
 	err = conn.Close()
 	asst.Nil(err, "close connection failed.")
 
-	sql := "select 1 as ok;"
-	result, err = Execute(sql)
+	sql := "select ? as ok;"
+	result, err = Execute(sql, 1)
 	asst.Nil(err, "execute sql with global pool failed.")
-	actual, err := result.GetIntByName(0, "ok")
+	actual, err := result.(*mysql.Result).GetIntByName(0, "ok")
 	asst.Nil(err, "execute sql with global pool failed.")
 	asst.Equal(int64(1), actual, "expected and actual values are not equal.")
 
 	// sleep to test maintain mechanism
-	time.Sleep(60 * time.Second)
+	time.Sleep(20 * time.Second)
 
 	err = Close()
 	asst.Nil(err, "close global pool failed.")

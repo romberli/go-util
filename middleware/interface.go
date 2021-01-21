@@ -17,6 +17,7 @@ type Result interface {
 	GetString(row, column int) (string, error)
 	GetStringByName(row int, name string) (string, error)
 }
+
 type PoolConn interface {
 	Close() error
 	DisConnect() error

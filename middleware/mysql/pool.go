@@ -10,6 +10,7 @@ import (
 	"github.com/romberli/log"
 
 	"github.com/romberli/go-util/constant"
+	"github.com/romberli/go-util/middleware"
 )
 
 const (
@@ -21,6 +22,9 @@ const (
 	DefaultKeepAliveChunkSize = 5
 	DefaultSleepTime          = 1 // Seconds
 )
+
+var _ middleware.PoolConn = (*PoolConn)(nil)
+var _ middleware.Pool = (*Pool)(nil)
 
 type PoolConfig struct {
 	Config
@@ -148,6 +152,10 @@ func (pc *PoolConn) DisConnect() error {
 // IsValid validates if connection is valid
 func (pc *PoolConn) IsValid() bool {
 	return pc.CheckInstanceStatus()
+}
+
+func (pc *PoolConn) Execute(command string, args ...interface{}) (interface{}, error) {
+	return pc.Conn.Execute(command, args...)
 }
 
 type Pool struct {
@@ -281,7 +289,7 @@ func (p *Pool) addToFreeChan(pc *PoolConn) {
 }
 
 // Get is an exported alias of get() function with routine safe
-func (p *Pool) Get() (*PoolConn, error) {
+func (p *Pool) Get() (middleware.PoolConn, error) {
 	p.Lock()
 	defer p.Unlock()
 
@@ -378,6 +386,8 @@ func (p *Pool) maintainFreeChan() {
 	}
 }
 
+// keepAlive keeps alive given number of connections in the pool to avoid disconnected by server side automatically,
+// it also checks if connections are still valid
 func (p *Pool) keepAlive(num int) error {
 	if len(p.freeConnChan) == 0 {
 		return nil

@@ -121,12 +121,7 @@ func (conn *Conn) GetReplicationSlaveList() (slaveList []string, err error) {
 }
 
 func (conn *Conn) GetReplicationSlavesStatus() (result *mysql.Result, err error) {
-	result, err = conn.Execute(ShowSlaveStatusSQL)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
+	return conn.Execute(ShowSlaveStatusSQL)
 }
 
 func (conn *Conn) GetReplicationRole() (role string, err error) {

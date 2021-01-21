@@ -8,6 +8,8 @@ import (
 	"github.com/siddontang/go-mysql/mysql"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap/zapcore"
+
+	"github.com/romberli/go-util/middleware"
 )
 
 func TestMySQLGlobalPool(t *testing.T) {
@@ -15,7 +17,7 @@ func TestMySQLGlobalPool(t *testing.T) {
 		err       error
 		conn      *PoolConn
 		slaveList []string
-		result    interface{}
+		result    middleware.Result
 	)
 
 	asst := assert.New(t)

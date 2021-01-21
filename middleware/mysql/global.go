@@ -2,6 +2,8 @@ package mysql
 
 import (
 	"errors"
+
+	"github.com/romberli/go-util/middleware"
 )
 
 var _globalPool *Pool
@@ -88,7 +90,7 @@ func Release(num int) error {
 }
 
 // Execute execute given sql statement
-func Execute(sql string, args ...interface{}) (interface{}, error) {
+func Execute(sql string, args ...interface{}) (middleware.Result, error) {
 	if _globalPool == nil {
 		return nil, errors.New("global pool is nil, please initiate it first")
 	}

@@ -21,7 +21,7 @@ func TestMySQLConnection(t *testing.T) {
 	addr := "192.168.137.11:3306"
 	dbName := "test"
 	dbUser := "root"
-	dbPass := "xxx"
+	dbPass := "root"
 
 	conn, err = NewMySQLConn(addr, dbName, dbUser, dbPass)
 	asst.Nil(err, "connect to mysql failed. addr: %s, dbName: %s, dbUser: %s, dbPass: %s",

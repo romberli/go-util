@@ -154,7 +154,7 @@ func (pc *PoolConn) IsValid() bool {
 	return pc.CheckInstanceStatus()
 }
 
-func (pc *PoolConn) Execute(command string, args ...interface{}) (interface{}, error) {
+func (pc *PoolConn) Execute(command string, args ...interface{}) (middleware.Result, error) {
 	return pc.Conn.Execute(command, args...)
 }
 

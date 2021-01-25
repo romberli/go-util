@@ -53,6 +53,6 @@ func TestResult(t *testing.T) {
 	for i := range envInfoList {
 		envInfoList[i] = &EnvInfo{}
 	}
-	err = result.MapToStruct(envInfoList, constant.DefaultTagType)
+	err = result.MapToStruct(envInfoList, constant.DefaultMiddlewareTag)
 	asst.Nil(err, "map to struct failed")
 }

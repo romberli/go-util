@@ -22,6 +22,8 @@ const (
 	TrueString                          = "true"
 	FalseString                         = "false"
 	CRLFString                          = "\n"
+	DefaultTimeLayout                   = "2021-01-01 10:00:00.000000"
+	DefaultTagType                      = "middleware"
 	DefaultFileMode         os.FileMode = 0644
 	DefaultExecFileMode     os.FileMode = 0755
 )

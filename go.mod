@@ -5,6 +5,7 @@ go 1.15
 require (
 	github.com/Shopify/sarama v1.26.1
 	github.com/hashicorp/go-multierror v1.1.0
+	github.com/jinzhu/now v1.1.1
 	github.com/pingcap/errors v0.11.4
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.12.0

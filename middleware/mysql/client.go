@@ -26,6 +26,7 @@ type Config struct {
 	DBPass string
 }
 
+// NewMySQLConfig returns a new Config
 func NewMySQLConfig(addr string, dbName string, dbUser string, dbPass string) Config {
 	return Config{
 		Addr:   addr,
@@ -73,6 +74,7 @@ func NewMySQLConn(addr string, dbName string, dbUser string, dbPass string) (*Co
 	}, nil
 }
 
+// CheckInstanceStatus checks mysql instance status
 func (conn *Conn) CheckInstanceStatus() bool {
 	sql := "select 1 as ok;"
 	result, err := conn.Execute(sql)
@@ -88,6 +90,7 @@ func (conn *Conn) CheckInstanceStatus() bool {
 	return ok == 1
 }
 
+// GetReplicationSlaveList returns slave list of this server
 func (conn *Conn) GetReplicationSlaveList() (slaveList []string, err error) {
 	var (
 		result *mysql.Result
@@ -120,10 +123,12 @@ func (conn *Conn) GetReplicationSlaveList() (slaveList []string, err error) {
 	return slaveList, nil
 }
 
+// GetReplicationSlavesStatus returns replication slave status, like sql: "show slave status;"
 func (conn *Conn) GetReplicationSlavesStatus() (result *mysql.Result, err error) {
 	return conn.Execute(ShowSlaveStatusSQL)
 }
 
+// GetReplicationRole returns replication role
 func (conn *Conn) GetReplicationRole() (role string, err error) {
 	var (
 		slaveList []string

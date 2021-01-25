@@ -128,7 +128,7 @@ func NewPoolConnWithPool(addr, dbName, dbUser, dbPass string, pool *Pool) (*Pool
 	return nil, errors.New("new created connection is not valid")
 }
 
-// Close returns connection backup to the pool
+// Close returns connection back to the pool
 func (pc *PoolConn) Close() error {
 	if pc.Pool.isClosed == true || pc.Pool == nil {
 		return pc.DisConnect()
@@ -154,8 +154,15 @@ func (pc *PoolConn) IsValid() bool {
 	return pc.CheckInstanceStatus()
 }
 
+// Execute executes given sql and placeholders on the mysql server
 func (pc *PoolConn) Execute(command string, args ...interface{}) (middleware.Result, error) {
-	return pc.Conn.Execute(command, args...)
+	r, err := pc.Conn.Execute(command, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewResult(r), err
+
 }
 
 type Pool struct {
@@ -296,7 +303,7 @@ func (p *Pool) Get() (middleware.PoolConn, error) {
 	return p.get()
 }
 
-// get gets a connection from pool and validate it,
+// get gets a connection from the pool and validate it,
 // if there is no valid connection in the pool, it will create a new connection
 func (p *Pool) get() (*PoolConn, error) {
 	if p.isClosed {

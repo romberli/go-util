@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/romberli/log"
-	"github.com/siddontang/go-mysql/mysql"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap/zapcore"
 
@@ -49,10 +48,11 @@ func TestMySQLPool(t *testing.T) {
 	conn, err = pool.Get()
 	asst.Nil(err, "get connection from pool failed.")
 
-	result, err = conn.(*PoolConn).GetReplicationSlavesStatus()
+	r, err := conn.(*PoolConn).GetReplicationSlavesStatus()
 	asst.Nil(err, "get replication slave status failed.")
+	result = NewResult(r)
 	if result.RowNumber() > 0 {
-		t.Logf("show slave status: %v", result.(*mysql.Result).Values)
+		t.Logf("show slave status: %v", result.(*Result).Values)
 	} else {
 		t.Logf("this is not a slave node.")
 	}

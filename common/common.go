@@ -204,16 +204,14 @@ func CopyStructWithFields(in interface{}, fields ...string) (interface{}, error)
 		return in, nil
 	}
 
-	var removeFields []string
-
-	inType := reflect.TypeOf(in)
-	inVal := reflect.ValueOf(in).Elem()
-
-	if inType.Kind() != reflect.Ptr {
+	if reflect.TypeOf(in).Kind() != reflect.Ptr {
 		return nil, errors.New("first argument must be a pointer to struct")
 	}
 
-	inType = inVal.Type()
+	var removeFields []string
+
+	inVal := reflect.ValueOf(in).Elem()
+	inType := inVal.Type()
 
 	for i := 0; i < inVal.NumField(); i++ {
 		inField := inType.Field(i).Name

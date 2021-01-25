@@ -165,6 +165,21 @@ func TrimSpaceOfStructString(in interface{}) error {
 	return nil
 }
 
+// GetValueOfStruct get value of specified field of input struct,
+// the field must exist and be exported, otherwise, it will return an error,
+// the first argument must be a pointer to struct
+func GetValueOfStruct(in interface{}, field string) (interface{}, error) {
+	if reflect.TypeOf(in).Kind() != reflect.Ptr {
+		return nil, errors.New("first argument must be a pointer to struct")
+	}
+	v := reflect.ValueOf(in).Elem().FieldByName(field)
+	if !v.CanSet() {
+		return nil, errors.New(fmt.Sprintf("field %s can not be set, please check if this field is exported", field))
+	}
+
+	return v.Interface(), nil
+}
+
 // SetValueOfStruct set value of specified field of input struct,
 // the field must exist and be exported, otherwise, it will return an error,
 // the first argument must be a pointer to struct

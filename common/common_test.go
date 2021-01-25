@@ -221,6 +221,12 @@ func TestCommon(t *testing.T) {
 	}
 
 	t.Log("==========test SetValueOfStruct() started==========")
+	name, err := GetValueOfStruct(ts, "Name")
+	asst.Nil(err, "test SetValueOfStruct() failed")
+	asst.Equal("aaa", name, "test SetValueOfStruct() failed")
+	t.Log("==========test SetValueOfStruct() completed==========")
+
+	t.Log("==========test SetValueOfStruct() started==========")
 	// set bool
 	err = SetValueOfStruct(ts, "B", false)
 	asst.Nil(err, "test SetValueOfStruct() failed")

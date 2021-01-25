@@ -98,7 +98,11 @@ func (r *Result) GetStringByName(row int, name string) (string, error) {
 	return r.Result.GetStringByName(row, name)
 }
 
-// MapToStruct maps each row to a struct of the values
+// MapToStruct maps each row to a struct of the values,
+// each column in the row maps to a field of the struct,
+// tag argument is the tag of the field, if the tag is not empty,
+// tag value represents the column name, otherwise, field name represents the column name,
+// normally, using "middleware" as the tag is recommended.
 func (r *Result) MapToStruct(values []interface{}, tag string) error {
 	rowNum := r.RowNumber()
 	length := len(values)

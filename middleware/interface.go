@@ -31,7 +31,11 @@ type Result interface {
 	GetString(row, column int) (string, error)
 	// GetStringByName returns string type value of given row number and column name
 	GetStringByName(row int, name string) (string, error)
-	// MapToStruct maps each row to a struct of the values argument
+	// MapToStruct maps each row to a struct of the values argument,
+	// each column in the row maps to a field of the struct,
+	// tag argument is the tag of the field, if the tag is not empty,
+	// tag value represents the column name, otherwise, field name represents the column name,
+	// normally, using "middleware" as the tag is recommended.
 	MapToStruct(values []interface{}, tag string) error
 }
 

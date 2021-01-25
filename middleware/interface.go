@@ -33,14 +33,23 @@ type Result interface {
 	GetString(row, column int) (string, error)
 	// GetStringByName returns string type value of given row number and column name
 	GetStringByName(row int, name string) (string, error)
-	// MapToStruct maps each row to a struct of the values argument,
-	// values must be a slice of pointers to structs,
+	// MapToStructSlice maps each row to a struct of the first argument,
+	// first argument must be a slice of pointers to structs,
+	// each row in the result maps to a struct in the slice,
 	// each column in the row maps to a field of the struct,
 	// tag argument is the tag of the field, it represents the column name,
 	// if there is no such tag in the field, this field will be ignored,
 	// so set tag to each field that need to be mapped,
 	// using "middleware" as the tag is recommended.
-	MapToStruct(values interface{}, tag string) error
+	MapToStructSlice(in interface{}, tag string) error
+	// MapFirstToStruct maps first row of the result to the struct
+	// first argument must be a pointer to struct,
+	// each column in the row maps to a field of the struct,
+	// tag argument is the tag of the field, it represents the column name,
+	// if there is no such tag in the field, this field will be ignored,
+	// so set tag to each field that need to be mapped,
+	// using "middleware" as the tag is recommended.
+	MapFirstToStruct(in interface{}, tag string) error
 }
 
 type PoolConn interface {

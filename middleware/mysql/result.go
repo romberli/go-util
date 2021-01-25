@@ -104,142 +104,171 @@ func (r *Result) GetStringByName(row int, name string) (string, error) {
 	return r.Result.GetStringByName(row, name)
 }
 
-// MapToStruct maps each row to a struct of the values argument,
-// values must be a slice of pointers to structs,
+// MapToStructSlice maps each row to a struct of the first argument,
+// first argument must be a slice of pointers to structs,
+// each row in the result maps to a struct in the slice,
 // each column in the row maps to a field of the struct,
 // tag argument is the tag of the field, it represents the column name,
 // if there is no such tag in the field, this field will be ignored,
 // so set tag to each field that need to be mapped,
 // using "middleware" as the tag is recommended.
-func (r *Result) MapToStruct(values interface{}, tag string) error {
-	if reflect.TypeOf(values).Kind() != reflect.Slice {
-		return errors.New("first argument must be a slice of pointers to structs")
+func (r *Result) MapToStructSlice(in interface{}, tag string) error {
+	if reflect.TypeOf(in).Kind() != reflect.Slice {
+		return errors.New("first argument must be a slice of pointers to struct")
 	}
 	if tag == constant.EmptyString {
 		return errors.New("tag argument could not be empty")
 	}
 
-	valueOf := reflect.ValueOf(values)
+	valueOf := reflect.ValueOf(in)
 	rowNum := r.RowNumber()
 	length := valueOf.Len()
 	if rowNum != length {
-		return errors.New(fmt.Sprintf(
-			"number of rows(%d) is not equal to length of values(%d)", rowNum, length))
+		return errors.New(fmt.Sprintf("number of rows(%d) is not equal to length of the slice(%d)", rowNum, length))
 	}
 
-	var columnName string
-
 	for i := 0; i < length; i++ {
-		in := valueOf.Index(i).Interface()
-		inValue := reflect.ValueOf(in).Elem()
-		inType := inValue.Type()
+		value := valueOf.Index(i).Interface()
+		err := r.mapToStructByRowIndex(value, i, tag)
+		if err != nil {
+			return err
+		}
+	}
 
-		if reflect.TypeOf(in).Kind() != reflect.Ptr {
-			return errors.New("each element in the slice must be a pointer to struct")
+	return nil
+}
+
+// MapFirstToStruct maps first row of the result to the struct
+// first argument must be a pointer to struct,
+// each column in the row maps to a field of the struct,
+// tag argument is the tag of the field, it represents the column name,
+// if there is no such tag in the field, this field will be ignored,
+// so set tag to each field that need to be mapped,
+// using "middleware" as the tag is recommended.
+func (r *Result) MapFirstToStruct(in interface{}, tag string) error {
+	if tag == constant.EmptyString {
+		return errors.New("tag argument could not be empty")
+	}
+
+	return r.mapToStructByRowIndex(in, constant.ZeroInt, tag)
+}
+
+// mapToStructByRowIndex maps row of given index result to the struct
+// first argument must be a pointer to struct,
+// each column in the row maps to a field of the struct,
+// tag argument is the tag of the field, it represents the column name,
+// if there is no such tag in the field, this field will be ignored,
+// so set tag to each field that need to be mapped,
+// using "middleware" as the tag is recommended.
+func (r *Result) mapToStructByRowIndex(in interface{}, row int, tag string) error {
+	if reflect.TypeOf(in).Kind() != reflect.Ptr {
+		return errors.New("each element in the slice must be a pointer to struct")
+	}
+
+	inValue := reflect.ValueOf(in).Elem()
+	inType := inValue.Type()
+
+	for i := 0; i < inValue.NumField(); i++ {
+		fieldType := inType.Field(i)
+		fieldName := fieldType.Name
+		columnName := fieldType.Tag.Get(tag)
+		if columnName == constant.EmptyString {
+			// no such tag, ignore this field
+			continue
 		}
 
-		for j := 0; j < inValue.NumField(); j++ {
-			fieldType := inType.Field(j)
-			fieldName := fieldType.Name
-			columnName = fieldType.Tag.Get(tag)
-			if columnName == constant.EmptyString {
-				// no such tag, ignore this field
-				continue
+		// get value with row number and column name
+		fieldKind := fieldType.Type.Kind()
+		switch fieldKind {
+		case reflect.Bool:
+			intVal, err := r.GetIntByName(row, columnName)
+			if err != nil {
+				return err
 			}
-
-			// get value with row number and column name
-			fieldKind := fieldType.Type.Kind()
-			switch fieldKind {
-			case reflect.Bool:
-				intVal, err := r.GetIntByName(i, columnName)
-				if err != nil {
-					return err
-				}
-				switch intVal {
-				case 0:
-					err = common.SetValueOfStruct(in, fieldName, false)
-				case 1:
-					err = common.SetValueOfStruct(in, fieldName, true)
-				default:
-					err = errors.New(fmt.Sprintf("bool type value should be either 0 or 1, %d is not valid", intVal))
-				}
-				if err != nil {
-					return err
-				}
-			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
-				reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-				intVal, err := r.GetIntByName(i, columnName)
-				if err != nil {
-					return err
-				}
-				switch fieldKind {
-				case reflect.Int:
-					err = common.SetValueOfStruct(in, fieldName, int(intVal))
-				case reflect.Int8:
-					err = common.SetValueOfStruct(in, fieldName, int8(intVal))
-				case reflect.Int16:
-					err = common.SetValueOfStruct(in, fieldName, int16(intVal))
-				case reflect.Int32:
-					err = common.SetValueOfStruct(in, fieldName, int32(intVal))
-				case reflect.Int64:
-					err = common.SetValueOfStruct(in, fieldName, intVal)
-				case reflect.Uint:
-					err = common.SetValueOfStruct(in, fieldName, uint(intVal))
-				case reflect.Uint8:
-					err = common.SetValueOfStruct(in, fieldName, uint8(intVal))
-				case reflect.Uint16:
-					err = common.SetValueOfStruct(in, fieldName, uint16(intVal))
-				case reflect.Uint32:
-					err = common.SetValueOfStruct(in, fieldName, uint32(intVal))
-				case reflect.Uint64:
-					err = common.SetValueOfStruct(in, fieldName, uint64(intVal))
-				}
-				if err != nil {
-					return err
-				}
-			case reflect.Float32, reflect.Float64:
-				floatVal, err := r.GetFloatByName(i, columnName)
-				if err != nil {
-					return err
-				}
-				switch fieldKind {
-				case reflect.Float32:
-					err = common.SetValueOfStruct(in, fieldName, float32(floatVal))
-				case reflect.Float64:
-					err = common.SetValueOfStruct(in, fieldName, floatVal)
-				}
-				if err != nil {
-					return err
-				}
-			case reflect.String:
-				stringVal, err := r.GetStringByName(i, columnName)
-				if err != nil {
-					return err
-				}
-				err = common.SetValueOfStruct(in, fieldName, stringVal)
-				if err != nil {
-					return err
-				}
-			case reflect.Struct:
-				stringVal, err := r.GetStringByName(i, columnName)
-				if err != nil {
-					return err
-				}
-				// for now, only support time.Time data type,
-				// so if data type of field of struct is not time.Time,
-				// it will return error
-				now.TimeFormats = append(now.TimeFormats, constant.DefaultTimeLayout)
-				t, err := now.Parse(stringVal)
-				if err != nil {
-					return err
-				}
-				err = common.SetValueOfStruct(in, fieldName, t)
-				if err != nil {
-					return err
-				}
+			switch intVal {
+			case 0:
+				err = common.SetValueOfStruct(in, fieldName, false)
+			case 1:
+				err = common.SetValueOfStruct(in, fieldName, true)
 			default:
-				return errors.New(fmt.Sprintf("got unsupported reflect.Kind of data type: %s", fieldKind.String()))
+				err = errors.New(fmt.Sprintf("bool type value should be either 0 or 1, %d is not valid", intVal))
 			}
+			if err != nil {
+				return err
+			}
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			intVal, err := r.GetIntByName(row, columnName)
+			if err != nil {
+				return err
+			}
+			switch fieldKind {
+			case reflect.Int:
+				err = common.SetValueOfStruct(in, fieldName, int(intVal))
+			case reflect.Int8:
+				err = common.SetValueOfStruct(in, fieldName, int8(intVal))
+			case reflect.Int16:
+				err = common.SetValueOfStruct(in, fieldName, int16(intVal))
+			case reflect.Int32:
+				err = common.SetValueOfStruct(in, fieldName, int32(intVal))
+			case reflect.Int64:
+				err = common.SetValueOfStruct(in, fieldName, intVal)
+			case reflect.Uint:
+				err = common.SetValueOfStruct(in, fieldName, uint(intVal))
+			case reflect.Uint8:
+				err = common.SetValueOfStruct(in, fieldName, uint8(intVal))
+			case reflect.Uint16:
+				err = common.SetValueOfStruct(in, fieldName, uint16(intVal))
+			case reflect.Uint32:
+				err = common.SetValueOfStruct(in, fieldName, uint32(intVal))
+			case reflect.Uint64:
+				err = common.SetValueOfStruct(in, fieldName, uint64(intVal))
+			}
+			if err != nil {
+				return err
+			}
+		case reflect.Float32, reflect.Float64:
+			floatVal, err := r.GetFloatByName(row, columnName)
+			if err != nil {
+				return err
+			}
+			switch fieldKind {
+			case reflect.Float32:
+				err = common.SetValueOfStruct(in, fieldName, float32(floatVal))
+			case reflect.Float64:
+				err = common.SetValueOfStruct(in, fieldName, floatVal)
+			}
+			if err != nil {
+				return err
+			}
+		case reflect.String:
+			stringVal, err := r.GetStringByName(row, columnName)
+			if err != nil {
+				return err
+			}
+			err = common.SetValueOfStruct(in, fieldName, stringVal)
+			if err != nil {
+				return err
+			}
+		case reflect.Struct:
+			stringVal, err := r.GetStringByName(row, columnName)
+			if err != nil {
+				return err
+			}
+			// for now, only support time.Time data type,
+			// so if data type of field of struct is not time.Time,
+			// it will return error
+			now.TimeFormats = append(now.TimeFormats, constant.DefaultTimeLayout)
+			t, err := now.Parse(stringVal)
+			if err != nil {
+				return err
+			}
+			err = common.SetValueOfStruct(in, fieldName, t)
+			if err != nil {
+				return err
+			}
+		default:
+			return errors.New(fmt.Sprintf("got unsupported reflect.Kind of data type: %s", fieldKind.String()))
 		}
 	}
 

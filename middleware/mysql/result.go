@@ -98,7 +98,7 @@ func (r *Result) GetStringByName(row int, name string) (string, error) {
 	return r.Result.GetStringByName(row, name)
 }
 
-// MapToStruct maps each row to a struct of the values,
+// MapToStruct maps each row to a struct of the values argument,
 // each column in the row maps to a field of the struct,
 // tag argument is the tag of the field, if the tag is not empty,
 // tag value represents the column name, otherwise, field name represents the column name,

@@ -7,6 +7,8 @@ type Result interface {
 	ColumnNumber() int
 	// GetValue returns interface{} type value of given row and column number
 	GetValue(row, column int) (interface{}, error)
+	// ColumnExists check if column exists in the result
+	ColumnExists(name string) bool
 	// NameIndex returns number of given column
 	NameIndex(name string) (int, error)
 	// GetValueByName returns interface{} type value of given row number and column name
@@ -32,11 +34,13 @@ type Result interface {
 	// GetStringByName returns string type value of given row number and column name
 	GetStringByName(row int, name string) (string, error)
 	// MapToStruct maps each row to a struct of the values argument,
+	// values must be a slice of pointers to structs,
 	// each column in the row maps to a field of the struct,
-	// tag argument is the tag of the field, if the tag is not empty,
-	// tag value represents the column name, otherwise, field name represents the column name,
-	// normally, using "middleware" as the tag is recommended.
-	MapToStruct(values []interface{}, tag string) error
+	// tag argument is the tag of the field, it represents the column name,
+	// if there is no such tag in the field, this field will be ignored,
+	// so set tag to each field that need to be mapped,
+	// using "middleware" as the tag is recommended.
+	MapToStruct(values interface{}, tag string) error
 }
 
 type PoolConn interface {

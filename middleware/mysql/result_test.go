@@ -13,6 +13,7 @@ import (
 )
 
 type EnvInfo struct {
+	UnknownField   *Pool
 	ID             int       `middleware:"id"`
 	EnvName        string    `middleware:"env_name"`
 	DelFlag        bool      `middleware:"del_flag"`
@@ -49,7 +50,7 @@ func TestResult(t *testing.T) {
 	sql := `select id, env_name, del_flag, create_time, last_update_time from t_meta_env_info;`
 	result, err = conn.Execute(sql)
 	asst.Nil(err, "execute sql failed.")
-	envInfoList := make([]interface{}, result.RowNumber())
+	envInfoList := make([]*EnvInfo, result.RowNumber())
 	for i := range envInfoList {
 		envInfoList[i] = &EnvInfo{}
 	}

@@ -38,6 +38,12 @@ func (r *Result) GetValue(row, column int) (interface{}, error) {
 	return r.Result.GetValue(row, column)
 }
 
+// ColumnExists check if column exists in the result
+func (r *Result) ColumnExists(name string) bool {
+	_, ok := r.FieldNames[name]
+	return ok
+}
+
 // NameIndex returns index of given column
 func (r *Result) NameIndex(name string) (int, error) {
 	return r.Result.NameIndex(name)
@@ -99,13 +105,23 @@ func (r *Result) GetStringByName(row int, name string) (string, error) {
 }
 
 // MapToStruct maps each row to a struct of the values argument,
+// values must be a slice of pointers to structs,
 // each column in the row maps to a field of the struct,
-// tag argument is the tag of the field, if the tag is not empty,
-// tag value represents the column name, otherwise, field name represents the column name,
-// normally, using "middleware" as the tag is recommended.
-func (r *Result) MapToStruct(values []interface{}, tag string) error {
+// tag argument is the tag of the field, it represents the column name,
+// if there is no such tag in the field, this field will be ignored,
+// so set tag to each field that need to be mapped,
+// using "middleware" as the tag is recommended.
+func (r *Result) MapToStruct(values interface{}, tag string) error {
+	if reflect.TypeOf(values).Kind() != reflect.Slice {
+		return errors.New("first argument must be a slice of pointers to structs")
+	}
+	if tag == constant.EmptyString {
+		return errors.New("tag argument could not be empty")
+	}
+
+	valueOf := reflect.ValueOf(values)
 	rowNum := r.RowNumber()
-	length := len(values)
+	length := valueOf.Len()
 	if rowNum != length {
 		return errors.New(fmt.Sprintf(
 			"number of rows(%d) is not equal to length of values(%d)", rowNum, length))
@@ -113,21 +129,22 @@ func (r *Result) MapToStruct(values []interface{}, tag string) error {
 
 	var columnName string
 
-	for i, in := range values {
+	for i := 0; i < length; i++ {
+		in := valueOf.Index(i).Interface()
 		inValue := reflect.ValueOf(in).Elem()
 		inType := inValue.Type()
 
 		if reflect.TypeOf(in).Kind() != reflect.Ptr {
-			return errors.New("argument must be a pointer to struct")
+			return errors.New("each element in the slice must be a pointer to struct")
 		}
 
 		for j := 0; j < inValue.NumField(); j++ {
 			fieldType := inType.Field(j)
 			fieldName := fieldType.Name
-			if tag == constant.EmptyString {
-				columnName = fieldName
-			} else {
-				columnName = fieldType.Tag.Get(tag)
+			columnName = fieldType.Tag.Get(tag)
+			if columnName == constant.EmptyString {
+				// no such tag, ignore this field
+				continue
 			}
 
 			// get value with row number and column name
@@ -146,7 +163,6 @@ func (r *Result) MapToStruct(values []interface{}, tag string) error {
 				default:
 					err = errors.New(fmt.Sprintf("bool type value should be either 0 or 1, %d is not valid", intVal))
 				}
-
 				if err != nil {
 					return err
 				}

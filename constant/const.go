@@ -24,6 +24,9 @@ const (
 	CRLFString                          = "\n"
 	DefaultTimeLayout                   = "2021-01-01 10:00:00.000000"
 	DefaultMiddlewareTag                = "middleware"
+	DefaultLocalHostName                = "localhost"
+	DefaultLocalHostIP                  = "127.0.0.1"
+	DefaultMySQLPort                    = 3306
 	DefaultFileMode         os.FileMode = 0644
 	DefaultExecFileMode     os.FileMode = 0755
 )

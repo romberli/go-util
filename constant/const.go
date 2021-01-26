@@ -23,6 +23,7 @@ const (
 	FalseString                         = "false"
 	CRLFString                          = "\n"
 	DefaultTimeLayout                   = "2021-01-01 10:00:00.000000"
+	DefaultMarshalTag                   = "json"
 	DefaultMiddlewareTag                = "middleware"
 	DefaultLocalHostName                = "localhost"
 	DefaultLocalHostIP                  = "127.0.0.1"

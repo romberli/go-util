@@ -16,7 +16,7 @@ type nestStruct struct {
 
 type trimStruct struct {
 	ID   int
-	Name string
+	Name string `middleware:"name"`
 	B    bool
 	s    string
 	NSA  *nestStruct
@@ -280,4 +280,10 @@ func TestCommon(t *testing.T) {
 	asst.Nil(err, "test MarshalStructWithoutFields() failed")
 	asst.Equal(string(jets), string(jnts), "test MarshalStructWithoutFields() failed")
 	t.Log("==========test MarshalStructWithoutFields() completed==========")
+
+	t.Log("==========test MarshalStructWithTag() started==========")
+	jnts, err = MarshalStructWithTag(ts, "middleware")
+	asst.Nil(err, "test MarshalStructWithTag() failed")
+	asst.Equal("{\"Name\":\"aaa\"}", string(jnts), "test MarshalStructWithoutFields() failed")
+	t.Log("==========test MarshalStructWithTag() completed==========")
 }

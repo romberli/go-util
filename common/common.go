@@ -280,7 +280,7 @@ func CopyStructWithoutFields(in interface{}, fields ...string) (interface{}, err
 	return newInstance, nil
 }
 
-// MarshalStructWithFields marshals input struct using json.Marshal() with given fields
+// MarshalStructWithFields marshals input struct using json.Marshal() with given fields,
 // first argument must be a pointer to struct, not the struct itself
 func MarshalStructWithFields(in interface{}, fields ...string) ([]byte, error) {
 	if reflect.TypeOf(in).Kind() != reflect.Ptr {
@@ -300,7 +300,7 @@ func MarshalStructWithFields(in interface{}, fields ...string) ([]byte, error) {
 	return json.Marshal(newInstance)
 }
 
-// MarshalStructWithFields marshals input struct using json.Marshal() without given fields
+// MarshalStructWithFields marshals input struct using json.Marshal() without given fields,
 // first argument must be a pointer to struct, not the struct itself
 func MarshalStructWithoutFields(in interface{}, fields ...string) ([]byte, error) {
 	if reflect.TypeOf(in).Kind() != reflect.Ptr {
@@ -318,4 +318,29 @@ func MarshalStructWithoutFields(in interface{}, fields ...string) ([]byte, error
 	}
 
 	return json.Marshal(newInstance)
+}
+
+// MarshalStructWithTag marshals input struct using json.Marshal() with fields that contain given tag,
+// first argument must be a pointer to struct, not the struct itself
+func MarshalStructWithTag(in interface{}, tag string) ([]byte, error) {
+	if reflect.TypeOf(in).Kind() != reflect.Ptr {
+		return nil, errors.New("first argument must be a pointer to struct")
+	}
+	if tag == constant.EmptyString {
+		return nil, errors.New("tag should not be empty")
+	}
+
+	inVal := reflect.ValueOf(in).Elem()
+
+	var fields []string
+
+	for i := 0; i < inVal.NumField(); i++ {
+		fieldType := inVal.Type().Field(i)
+		fieldTag := fieldType.Tag.Get(tag)
+		if fieldTag != constant.EmptyString {
+			fields = append(fields, fieldType.Name)
+		}
+	}
+
+	return MarshalStructWithFields(in, fields...)
 }

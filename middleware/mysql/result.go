@@ -138,14 +138,14 @@ func (r *Result) MapToStructSlice(in interface{}, tag string) error {
 	return nil
 }
 
-// MapFirstToStruct maps first row of the result to the struct
+// MapToStructByRowIndex maps row of given index result to the struct
 // first argument must be a pointer to struct,
 // each column in the row maps to a field of the struct,
 // tag argument is the tag of the field, it represents the column name,
 // if there is no such tag in the field, this field will be ignored,
 // so set tag to each field that need to be mapped,
 // using "middleware" as the tag is recommended.
-func (r *Result) MapFirstToStruct(in interface{}, tag string) error {
+func (r *Result) MapToStructByRowIndex(in interface{}, row int, tag string) error {
 	if tag == constant.EmptyString {
 		return errors.New("tag argument could not be empty")
 	}

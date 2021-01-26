@@ -5,6 +5,8 @@ import (
 )
 
 const (
+	DefaultFileMode         os.FileMode = 0644
+	DefaultExecFileMode     os.FileMode = 0755
 	DefaultKillSignal                   = 15
 	DefaultNormalExitCode               = 0
 	DefaultAbnormalExitCode             = 1
@@ -25,12 +27,10 @@ const (
 	DefaultTimeLayout                   = "2021-01-01 10:00:00.000000"
 	DefaultMarshalTag                   = "json"
 	DefaultMiddlewareTag                = "middleware"
+	DefaultListenIP                     = "0.0.0.0"
 	DefaultLocalHostName                = "localhost"
 	DefaultLocalHostIP                  = "127.0.0.1"
-	DefaultListenIP                     = "0.0.0.0"
 	DefaultMySQLPort                    = 3306
-	DefaultFileMode         os.FileMode = 0644
-	DefaultExecFileMode     os.FileMode = 0755
 	DefaultRootUserName                 = "root"
 	DefaultRootUserPass                 = "root"
 )

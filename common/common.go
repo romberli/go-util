@@ -344,3 +344,34 @@ func MarshalStructWithTag(in interface{}, tag string) ([]byte, error) {
 
 	return MarshalStructWithFields(in, fields...)
 }
+
+// NewMapWithStructTag returns a new map, it loops the keys of given map and tags of the struct,
+// if key and tag are same, the field of the the input struct will be the key of the new map,
+// the value of the given map will be the value of the new map,
+// if any key in the given map could not match any tag in the struct,
+// it will return error, so make sure that each key the given map could match a field tag in the struct
+func NewMapWithStructTag(m map[string]interface{}, in interface{}, tag string) (map[string]interface{}, error) {
+	if reflect.TypeOf(in).Kind() != reflect.Ptr {
+		return nil, errors.New("second argument must be a pointer to struct")
+	}
+
+	newMap := make(map[string]interface{})
+	inVal := reflect.ValueOf(in).Elem()
+
+Loop:
+	for key := range m {
+		for i := 0; i < inVal.NumField(); i++ {
+			fieldType := inVal.Type().Field(i)
+			fieldTag := fieldType.Tag.Get(tag)
+
+			if key == fieldTag {
+				newMap[fieldType.Name] = m[key]
+				continue Loop
+			}
+		}
+		// this means there is no relevant tag in the struct, should return error
+		return nil, errors.New(fmt.Sprintf("key %s could not match any tag in the struct", key))
+	}
+
+	return newMap, nil
+}

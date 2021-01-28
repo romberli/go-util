@@ -2,6 +2,7 @@ package common
 
 import (
 	"encoding/json"
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -27,6 +28,12 @@ type expectStructA struct {
 	ID   int
 	Name string
 	NSA  *nestStruct
+}
+
+type EnvInfo struct {
+	ID      int    `middleware:"id"`
+	EnvName string `middleware:"env_name"`
+	DelFlag string `middleware:"del_flag"`
 }
 
 func TestCommon(t *testing.T) {
@@ -286,4 +293,13 @@ func TestCommon(t *testing.T) {
 	asst.Nil(err, "test MarshalStructWithTag() failed")
 	asst.Equal("{\"Name\":\"aaa\"}", string(jnts), "test MarshalStructWithoutFields() failed")
 	t.Log("==========test MarshalStructWithTag() completed==========")
+
+	t.Log("==========test NewMapWithStructTag() started==========")
+	envInfo := &EnvInfo{}
+	oldMap := map[string]interface{}{"id": 1, "env_name": "test"}
+	expectMap := map[string]interface{}{"ID": 1, "EnvName": "test"}
+	newMap, err := NewMapWithStructTag(oldMap, envInfo, "middleware")
+	asst.Nil(err, "test NewMapWithStructTag() failed")
+	asst.True(reflect.DeepEqual(newMap, expectMap), "test NewMapWithStructTag() failed")
+	t.Log("==========test NewMapWithStructTag() completed==========")
 }

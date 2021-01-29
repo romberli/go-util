@@ -428,3 +428,8 @@ Loop:
 
 	return result, nil
 }
+
+// UnmarshalToMapWithStructTag converts given string to []byte and then call UnmarshalToMapWithStructTag() function
+func UnmarshalToMapWithStructTagFromString(s string, in interface{}, tag string) (map[string]interface{}, error) {
+	return UnmarshalToMapWithStructTag([]byte(s), in, tag)
+}

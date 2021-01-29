@@ -303,10 +303,10 @@ func TestCommon(t *testing.T) {
 	asst.True(reflect.DeepEqual(newMap, expectMap), "test NewMapWithStructTag() failed")
 	t.Log("==========test NewMapWithStructTag() completed==========")
 
-	t.Log("==========test NewMapWithStructTag() started==========")
+	t.Log("==========test UnmarshalToMapWithStructTagFromString() started==========")
 	data, _ := json.Marshal(oldMap)
-	result, err := UnmarshalToMapWithStructTag(data, envInfo, "middleware")
-	asst.Nil(err, "test NewMapWithStructTag() failed")
-	asst.True(reflect.DeepEqual(result, expectMap), "test NewMapWithStructTag() failed")
-	t.Log("==========test NewMapWithStructTag() completed==========")
+	result, err := UnmarshalToMapWithStructTagFromString(string(data), envInfo, "middleware")
+	asst.Nil(err, "test UnmarshalToMapWithStructTagFromString() failed")
+	asst.True(reflect.DeepEqual(result, expectMap), "test UnmarshalToMapWithStructTagFromString() failed")
+	t.Log("==========test UnmarshalToMapWithStructTagFromString() completed==========")
 }

@@ -17,4 +17,5 @@ require (
 	go.etcd.io/etcd v0.0.0-20200520232829-54ba9589114f
 	go.uber.org/zap v1.13.0
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
+	github.com/json-iterator/go v1.1.10
 )

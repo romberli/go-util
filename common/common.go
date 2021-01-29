@@ -1,7 +1,6 @@
 package common
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/romberli/dynamic-struct"
 
+	json "github.com/json-iterator/go"
 	"github.com/romberli/go-util/constant"
 )
 
@@ -229,13 +229,13 @@ func CopyStructWithFields(in interface{}, fields ...string) (interface{}, error)
 	inType := inVal.Type()
 
 	for i := 0; i < inVal.NumField(); i++ {
-		inField := inType.Field(i).Name
-		ok, err := ElementInSlice(inField, fields)
+		fieldName := inType.Field(i).Name
+		ok, err := ElementInSlice(fieldName, fields)
 		if err != nil {
 			return nil, err
 		}
 		if !ok {
-			removeFields = append(removeFields, inField)
+			removeFields = append(removeFields, fieldName)
 		}
 	}
 
@@ -265,16 +265,16 @@ func CopyStructWithoutFields(in interface{}, fields ...string) (interface{}, err
 
 	// generate new instance
 	newInstance := newStruct.Build().New()
-	newValue := reflect.ValueOf(newInstance).Elem()
-	newType := newValue.Type()
+	newVal := reflect.ValueOf(newInstance).Elem()
+	newType := newVal.Type()
 
-	inputValue := reflect.ValueOf(in).Elem()
+	inVal := reflect.ValueOf(in).Elem()
 
-	for i := 0; i < newValue.NumField(); i++ {
-		fType := newType.Field(i)
-		fValue := newValue.Field(i)
+	for i := 0; i < newVal.NumField(); i++ {
+		fieldType := newType.Field(i)
+		fieldVal := newVal.Field(i)
 		// set value
-		fValue.Set(inputValue.FieldByName(fType.Name))
+		fieldVal.Set(inVal.FieldByName(fieldType.Name))
 	}
 
 	return newInstance, nil
@@ -345,7 +345,8 @@ func MarshalStructWithTag(in interface{}, tag string) ([]byte, error) {
 	return MarshalStructWithFields(in, fields...)
 }
 
-// NewMapWithStructTag returns a new map, it loops the keys of given map and tags of the struct,
+// NewMapWithStructTag returns a new map as the result,
+// it loops the keys of given map and tags of the struct,
 // if key and tag are same, the field of the the input struct will be the key of the new map,
 // the value of the given map will be the value of the new map,
 // if any key in the given map could not match any tag in the struct,
@@ -355,7 +356,7 @@ func NewMapWithStructTag(m map[string]interface{}, in interface{}, tag string) (
 		return nil, errors.New("second argument must be a pointer to struct")
 	}
 
-	newMap := make(map[string]interface{})
+	result := make(map[string]interface{})
 	inVal := reflect.ValueOf(in).Elem()
 
 Loop:
@@ -365,7 +366,7 @@ Loop:
 			fieldTag := fieldType.Tag.Get(tag)
 
 			if key == fieldTag {
-				newMap[fieldType.Name] = m[key]
+				result[fieldType.Name] = m[key]
 				continue Loop
 			}
 		}
@@ -373,5 +374,56 @@ Loop:
 		return nil, errors.New(fmt.Sprintf("key %s could not match any tag in the struct", key))
 	}
 
-	return newMap, nil
+	return result, nil
+}
+
+// UnmarshalToMapWithStructTag returns a map as the result, it works as following logic:
+// 1. unmarshals given data to to a temporary map to get keys
+// 2. unmarshals given data to the input struct, to get field names and values with appropriate data types
+// 3. loops keys in the temporary map, loops tags of the input struct in a nested
+// 4. if the key matches the tag, set field name as the key of result map, set field value as the value of the result map
+// 5. if any key in the temporary map can not match any field tag of the struct, it returns error,
+//    so make sure that each key of the given data could match a field tag in the struct
+func UnmarshalToMapWithStructTag(data []byte, in interface{}, tag string) (map[string]interface{}, error) {
+	if reflect.TypeOf(in).Kind() != reflect.Ptr {
+		return nil, errors.New("second argument must be a pointer to struct")
+	}
+
+	// get new decoder to unmarshal with specified tag
+	decoder := json.Config{
+		EscapeHTML:             true,
+		SortMapKeys:            true,
+		ValidateJsonRawMessage: true,
+		TagKey:                 tag,
+	}.Froze()
+	// unmarshal to struct to get appropriate data type
+	err := decoder.Unmarshal(data, &in)
+	if err != nil {
+		return nil, err
+	}
+	// unmarshal to temporary map to get key names
+	tmpMap := make(map[string]interface{})
+	err = decoder.Unmarshal(data, &tmpMap)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[string]interface{})
+	inVal := reflect.ValueOf(in).Elem()
+Loop:
+	for key := range tmpMap {
+		for i := 0; i < inVal.NumField(); i++ {
+			fieldType := inVal.Type().Field(i)
+			fieldTag := fieldType.Tag.Get(tag)
+			if key == fieldTag {
+				// set field name of struct as key, set value of temporary map as value of the result
+				result[fieldType.Name] = inVal.Field(i).Interface()
+				continue Loop
+			}
+		}
+		// this means there is no relevant tag in the struct, should return error
+		return nil, errors.New(fmt.Sprintf("key %s could not match any tag in the struct", key))
+	}
+
+	return result, nil
 }

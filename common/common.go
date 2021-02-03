@@ -222,11 +222,12 @@ func SetValueOfStruct(in interface{}, field string, value interface{}) error {
 // 3. if any field in fields does not exist in the input struct, it returns error
 // 4. if values in input struct is a pointer, then value in the new struct will point to the same object
 // 5. returning struct is totally a new data type, so you could not use any (*type) assertion
-// 6. technically, for convenience purpose, this function creates a new struct as same as input struct,
+// 6. if fields argument is empty, a new struct which contains the whole fields of input struct will be returned
+// 7. technically, for convenience purpose, this function creates a new struct as same as input struct,
 //    then removes fields that does not exist in the given fields
 func CopyStructWithFields(in interface{}, fields ...string) (interface{}, error) {
 	if len(fields) == 0 {
-		return in, nil
+		return CopyStructWithoutFields(in)
 	}
 
 	if reflect.TypeOf(in).Kind() != reflect.Ptr {
@@ -259,11 +260,8 @@ func CopyStructWithFields(in interface{}, fields ...string) (interface{}, error)
 // 3. if any field in fields does not exist in the input struct, it simply ignores
 // 4. if values in input struct is a pointer, then value in the new struct will point to the same object
 // 5. returning struct is totally a new data type, so you could not use any (*type) assertion
+// 6. if fields argument is empty, a new struct which contains the whole fields of input struct will be returned
 func CopyStructWithoutFields(in interface{}, fields ...string) (interface{}, error) {
-	if len(fields) == 0 {
-		return in, nil
-	}
-
 	newStruct, err := dynamicstruct.MergeStructsWithSettableFields(in)
 	if err != nil {
 		return nil, err

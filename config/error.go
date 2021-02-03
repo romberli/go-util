@@ -31,9 +31,14 @@ func (e *ErrMessage) Code() string {
 	return fmt.Sprintf("%s-%d", e.Header, e.ErrCode)
 }
 
-// Error is implementation fo Error interface
+// Error is an implementation fo Error interface
 func (e *ErrMessage) Error() string {
 	return fmt.Sprintf("%s: %s", e.Code(), e.Raw)
+}
+
+// String is an alias of Error()
+func (e *ErrMessage) String() string {
+	return e.Error()
 }
 
 // Renew returns a new *ErrMessage and specify with given input

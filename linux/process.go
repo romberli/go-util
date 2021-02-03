@@ -98,46 +98,15 @@ func RemovePidFile(pidFile string) error {
 	return os.Remove(pidFile)
 }
 
-// KillServerWithSignal kills process with given pid and signal,
-// it will also remove pid file if pid file path is specified as opts,
-// as this function accepts signal as argument, it is only worked on unix-like system
-func KillServerWithSignal(pid, signal int, opts ...string) error {
-	var (
-		err     error
-		p       *process.Process
-		pidFile string
-	)
-
-	p, err = process.NewProcess(int32(pid))
-	if err != nil {
-		return err
-	}
-
-	// kill process with signal
-	err = p.SendSignal(syscall.Signal(signal))
-	if err != nil {
-		return err
-	}
-
-	// remove pid file
-	if len(opts) > constant.ZeroInt {
-		pidFile = opts[constant.ZeroInt]
-		return RemovePidFile(pidFile)
-	}
-
-	return nil
-}
-
-// KillServer kills process with given pid,
+// SendSignal sends signal to given pid,
 // it will also remove pid file if pid file path is specified as opts
-func KillServer(pid int, opts ...string) (err error) {
-	p, err := process.NewProcess(int32(pid))
+func SendSignal(pid int, sig syscall.Signal, opts ...string) (err error) {
+	p, err := os.FindProcess(pid)
 	if err != nil {
 		return err
 	}
 
-	// kill process
-	err = p.Kill()
+	err = p.Signal(sig)
 	if err != nil {
 		return err
 	}
@@ -149,6 +118,18 @@ func KillServer(pid int, opts ...string) (err error) {
 	}
 
 	return nil
+}
+
+// KillServer kills server with given pid, it acts like shell command "kill -9",
+// it will also remove pid file if pid file path is specified as opts
+func KillServer(pid int, opts ...string) (err error) {
+	return SendSignal(pid, syscall.SIGKILL, opts...)
+}
+
+// ShutdownServer kills server with given pid, it acts like shell command "kill -15",
+// it will also remove pid file if pid file path is specified as opts
+func ShutdownServer(pid int, opts ...string) (err error) {
+	return SendSignal(pid, syscall.SIGTERM, opts...)
 }
 
 // HandleSignalsWithPidFile handles operating system signals

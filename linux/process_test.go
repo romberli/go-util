@@ -80,6 +80,15 @@ func TestProcess(t *testing.T) {
 	asst.Nil(err, "KillServer failed.\n%v", err)
 	t.Log("==========KillServer completed.==========")
 
+	t.Log("==========ShutdownServer started.==========")
+	go StartSandbox(cmd)
+	time.Sleep(sleep * time.Second)
+	pidSandbox, err = GetPidFromPidFile(pidFileSandbox)
+	asst.Nil(err, "get pid of go-sandbox failed.")
+	err = ShutdownServer(pidSandbox, pidFileSandbox)
+	asst.Nil(err, "ShutdownServer failed.\n%v", err)
+	t.Log("==========ShutdownServer completed.==========")
+
 	t.Log("==========HandleSignalsWithPidFile started.==========")
 	go killProcess(pid, sleep)
 	time.Sleep(sleep * time.Second)

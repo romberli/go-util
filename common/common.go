@@ -27,6 +27,15 @@ func BytesToString(b []byte) string {
 	return *(*string)(unsafe.Pointer(&b))
 }
 
+// CombineMessageWithError returns a new string which combines given message and error
+func CombineMessageWithError(message string, err error) string {
+	if err == nil {
+		return message
+	}
+
+	return fmt.Sprintf("%s\n%s", message, err.Error())
+}
+
 // ConvertNumberToString tries to convert number to string,
 // if input is neither number type nor string, it will return error
 func ConvertNumberToString(in interface{}) (string, error) {

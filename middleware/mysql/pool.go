@@ -344,6 +344,11 @@ func (p *Pool) get() (*PoolConn, error) {
 	return pc, nil
 }
 
+// Transaction simply returns *PoolConn, because it had implemented Transaction interface
+func (p *Pool) Transaction() (middleware.Transaction, error) {
+	return p.get()
+}
+
 // maintainFreeChan maintains free connection channel, if there are insufficient connection in the free connection channel,
 // it will add some connections, otherwise it will release some.
 // for saving disk purpose, if there are errors when maintaining free channel,

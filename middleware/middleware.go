@@ -52,6 +52,13 @@ type Result interface {
 	MapToStructByRowIndex(in interface{}, row int, tag string) error
 }
 
+type Transaction interface {
+	PoolConn
+	Begin() error
+	Commit() error
+	Rollback() error
+}
+
 type PoolConn interface {
 	// Close returns connection back to the pool
 	Close() error
@@ -70,6 +77,8 @@ type Pool interface {
 	IsClosed() bool
 	// Get gets a connection from the pool
 	Get() (PoolConn, error)
+	// Transaction returns a connection that could run multiple statement in the same transaction
+	Transaction() (Transaction, error)
 	// Supply creates given number of connections and add them to the pool
 	Supply(num int) error
 	// Release releases given number of connections, each connection will disconnect with the middleware

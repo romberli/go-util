@@ -24,6 +24,7 @@ const (
 	TrueString                          = "true"
 	FalseString                         = "false"
 	CRLFString                          = "\n"
+	CommaString                         = ","
 	DefaultTimeLayout                   = "2021-01-01 10:00:00.000000"
 	DefaultMarshalTag                   = "json"
 	DefaultMiddlewareTag                = "middleware"

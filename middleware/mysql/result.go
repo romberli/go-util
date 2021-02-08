@@ -23,6 +23,17 @@ func NewResult(r *mysql.Result) *Result {
 	return &Result{r}
 }
 
+// LastInsertID returns the database's auto-generated ID
+// after, for example, an INSERT into a table with primary key.
+func (r *Result) LastInsertID() (uint64, error) {
+	return r.InsertId, nil
+}
+
+// RowsAffected returns the number of rows affected by the query.
+func (r *Result) RowsAffected() (uint64, error) {
+	return r.AffectedRows, nil
+}
+
 // RowNumber returns how many rows in the result
 func (r *Result) RowNumber() int {
 	return r.Result.RowNumber()

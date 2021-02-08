@@ -18,7 +18,7 @@ func TestMySQLPool(t *testing.T) {
 		conn      middleware.PoolConn
 		repRole   string
 		slaveList []string
-		result    middleware.Result
+		result    *Result
 	)
 
 	asst := assert.New(t)
@@ -48,11 +48,10 @@ func TestMySQLPool(t *testing.T) {
 	conn, err = pool.Get()
 	asst.Nil(err, "get connection from pool failed.")
 
-	r, err := conn.(*PoolConn).GetReplicationSlavesStatus()
+	result, err = conn.(*PoolConn).GetReplicationSlavesStatus()
 	asst.Nil(err, "get replication slave status failed.")
-	result = NewResult(r)
 	if result.RowNumber() > 0 {
-		t.Logf("show slave status: %v", result.(*Result).Values)
+		t.Logf("show slave status: %v", result.Values)
 	} else {
 		t.Logf("this is not a slave node.")
 	}

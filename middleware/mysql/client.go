@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/siddontang/go-mysql/client"
-	"github.com/siddontang/go-mysql/mysql"
 
 	"github.com/romberli/go-util/constant"
 )
@@ -38,20 +37,15 @@ func NewMySQLConfig(addr string, dbName string, dbUser string, dbPass string) Co
 
 type Conn struct {
 	Config
-	client.Conn
+	*client.Conn
 }
 
 // NewMySQLConn returns connection to mysql database, be aware that addr is host:port style, default charset is utf8mb4
 func NewMySQLConn(addr string, dbName string, dbUser string, dbPass string) (*Conn, error) {
-	var (
-		err  error
-		conn *client.Conn
-	)
-
 	config := NewMySQLConfig(addr, dbName, dbUser, dbPass)
 
 	// connect to mysql
-	conn, err = client.Connect(addr, dbUser, dbPass, dbName)
+	conn, err := client.Connect(addr, dbUser, dbPass, dbName)
 	if err != nil {
 		return nil, err
 	}
@@ -70,8 +64,18 @@ func NewMySQLConn(addr string, dbName string, dbUser string, dbPass string) (*Co
 
 	return &Conn{
 		Config: config,
-		Conn:   *conn,
+		Conn:   conn,
 	}, nil
+}
+
+// Execute executes given sql with arguments and return a result
+func (conn *Conn) Execute(command string, args ...interface{}) (*Result, error) {
+	result, err := conn.Conn.Execute(command, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewResult(result), nil
 }
 
 // CheckInstanceStatus checks mysql instance status
@@ -93,7 +97,7 @@ func (conn *Conn) CheckInstanceStatus() bool {
 // GetReplicationSlaveList returns slave list of this server
 func (conn *Conn) GetReplicationSlaveList() (slaveList []string, err error) {
 	var (
-		result *mysql.Result
+		result *Result
 		host   string
 		port   int64
 	)
@@ -124,7 +128,7 @@ func (conn *Conn) GetReplicationSlaveList() (slaveList []string, err error) {
 }
 
 // GetReplicationSlavesStatus returns replication slave status, like sql: "show slave status;"
-func (conn *Conn) GetReplicationSlavesStatus() (result *mysql.Result, err error) {
+func (conn *Conn) GetReplicationSlavesStatus() (result *Result, err error) {
 	return conn.Execute(ShowSlaveStatusSQL)
 }
 
@@ -132,7 +136,7 @@ func (conn *Conn) GetReplicationSlavesStatus() (result *mysql.Result, err error)
 func (conn *Conn) GetReplicationRole() (role string, err error) {
 	var (
 		slaveList []string
-		result    *mysql.Result
+		result    *Result
 	)
 
 	role = ReplicationMaster

@@ -5,27 +5,14 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
-	"unsafe"
 
+	"github.com/jinzhu/now"
 	"github.com/romberli/dynamic-struct"
 
 	json "github.com/json-iterator/go"
 
 	"github.com/romberli/go-util/constant"
 )
-
-// StringToBytes converts string type to byte slice
-func StringToBytes(s string) []byte {
-	x := (*[2]uintptr)(unsafe.Pointer(&s))
-	h := [3]uintptr{x[0], x[1], x[1]}
-
-	return *(*[]byte)(unsafe.Pointer(&h))
-}
-
-// BytesToString converts byte slice type to string
-func BytesToString(b []byte) string {
-	return *(*string)(unsafe.Pointer(&b))
-}
 
 // CombineMessageWithError returns a new string which combines given message and error
 func CombineMessageWithError(message string, err error) string {
@@ -34,71 +21,6 @@ func CombineMessageWithError(message string, err error) string {
 	}
 
 	return fmt.Sprintf("%s\n%s", message, err.Error())
-}
-
-// ConvertNumberToString tries to convert number to string,
-// if input is neither number type nor string, it will return error
-func ConvertNumberToString(in interface{}) (string, error) {
-	inType := reflect.TypeOf(in)
-
-	switch inType.Kind() {
-	case reflect.String:
-		return in.(string), nil
-	case reflect.Bool:
-		if in.(bool) == true {
-			return constant.TrueString, nil
-		}
-
-		return constant.FalseString, nil
-	case reflect.Float32, reflect.Float64,
-		reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
-		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return fmt.Sprintf("%v", in), nil
-	default:
-		return constant.EmptyString, errors.New(
-			fmt.Sprintf("convert %s to string is not supported. ONLY accept string, float, int, bool.",
-				inType.String()))
-	}
-}
-
-// ConvertInterfaceToSliceInterface converts input data which must be slice type to interface slice,
-// it means each element in the slice is interface type.
-func ConvertInterfaceToSliceInterface(in interface{}) ([]interface{}, error) {
-	inType := reflect.TypeOf(in)
-	inValue := reflect.ValueOf(in)
-
-	if inType.Kind() != reflect.Slice {
-		return nil, errors.New("argument must be array or slice")
-	}
-
-	inLength := inValue.Len()
-	sliceInterface := make([]interface{}, inLength)
-
-	for i := 0; i < inLength; i++ {
-		sliceInterface[i] = inValue.Index(i).Interface()
-	}
-
-	return sliceInterface, nil
-}
-
-// ConvertInterfaceToMapInterfaceInterface converts input data which must be map type to map interface interface,
-// it means each pair of key and value in the map will be interface type
-func ConvertInterfaceToMapInterfaceInterface(in interface{}) (map[interface{}]interface{}, error) {
-	inType := reflect.TypeOf(in)
-	inValue := reflect.ValueOf(in)
-
-	if inType.Kind() != reflect.Map {
-		return nil, errors.New("argument must be map")
-	}
-
-	inLength := inValue.Len()
-	mapInterface := make(map[interface{}]interface{}, inLength)
-
-	for _, key := range inValue.MapKeys() {
-		mapInterface[key.Interface()] = inValue.MapIndex(key).Interface()
-	}
-
-	return mapInterface, nil
 }
 
 // ElementInSlice checks if given element is in the slice
@@ -211,6 +133,112 @@ func SetValueOfStruct(in interface{}, field string, value interface{}) error {
 	}
 
 	v.Set(reflect.ValueOf(value))
+
+	return nil
+}
+
+func SetValueOfStructByKind(in interface{}, field string, value interface{}, kind reflect.Kind) error {
+	switch kind {
+	case reflect.Bool:
+		v, err := ConvertToBool(value)
+		if err != nil {
+			return err
+		}
+
+		err = SetValueOfStruct(in, field, v)
+		if err != nil {
+			return err
+		}
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		v, err := ConvertToUint(value)
+		if err != nil {
+			return err
+		}
+
+		switch kind {
+		case reflect.Int:
+			err = SetValueOfStruct(in, field, int(v))
+		case reflect.Int8:
+			err = SetValueOfStruct(in, field, int8(v))
+		case reflect.Int16:
+			err = SetValueOfStruct(in, field, int16(v))
+		case reflect.Int32:
+			err = SetValueOfStruct(in, field, int32(v))
+		case reflect.Int64:
+			err = SetValueOfStruct(in, field, int64(v))
+		case reflect.Uint:
+			err = SetValueOfStruct(in, field, uint(v))
+		case reflect.Uint8:
+			err = SetValueOfStruct(in, field, uint8(v))
+		case reflect.Uint16:
+			err = SetValueOfStruct(in, field, uint16(v))
+		case reflect.Uint32:
+			err = SetValueOfStruct(in, field, uint32(v))
+		case reflect.Uint64:
+			err = SetValueOfStruct(in, field, v)
+		}
+		if err != nil {
+			return err
+		}
+	case reflect.Float32, reflect.Float64:
+		v, err := ConvertToFloat(value)
+		if err != nil {
+			return err
+		}
+
+		switch kind {
+		case reflect.Float32:
+			err = SetValueOfStruct(in, field, float32(v))
+		case reflect.Float64:
+			err = SetValueOfStruct(in, field, v)
+		}
+		if err != nil {
+			return err
+		}
+	case reflect.String:
+		v, err := ConvertToString(value)
+		if err != nil {
+			return err
+		}
+
+		err = SetValueOfStruct(in, field, v)
+		if err != nil {
+			return err
+		}
+	case reflect.Slice:
+		fieldType, ok := reflect.ValueOf(in).Elem().Type().FieldByName(field)
+		if !ok {
+			return errors.New(fmt.Sprintf("field %s does not exist", field))
+		}
+
+		v, err := ConvertToSlice(value, fieldType.Type.Elem().Kind())
+		if err != nil {
+			return err
+		}
+
+		err = SetValueOfStruct(in, field, v)
+		if err != nil {
+			return err
+		}
+	case reflect.Struct:
+		v, err := ConvertToString(value)
+		if err != nil {
+			return err
+		}
+
+		now.TimeFormats = append(now.TimeFormats, constant.DefaultTimeLayout)
+		t, err := now.Parse(v)
+		if err != nil {
+			return err
+		}
+		err = SetValueOfStruct(in, field, t)
+		if err != nil {
+			return err
+		}
+	default:
+		return errors.New(fmt.Sprintf("got unsupported reflect.Kind of data type: %s", kind.String()))
+	}
 
 	return nil
 }

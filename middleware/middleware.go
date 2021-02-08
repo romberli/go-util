@@ -1,6 +1,11 @@
 package middleware
 
 type Result interface {
+	// LastInsertID returns the database's auto-generated ID
+	// after, for example, an INSERT into a table with primary key.
+	LastInsertID() (uint64, error)
+	// RowsAffected returns the number of rows affected by the query.
+	RowsAffected() (uint64, error)
 	// RowNumber returns how many rows in the result
 	RowNumber() int
 	// ColumnNumber return how many columns in the result
@@ -52,13 +57,6 @@ type Result interface {
 	MapToStructByRowIndex(in interface{}, row int, tag string) error
 }
 
-type Transaction interface {
-	PoolConn
-	Begin() error
-	Commit() error
-	Rollback() error
-}
-
 type PoolConn interface {
 	// Close returns connection back to the pool
 	Close() error
@@ -70,6 +68,16 @@ type PoolConn interface {
 	Execute(command string, args ...interface{}) (Result, error)
 }
 
+type Transaction interface {
+	PoolConn
+	// Begin begins a transaction
+	Begin() error
+	// Commit commits current transaction
+	Commit() error
+	// Rollback rollbacks current transaction
+	Rollback() error
+}
+
 type Pool interface {
 	// Close releases each connection in the pool
 	Close() error
@@ -77,7 +85,7 @@ type Pool interface {
 	IsClosed() bool
 	// Get gets a connection from the pool
 	Get() (PoolConn, error)
-	// Transaction returns a connection that could run multiple statement in the same transaction
+	// Transaction returns a connection that could run multiple statements in the same transaction
 	Transaction() (Transaction, error)
 	// Supply creates given number of connections and add them to the pool
 	Supply(num int) error

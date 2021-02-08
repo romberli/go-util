@@ -156,12 +156,12 @@ func (pc *PoolConn) IsValid() bool {
 
 // Execute executes given sql and placeholders on the mysql server
 func (pc *PoolConn) Execute(command string, args ...interface{}) (middleware.Result, error) {
-	r, err := pc.Conn.Execute(command, args...)
+	result, err := pc.Conn.Execute(command, args...)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewResult(r), err
+	return result, err
 
 }
 

@@ -3,7 +3,6 @@ package mysql
 import (
 	"testing"
 
-	"github.com/siddontang/go-mysql/mysql"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,7 +12,7 @@ func TestMySQLConnection(t *testing.T) {
 		conn      *Conn
 		repRole   string
 		slaveList []string
-		result    *mysql.Result
+		result    *Result
 	)
 
 	asst := assert.New(t)

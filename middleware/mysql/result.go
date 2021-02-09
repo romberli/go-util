@@ -13,14 +13,22 @@ import (
 	"github.com/siddontang/go-mysql/mysql"
 )
 
+const middlewareType = "mysql"
+
 var _ middleware.Result = (*Result)(nil)
 
 type Result struct {
+	middleware.SliceResult
+	middleware.MapResult
 	*mysql.Result
 }
 
 func NewResult(r *mysql.Result) *Result {
-	return &Result{r}
+	return &Result{
+		middleware.NewEmptySliceResult(middlewareType),
+		middleware.NewEmptyMapResult(middlewareType),
+		r,
+	}
 }
 
 // LastInsertID returns the database's auto-generated ID

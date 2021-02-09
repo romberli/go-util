@@ -54,6 +54,9 @@ func TestResult(t *testing.T) {
 	for i := range envInfoList {
 		envInfoList[i] = &EnvInfo{}
 	}
+	value, err := result.GetMap(0, 0)
+	asst.NotNil(err, "get map value failed")
+	asst.Nil(value, "get map value failed")
 	err = result.MapToStructSlice(envInfoList, constant.DefaultMiddlewareTag)
 	asst.Nil(err, "map to struct failed")
 }

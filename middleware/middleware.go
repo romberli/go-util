@@ -1,5 +1,178 @@
 package middleware
 
+import (
+	"errors"
+	"fmt"
+)
+
+type SliceResult interface {
+	GetSlice(row, column int) ([]interface{}, error)
+	GetSliceByName(row int, name string) ([]interface{}, error)
+	GetUintSlice(row, column int) ([]uint64, error)
+	GetUintSliceByName(row int, name string) ([]uint64, error)
+	GetIntSlice(row, column int) ([]int64, error)
+	GetIntSliceByName(row int, name string) ([]int64, error)
+	GetFloatSlice(row, column int) ([]float64, error)
+	GetFloatSliceByName(row int, name string) ([]float64, error)
+	GetStringSlice(row, column int) ([]string, error)
+	GetStringSliceByName(row int, name string) ([]string, error)
+}
+
+var _ SliceResult = (*EmptySliceResult)(nil)
+
+type EmptySliceResult struct {
+	MiddlewareType string
+}
+
+// NewEmptySliceResult returns *EmptySliceResult with given middleware type
+func NewEmptySliceResult(middlewareType string) *EmptySliceResult {
+	return &EmptySliceResult{middlewareType}
+}
+
+// GetSlice always returns error, because middleware does not support slice type
+// this function is only for implementing the middleware.Result interface
+func (esr *EmptySliceResult) GetSlice(row, column int) ([]interface{}, error) {
+	return nil, errors.New(fmt.Sprintf("GetSlice() for %s is not supported, never call this function", esr.MiddlewareType))
+}
+
+// GetSliceByName always returns error, because middleware does not support slice type
+// this function is only for implementing the middleware.Result interface
+func (esr *EmptySliceResult) GetSliceByName(row int, name string) ([]interface{}, error) {
+	return nil, errors.New(fmt.Sprintf("GetSliceByName() for %s is not supported, never call this function", esr.MiddlewareType))
+}
+
+// GetUintSlice always returns error, because middleware does not support slice type
+// this function is only for implementing the middleware.Result interface
+func (esr *EmptySliceResult) GetUintSlice(row, column int) ([]uint64, error) {
+	return nil, errors.New(fmt.Sprintf("GetUintSlice() for %s is not supported, never call this function", esr.MiddlewareType))
+}
+
+// GetUintSliceByName always returns error, because middleware does not support slice type
+// this function is only for implementing the middleware.Result interface
+func (esr *EmptySliceResult) GetUintSliceByName(row int, name string) ([]uint64, error) {
+	return nil, errors.New(fmt.Sprintf("GetUintSliceByName() for %s is not supported, never call this function", esr.MiddlewareType))
+}
+
+// GetIntSlice always returns error, because middleware does not support slice type
+// this function is only for implementing the middleware.Result interface
+func (esr *EmptySliceResult) GetIntSlice(row, column int) ([]int64, error) {
+	return nil, errors.New(fmt.Sprintf("GetIntSlice() for %s is not supported, never call this function", esr.MiddlewareType))
+}
+
+// GetIntSliceByName always returns error, because middleware does not support slice type
+// this function is only for implementing the middleware.Result interface
+func (esr *EmptySliceResult) GetIntSliceByName(row int, name string) ([]int64, error) {
+	return nil, errors.New(fmt.Sprintf("GetIntSliceByName() for %s is not supported, never call this function", esr.MiddlewareType))
+}
+
+// GetFloatSlice always returns error, because middleware does not support slice type
+// this function is only for implementing the middleware.Result interface
+func (esr *EmptySliceResult) GetFloatSlice(row, column int) ([]float64, error) {
+	return nil, errors.New(fmt.Sprintf("GetFloatSlice() for %s is not supported, never call this function", esr.MiddlewareType))
+}
+
+// GetFloatSliceByName always returns error, because middleware does not support slice type
+// this function is only for implementing the middleware.Result interface
+func (esr *EmptySliceResult) GetFloatSliceByName(row int, name string) ([]float64, error) {
+	return nil, errors.New(fmt.Sprintf("GetFloatSliceByName() for %s is not supported, never call this function", esr.MiddlewareType))
+}
+
+// GetStringSlice always returns error, because middleware does not support slice type
+// this function is only for implementing the middleware.Result interface
+func (esr *EmptySliceResult) GetStringSlice(row, column int) ([]string, error) {
+	return nil, errors.New(fmt.Sprintf("GetStringSlice() for %s is not supported, never call this function", esr.MiddlewareType))
+}
+
+// GetStringSliceByName always returns error, because middleware does not support slice type
+// this function is only for implementing the middleware.Result interface
+func (esr *EmptySliceResult) GetStringSliceByName(row int, name string) ([]string, error) {
+	return nil, errors.New(fmt.Sprintf("GetStringSliceByName() for %s is not supported, never call this function", esr.MiddlewareType))
+}
+
+type MapResult interface {
+	GetMap(row, column int) (map[string]interface{}, error)
+	GetMapByName(row int, name string) (map[string]interface{}, error)
+	GetMapUint(row, column int) (map[string]uint64, error)
+	GetMapUintByName(row int, name string) (map[string]uint64, error)
+	GetMapInt(row, column int) (map[string]int64, error)
+	GetMapIntByName(row int, name string) (map[string]int64, error)
+	GetMapFloat(row, column int) (map[string]float64, error)
+	GetMapFloatByName(row int, name string) (map[string]float64, error)
+	GetMapString(row, column int) (map[string]string, error)
+	GetMapStringByName(row int, name string) (map[string]string, error)
+}
+
+var _ MapResult = (*EmptyMapResult)(nil)
+
+type EmptyMapResult struct {
+	MiddlewareType string
+}
+
+// NewEmptyMapResult returns *EmptyMapResult with given middleware type
+func NewEmptyMapResult(middlewareType string) *EmptyMapResult {
+	return &EmptyMapResult{middlewareType}
+}
+
+// GetMap always returns error, because middleware does not support map data type,
+// this function is only for implementing the middleware.Result interface
+func (emr *EmptyMapResult) GetMap(row, column int) (map[string]interface{}, error) {
+	return nil, errors.New(fmt.Sprintf("map data type for %s is not supported, never call this function", emr.MiddlewareType))
+}
+
+// GetMapByName always returns error, because middleware does not support map data type,
+// this function is only for implementing the middleware.Result interface
+func (emr *EmptyMapResult) GetMapByName(row int, name string) (map[string]interface{}, error) {
+	return nil, errors.New(fmt.Sprintf("map data type for %s is not supported, never call this function", emr.MiddlewareType))
+}
+
+// GetMapUint always returns error, because middleware does not support map data type,
+// this function is only for implementing the middleware.Result interface
+func (emr *EmptyMapResult) GetMapUint(row, column int) (map[string]uint64, error) {
+	return nil, errors.New(fmt.Sprintf("map data type for %s is not supported, never call this function", emr.MiddlewareType))
+}
+
+// GetMapUintByName always returns error, because middleware does not support map data type,
+// this function is only for implementing the middleware.Result interface
+func (emr *EmptyMapResult) GetMapUintByName(row int, name string) (map[string]uint64, error) {
+	return nil, errors.New(fmt.Sprintf("map data type for %s is not supported, never call this function", emr.MiddlewareType))
+}
+
+// GetMapInt always returns error, because middleware does not support map data type,
+// this function is only for implementing the middleware.Result interface
+func (emr *EmptyMapResult) GetMapInt(row, column int) (map[string]int64, error) {
+	return nil, errors.New(fmt.Sprintf("map data type for %s is not supported, never call this function", emr.MiddlewareType))
+}
+
+// GetMapIntByName always returns error, because middleware does not support map data type,
+// this function is only for implementing the middleware.Result interface
+func (emr *EmptyMapResult) GetMapIntByName(row int, name string) (map[string]int64, error) {
+	return nil, errors.New(fmt.Sprintf("map data type for %s is not supported, never call this function", emr.MiddlewareType))
+}
+
+// GetMapFloat always returns error, because middleware does not support map data type,
+// this function is only for implementing the middleware.Result interface
+func (emr *EmptyMapResult) GetMapFloat(row, column int) (map[string]float64, error) {
+	return nil, errors.New(fmt.Sprintf("map data type for %s is not supported, never call this function", emr.MiddlewareType))
+}
+
+// GetMapFloatByName always returns error, because middleware does not support map data type,
+// this function is only for implementing the middleware.Result interface
+func (emr *EmptyMapResult) GetMapFloatByName(row int, name string) (map[string]float64, error) {
+	return nil, errors.New(fmt.Sprintf("map data type for %s is not supported, never call this function", emr.MiddlewareType))
+}
+
+// GetMapString always returns error, because middleware does not support map data type,
+// this function is only for implementing the middleware.Result interface
+func (emr *EmptyMapResult) GetMapString(row, column int) (map[string]string, error) {
+	return nil, errors.New(fmt.Sprintf("map data type for %s is not supported, never call this function", emr.MiddlewareType))
+}
+
+// GetMapStringByName always returns error, because middleware does not support map data type,
+// this function is only for implementing the middleware.Result interface
+func (emr *EmptyMapResult) GetMapStringByName(row int, name string) (map[string]string, error) {
+	return nil, errors.New(fmt.Sprintf("map data type for %s is not supported, never call this function", emr.MiddlewareType))
+}
+
 type Result interface {
 	// LastInsertID returns the database's auto-generated ID
 	// after, for example, an INSERT into a table with primary key.
@@ -55,6 +228,10 @@ type Result interface {
 	// so set tag to each field that need to be mapped,
 	// using "middleware" as the tag is recommended.
 	MapToStructByRowIndex(in interface{}, row int, tag string) error
+	// must implement SliceResult Interface
+	SliceResult
+	// must implement MapResult Interface
+	MapResult
 }
 
 type PoolConn interface {

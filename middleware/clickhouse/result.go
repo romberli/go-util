@@ -12,9 +12,12 @@ import (
 	"github.com/romberli/go-util/middleware"
 )
 
+const middlewareType = "clickhouse"
+
 var _ middleware.Result = (*Result)(nil)
 
 type Result struct {
+	middleware.MapResult
 	FieldSlice []string
 	FieldMap   map[string]int
 	Values     [][]driver.Value
@@ -41,32 +44,41 @@ func NewResult(rows driver.Rows) *Result {
 	}
 
 	return &Result{
+		middleware.NewEmptyMapResult(middlewareType),
 		columns,
 		fieldMap,
 		values,
 	}
 }
 
+// NewEmptyResult returns an empty *Result
 func NewEmptyResult() *Result {
 	return &Result{}
 }
 
+// LastInsertID always returns error, because clickhouse does not support this,
+// this function is only for implementing the middleware.Result interface
 func (r *Result) LastInsertID() (uint64, error) {
-	return constant.ZeroInt, errors.New("LastInsertID() is not supported")
+	return constant.ZeroInt, errors.New("LastInsertID() for clickhouse is not supported, never call this function")
 }
 
+// LastInsertID always returns error, because clickhouse does not support this,
+// this function is only for implementing the middleware.Result interface
 func (r *Result) RowsAffected() (uint64, error) {
-	return constant.ZeroInt, errors.New("RowsAffected() is not supported")
+	return constant.ZeroInt, errors.New("RowsAffected() for clickhouse is not supported, never call this function")
 }
 
+// RowNumber returns how many rows in the result
 func (r *Result) RowNumber() int {
 	return len(r.Values)
 }
 
+// ColumnNumber returns how many columns in the result
 func (r *Result) ColumnNumber() int {
 	return len(r.FieldSlice)
 }
 
+// GetValue returns interface{} type value of given row and column number
 func (r *Result) GetValue(row, column int) (interface{}, error) {
 	if row >= len(r.Values) || row < constant.ZeroInt {
 		return nil, errors.Errorf("invalid row index %d", row)
@@ -79,12 +91,14 @@ func (r *Result) GetValue(row, column int) (interface{}, error) {
 	return r.Values[row][column], nil
 }
 
+// ColumnExists check if column exists in the result
 func (r *Result) ColumnExists(name string) bool {
 	_, ok := r.FieldMap[name]
 
 	return ok
 }
 
+// NameIndex returns index of given column
 func (r *Result) NameIndex(name string) (int, error) {
 	column, ok := r.FieldMap[name]
 	if ok {
@@ -94,6 +108,7 @@ func (r *Result) NameIndex(name string) (int, error) {
 	return constant.ZeroInt, errors.Errorf("invalid field name %s", name)
 }
 
+// GetValueByName returns interface{} type value of given row number and column name
 func (r *Result) GetValueByName(row int, name string) (interface{}, error) {
 	column, err := r.NameIndex(name)
 	if err != nil {
@@ -103,6 +118,7 @@ func (r *Result) GetValueByName(row int, name string) (interface{}, error) {
 	return r.GetValue(row, column)
 }
 
+// IsNull checks if value of given row and column index is nil
 func (r *Result) IsNull(row, column int) (bool, error) {
 	value, err := r.GetValue(row, column)
 	if err != nil {
@@ -112,6 +128,7 @@ func (r *Result) IsNull(row, column int) (bool, error) {
 	return value == nil, nil
 }
 
+// IsNullByName checks if value of given row number and column name is nil
 func (r *Result) IsNullByName(row int, name string) (bool, error) {
 	column, err := r.NameIndex(name)
 	if err != nil {
@@ -121,6 +138,7 @@ func (r *Result) IsNullByName(row int, name string) (bool, error) {
 	return r.IsNull(row, column)
 }
 
+// GetUint returns uint64 type value of given row and column number
 func (r *Result) GetUint(row, column int) (uint64, error) {
 	value, err := r.GetValue(row, column)
 	if err != nil {
@@ -130,6 +148,7 @@ func (r *Result) GetUint(row, column int) (uint64, error) {
 	return common.ConvertToUint(value)
 }
 
+// GetUintByName returns uint64 type value of given row number and column name
 func (r *Result) GetUintByName(row int, name string) (uint64, error) {
 	if column, err := r.NameIndex(name); err != nil {
 		return constant.ZeroInt, err
@@ -138,6 +157,7 @@ func (r *Result) GetUintByName(row int, name string) (uint64, error) {
 	}
 }
 
+// GetInt returns int64 type value of given row and column number
 func (r *Result) GetInt(row, column int) (int64, error) {
 	value, err := r.GetUint(row, column)
 	if err != nil {
@@ -147,6 +167,7 @@ func (r *Result) GetInt(row, column int) (int64, error) {
 	return int64(value), nil
 }
 
+// GetIntByName returns int64 type value of given row number and column name
 func (r *Result) GetIntByName(row int, name string) (int64, error) {
 	value, err := r.GetUintByName(row, name)
 	if err != nil {
@@ -156,6 +177,7 @@ func (r *Result) GetIntByName(row int, name string) (int64, error) {
 	return int64(value), nil
 }
 
+// GetFloat returns float64 type value of given row and column number
 func (r *Result) GetFloat(row, column int) (float64, error) {
 	value, err := r.GetValue(row, column)
 	if err != nil {
@@ -165,6 +187,7 @@ func (r *Result) GetFloat(row, column int) (float64, error) {
 	return common.ConvertToFloat(value)
 }
 
+// GetFloatByName returns float64 type value of given row number and column name
 func (r *Result) GetFloatByName(row int, name string) (float64, error) {
 	column, err := r.NameIndex(name)
 	if err != nil {
@@ -174,6 +197,7 @@ func (r *Result) GetFloatByName(row int, name string) (float64, error) {
 	return r.GetFloat(row, column)
 }
 
+// GetString returns string type value of given row and column number
 func (r *Result) GetString(row, column int) (string, error) {
 	value, err := r.GetValue(row, column)
 	if err != nil {
@@ -183,6 +207,7 @@ func (r *Result) GetString(row, column int) (string, error) {
 	return common.ConvertToString(value)
 }
 
+// GetStringByName returns string type value of given row number and column name
 func (r *Result) GetStringByName(row int, name string) (string, error) {
 	column, err := r.NameIndex(name)
 	if err != nil {
@@ -192,6 +217,7 @@ func (r *Result) GetStringByName(row int, name string) (string, error) {
 	return r.GetString(row, column)
 }
 
+// GetSlice returns []interface type value of given row and column number
 func (r *Result) GetSlice(row, column int) ([]interface{}, error) {
 	value, err := r.GetValue(row, column)
 	if err != nil {
@@ -213,6 +239,7 @@ func (r *Result) GetSlice(row, column int) ([]interface{}, error) {
 	return v, nil
 }
 
+// GetStringByName returns []interface type value of given row number and column name
 func (r *Result) GetSliceByName(row int, name string) ([]interface{}, error) {
 	column, err := r.NameIndex(name)
 	if err != nil {
@@ -222,6 +249,7 @@ func (r *Result) GetSliceByName(row int, name string) ([]interface{}, error) {
 	return r.GetSlice(row, column)
 }
 
+// GetUintSlice returns []uint64 type value of given row and column number
 func (r *Result) GetUintSlice(row, column int) ([]uint64, error) {
 	value, err := r.GetValue(row, column)
 	if err != nil {
@@ -236,6 +264,7 @@ func (r *Result) GetUintSlice(row, column int) ([]uint64, error) {
 	return result.([]uint64), nil
 }
 
+// GetUintSliceByName returns []uint64 type value of given row number and column name
 func (r *Result) GetUintSliceByName(row int, name string) ([]uint64, error) {
 	column, err := r.NameIndex(name)
 	if err != nil {
@@ -245,6 +274,7 @@ func (r *Result) GetUintSliceByName(row int, name string) ([]uint64, error) {
 	return r.GetUintSlice(row, column)
 }
 
+// GetIntSlice returns []uint64 type value of given row and column number
 func (r *Result) GetIntSlice(row, column int) ([]int64, error) {
 	value, err := r.GetValue(row, column)
 	if err != nil {
@@ -259,6 +289,7 @@ func (r *Result) GetIntSlice(row, column int) ([]int64, error) {
 	return result.([]int64), nil
 }
 
+// GetIntSliceByName returns []int64 type value of given row number and column name
 func (r *Result) GetIntSliceByName(row int, name string) ([]int64, error) {
 	column, err := r.NameIndex(name)
 	if err != nil {
@@ -268,6 +299,7 @@ func (r *Result) GetIntSliceByName(row int, name string) ([]int64, error) {
 	return r.GetIntSlice(row, column)
 }
 
+// GetFloatSlice returns []float64 type value of given row and column number
 func (r *Result) GetFloatSlice(row, column int) ([]float64, error) {
 	value, err := r.GetValue(row, column)
 	if err != nil {
@@ -282,6 +314,7 @@ func (r *Result) GetFloatSlice(row, column int) ([]float64, error) {
 	return result.([]float64), nil
 }
 
+// GetFloatSliceByName returns []float64 type value of given row number and column name
 func (r *Result) GetFloatSliceByName(row int, name string) ([]float64, error) {
 	column, err := r.NameIndex(name)
 	if err != nil {
@@ -291,6 +324,7 @@ func (r *Result) GetFloatSliceByName(row int, name string) ([]float64, error) {
 	return r.GetFloatSlice(row, column)
 }
 
+// GetStringSlice returns []string type value of given row and column number
 func (r *Result) GetStringSlice(row, column int) ([]string, error) {
 	value, err := r.GetValue(row, column)
 	if err != nil {
@@ -305,6 +339,7 @@ func (r *Result) GetStringSlice(row, column int) ([]string, error) {
 	return result.([]string), nil
 }
 
+// GetStringSliceByName returns []string type value of given row number and column name
 func (r *Result) GetStringSliceByName(row int, name string) ([]string, error) {
 	column, err := r.NameIndex(name)
 	if err != nil {
@@ -312,26 +347,6 @@ func (r *Result) GetStringSliceByName(row int, name string) ([]string, error) {
 	}
 
 	return r.GetStringSlice(row, column)
-}
-
-func (r *Result) GetMap(row, column int) (map[string]interface{}, error) {
-	return nil, errors.New("map data type is not supported, never call this function")
-}
-
-func (r *Result) GetMapUint(row, column int) (map[string]uint64, error) {
-	return nil, errors.New("map data type is not supported, never call this function")
-}
-
-func (r *Result) GetMapInt(row, column int) (map[string]int64, error) {
-	return nil, errors.New("map data type is not supported, never call this function")
-}
-
-func (r *Result) GetMapFloat(row, column int) (map[string]float64, error) {
-	return nil, errors.New("map data type is not supported, never call this function")
-}
-
-func (r *Result) GetMapString(row, column int) (map[string]string, error) {
-	return nil, errors.New("map data type is not supported, never call this function")
 }
 
 // MapToStructSlice maps each row to a struct of the first argument,

@@ -46,9 +46,9 @@ func TestMySQLGlobalPool(t *testing.T) {
 
 	sql := "select ? as ok;"
 	result, err = Execute(sql, 1)
-	asst.Nil(err, "execute sql with global pool failed.")
+	asst.Nil(err, "execute sqls with global pool failed.")
 	actual, err := result.(*Result).GetIntByName(0, "ok")
-	asst.Nil(err, "execute sql with global pool failed.")
+	asst.Nil(err, "execute sqls with global pool failed.")
 	asst.Equal(int64(1), actual, "expected and actual values are not equal.")
 
 	// sleep to test maintain mechanism

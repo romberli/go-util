@@ -42,10 +42,7 @@ func TestConn_Execute(t *testing.T) {
 	asst := assert.New(t)
 
 	// create table
-	sql := `drop table if exists t01;`
-	_, err := conn.Execute(sql)
-	asst.Nil(err, "test Execute() failed")
-	sql = `
+	sql := `
 		create table t01
 		(
 			id               Int64,
@@ -59,10 +56,10 @@ func TestConn_Execute(t *testing.T) {
 			engine = MergeTree PARTITION BY toYYYYMMDD(last_update_time)
 			ORDER BY (id, last_update_time) SETTINGS index_granularity = 8192;
 	`
-	_, err = conn.Execute(sql)
+	_, err := conn.Execute(sql)
 	asst.Nil(err, "test Execute() failed")
 	// insert data
-	_, err = conn.Begin()
+	err = conn.Begin()
 	asst.Nil(err, "test Execute() failed")
 	sql = `insert into t01(id, name, group, type, del_flag, create_time, last_update_time) values(?, ?, ?, ?, ?, ?, ?)`
 	_, err = conn.Execute(sql, 1, "aaa", clickhouse.Array([]string{"group1", "group2", "group3"}), "a", 0, time.Now(), time.Now())
@@ -77,10 +74,8 @@ func TestConn_Execute(t *testing.T) {
 	// map to struct
 	r := &testRow{}
 	err = result.MapToStructByRowIndex(r, 0, "middleware")
-
-	fmt.Println(fmt.Sprintf("%v", r))
-
-	for _, row := range result.Values {
-		t.Log(fmt.Sprintf("%v", row))
-	}
+	// drop table
+	sql = `drop table if exists t01;`
+	_, err = conn.Execute(sql)
+	asst.Nil(err, "test Execute() failed")
 }

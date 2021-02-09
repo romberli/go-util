@@ -68,7 +68,7 @@ func NewMySQLConn(addr string, dbName string, dbUser string, dbPass string) (*Co
 	}, nil
 }
 
-// Execute executes given sql with arguments and return a result
+// Execute executes given sqls with arguments and return a result
 func (conn *Conn) Execute(command string, args ...interface{}) (*Result, error) {
 	result, err := conn.Conn.Execute(command, args...)
 	if err != nil {
@@ -127,7 +127,7 @@ func (conn *Conn) GetReplicationSlaveList() (slaveList []string, err error) {
 	return slaveList, nil
 }
 
-// GetReplicationSlavesStatus returns replication slave status, like sql: "show slave status;"
+// GetReplicationSlavesStatus returns replication slave status, like sqls: "show slave status;"
 func (conn *Conn) GetReplicationSlavesStatus() (result *Result, err error) {
 	return conn.Execute(ShowSlaveStatusSQL)
 }

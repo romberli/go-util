@@ -8,7 +8,7 @@ import (
 	"github.com/ClickHouse/clickhouse-go"
 
 	"github.com/romberli/go-util/constant"
-	"github.com/romberli/go-util/middleware/sql"
+	"github.com/romberli/go-util/middleware/sqls"
 )
 
 const (
@@ -145,7 +145,7 @@ func NewClickhouseConnWithDefault(addr, dbName, dbUser, dbPass string, altHosts 
 	return NewClickhouseConnWithConfig(config)
 }
 
-// Execute executes given sql with arguments and return a result
+// Execute executes given sqls with arguments and return a result
 func (conn *Conn) Execute(command string, args ...interface{}) (*Result, error) {
 	// prepare
 	stmt, err := conn.Prepare(command)
@@ -159,9 +159,9 @@ func (conn *Conn) Execute(command string, args ...interface{}) (*Result, error) 
 		values = append(values, arg)
 	}
 
-	sqlType := sql.GetType(command)
-	if sqlType == sql.Select {
-		// this is a select sql
+	sqlType := sqls.GetType(command)
+	if sqlType == sqls.Select {
+		// this is a select sqls
 		rows, err := stmt.Query(values)
 		if err != nil {
 			return nil, err
@@ -171,11 +171,40 @@ func (conn *Conn) Execute(command string, args ...interface{}) (*Result, error) 
 		return NewResult(rows), nil
 	}
 
-	// this is not a select sql
+	// this is not a select sqls
 	_, err = stmt.Exec(values)
 	if err != nil {
 		return nil, err
 	}
 
 	return NewEmptyResult(), nil
+}
+
+func (conn *Conn) CheckInstanceStatus() bool {
+	sql := "select 1 as ok;"
+	result, err := conn.Execute(sql)
+	if err != nil {
+		return false
+	}
+
+	ok, err := result.GetIntByName(constant.ZeroInt, "ok")
+	if err != nil {
+		return false
+	}
+
+	return ok == 1
+}
+
+func (conn *Conn) Begin() error {
+	_, err := conn.Clickhouse.Begin()
+
+	return err
+}
+
+func (conn *Conn) Commit() error {
+	return conn.Clickhouse.Commit()
+}
+
+func (conn *Conn) Rollback() error {
+	return conn.Clickhouse.Rollback()
 }

@@ -89,7 +89,7 @@ func Release(num int) error {
 	return _globalPool.Release(num)
 }
 
-// Execute execute given sql statement
+// Execute execute given sqls statement
 func Execute(sql string, args ...interface{}) (middleware.Result, error) {
 	if _globalPool == nil {
 		return nil, errors.New("global pool is nil, please initiate it first")

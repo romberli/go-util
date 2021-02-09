@@ -1,4 +1,4 @@
-package mysql
+package clickhouse
 
 import (
 	"errors"
@@ -36,9 +36,9 @@ type PoolConfig struct {
 }
 
 // NewPoolConfig returns a new PoolConfig
-func NewPoolConfig(addr, dbName, dbUser, dbPass string,
-	maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval int) PoolConfig {
-	config := NewMySQLConfig(addr, dbName, dbUser, dbPass)
+func NewPoolConfig(addr, dbName, dbUser, dbPass string, debug bool, readTimeout, writeTimeout int,
+	maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval int, altHosts ...string) PoolConfig {
+	config := NewClickhouseConfig(addr, dbName, dbUser, dbPass, debug, readTimeout, writeTimeout, altHosts...)
 
 	return PoolConfig{
 		Config:             config,
@@ -66,26 +66,26 @@ func NewPoolConfigWithConfig(config Config, maxConnections, initConnections, max
 // Validate validates pool config
 func (cfg *PoolConfig) Validate() (bool, error) {
 	// validate MaxConnections
-	if cfg.MaxConnections <= 0 {
+	if cfg.MaxConnections <= constant.ZeroInt {
 		return false, errors.New("maximum connection argument should larger than 0")
 	}
 	// validate InitConnections
-	if cfg.InitConnections < 0 {
+	if cfg.InitConnections < constant.ZeroInt {
 		return false, errors.New("init connection argument should not be smaller than 0")
 	}
 	// validate MaxIdleConnections
-	if cfg.MaxIdleConnections < 0 {
+	if cfg.MaxIdleConnections < constant.ZeroInt {
 		return false, errors.New("maximum idle connection argument should not be smaller than 0")
 	}
 	if cfg.MaxIdleConnections > cfg.MaxConnections {
 		return false, errors.New("maximum idle connection argument should not be larger than maximum connection argument")
 	}
 	// validate MaxIdleTime
-	if cfg.MaxIdleTime <= 0 {
+	if cfg.MaxIdleTime <= constant.ZeroInt {
 		return false, errors.New("maximum idle time argument should be larger than 0")
 	}
 	// validate KeepAliveInterval
-	if cfg.KeepAliveInterval <= 0 {
+	if cfg.KeepAliveInterval <= constant.ZeroInt {
 		return false, errors.New("keep alive interval argument should be larger than 0")
 	}
 
@@ -98,8 +98,8 @@ type PoolConn struct {
 }
 
 // NewPoolConn returns a new *PoolConn
-func NewPoolConn(addr, dbName, dbUser, dbPass string) (*PoolConn, error) {
-	conn, err := NewMySQLConn(addr, dbName, dbUser, dbPass)
+func NewPoolConn(addr, dbName, dbUser, dbPass string, debug bool, readTimeout, writeTimeout int, alterHosts ...string) (*PoolConn, error) {
+	conn, err := NewClickhouseConn(addr, dbName, dbUser, dbPass, debug, readTimeout, writeTimeout, alterHosts...)
 	if err != nil {
 		return nil, err
 	}
@@ -111,8 +111,8 @@ func NewPoolConn(addr, dbName, dbUser, dbPass string) (*PoolConn, error) {
 }
 
 // NewPoolConnWithPool returns a new *PoolConn
-func NewPoolConnWithPool(pool *Pool, addr, dbName, dbUser, dbPass string) (*PoolConn, error) {
-	pc, err := NewPoolConn(addr, dbName, dbUser, dbPass)
+func NewPoolConnWithPool(pool *Pool, addr, dbName, dbUser, dbPass string, debug bool, readTimeout, writeTimeout int, alterHosts ...string) (*PoolConn, error) {
+	pc, err := NewPoolConn(addr, dbName, dbUser, dbPass, debug, readTimeout, writeTimeout, alterHosts...)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +154,7 @@ func (pc *PoolConn) IsValid() bool {
 	return pc.CheckInstanceStatus()
 }
 
-// Execute executes given sqls and placeholders on the mysql server
+// Execute executes given sql and placeholders on the mysql server
 func (pc *PoolConn) Execute(command string, args ...interface{}) (middleware.Result, error) {
 	result, err := pc.Conn.Execute(command, args...)
 	if err != nil {
@@ -176,16 +176,17 @@ type Pool struct {
 }
 
 // NewMySQLPool returns a new *Pool
-func NewMySQLPool(addr, dbName, dbUser, dbPass string,
-	maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval int) (*Pool, error) {
-	cfg := NewPoolConfig(addr, dbName, dbUser, dbPass, maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval)
+func NewMySQLPool(addr, dbName, dbUser, dbPass string, debug bool, readTimeout, writeTimeout int,
+	maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval int, altHosts ...string) (*Pool, error) {
+	cfg := NewPoolConfig(addr, dbName, dbUser, dbPass, debug, readTimeout, writeTimeout,
+		maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval, altHosts...)
 
 	return NewMySQLPoolWithPoolConfig(cfg)
 }
 
 // NewMySQLPoolWithDefault returns a new *Pool with default configuration
 func NewMySQLPoolWithDefault(addr, dbName, dbUser, dbPass string) (*Pool, error) {
-	return NewMySQLPool(addr, dbName, dbUser, dbPass,
+	return NewMySQLPool(addr, dbName, dbUser, dbPass, false, DefaultReadTimeout, DefaultWriteTimeout,
 		DefaultMaxConnections, DefaultInitConnections, DefaultMaxIdleConnections, DefaultMaxIdleTime, DefaultKeepAliveInterval)
 }
 
@@ -256,7 +257,7 @@ func (p *Pool) supply(num int) error {
 
 	for i := 0; i < num; i++ {
 		if len(p.freeConnChan)+p.usedConnections < p.MaxConnections {
-			pc, err := NewPoolConnWithPool(p, p.Addr, p.DBName, p.DBUser, p.DBPass)
+			pc, err := NewPoolConnWithPool(p, p.Addr, p.DBName, p.DBUser, p.DBPass, p.Debug, p.ReadTimeout, p.WriteTimeout, p.AltHosts...)
 			if err != nil {
 				merr = multierror.Append(merr, err)
 				continue
@@ -335,7 +336,7 @@ func (p *Pool) get() (*PoolConn, error) {
 	}
 
 	// there is no valid connection in the free connection channel, therefore create a new one
-	pc, err := NewPoolConnWithPool(p, p.Addr, p.DBName, p.DBUser, p.DBPass)
+	pc, err := NewPoolConnWithPool(p, p.Addr, p.DBName, p.DBUser, p.DBPass, p.Debug, p.ReadTimeout, p.WriteTimeout, p.AltHosts...)
 	if err != nil {
 		return nil, err
 	}

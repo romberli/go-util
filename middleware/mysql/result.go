@@ -131,15 +131,15 @@ func (r *Result) MapToStructSlice(in interface{}, tag string) error {
 		return errors.New("tag argument could not be empty")
 	}
 
-	valueOf := reflect.ValueOf(in)
+	inVal := reflect.ValueOf(in)
 	rowNum := r.RowNumber()
-	length := valueOf.Len()
+	length := inVal.Len()
 	if rowNum != length {
 		return errors.New(fmt.Sprintf("number of rows(%d) is not equal to length of the slice(%d)", rowNum, length))
 	}
 
 	for i := 0; i < length; i++ {
-		value := valueOf.Index(i).Interface()
+		value := inVal.Index(i).Interface()
 		err := r.mapToStructByRowIndex(value, i, tag)
 		if err != nil {
 			return err
@@ -161,7 +161,7 @@ func (r *Result) MapToStructByRowIndex(in interface{}, row int, tag string) erro
 		return errors.New("tag argument could not be empty")
 	}
 
-	return r.mapToStructByRowIndex(in, constant.ZeroInt, tag)
+	return r.mapToStructByRowIndex(in, row, tag)
 }
 
 // mapToStructByRowIndex maps row of given index result to the struct
@@ -173,13 +173,13 @@ func (r *Result) MapToStructByRowIndex(in interface{}, row int, tag string) erro
 // using "middleware" as the tag is recommended.
 func (r *Result) mapToStructByRowIndex(in interface{}, row int, tag string) error {
 	if reflect.TypeOf(in).Kind() != reflect.Ptr {
-		return errors.New("each element in the slice must be a pointer to struct")
+		return errors.New("first argument must be a pointer to struct")
 	}
 
-	inValue := reflect.ValueOf(in).Elem()
-	inType := inValue.Type()
+	inVal := reflect.ValueOf(in).Elem()
+	inType := inVal.Type()
 
-	for i := 0; i < inValue.NumField(); i++ {
+	for i := 0; i < inVal.NumField(); i++ {
 		fieldType := inType.Field(i)
 		fieldName := fieldType.Name
 		columnName := fieldType.Tag.Get(tag)

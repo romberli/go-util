@@ -11,7 +11,7 @@ import (
 	"github.com/romberli/go-util/middleware"
 )
 
-func TestMySQLPool(t *testing.T) {
+func TestPool(t *testing.T) {
 	var (
 		err       error
 		pool      *Pool

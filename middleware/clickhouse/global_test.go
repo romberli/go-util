@@ -1,35 +1,25 @@
-package mysql
+package clickhouse
 
 import (
 	"testing"
 	"time"
 
-	"github.com/romberli/log"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap/zapcore"
 
 	"github.com/romberli/go-util/middleware"
 )
 
-func TestMySQLGlobalPool(t *testing.T) {
+func TestClickhouseGlobalPool(t *testing.T) {
 	var (
-		err       error
-		conn      *PoolConn
-		slaveList []string
-		result    middleware.Result
+		err    error
+		conn   *PoolConn
+		result middleware.Result
 	)
 
 	asst := assert.New(t)
 
-	log.SetLevel(zapcore.DebugLevel)
-
-	addr := "192.168.137.11:3306"
-	dbName := "test"
-	dbUser := "root"
-	dbPass := "root"
-
 	// create pool
-	err = InitMySQLGlobalPoolWithDefault(addr, dbName, dbUser, dbPass)
+	err = InitClickhouseGlobalPoolWithDefault(addr, dbName, dbUser, dbPass)
 	asst.Nil(err, "create pool failed. addr: %s, dbName: %s, dbUser: %s, dbPass: %s", addr, dbName, dbUser, dbPass)
 
 	// get connection from the pool
@@ -37,15 +27,14 @@ func TestMySQLGlobalPool(t *testing.T) {
 	asst.Nil(err, "get connection from pool failed.")
 
 	// test connection
-	slaveList, err = conn.GetReplicationSlaveList()
-	asst.Nil(err, "get replication slave list failed.")
-	t.Logf("replication slave list: %v", slaveList)
+	ok := conn.CheckInstanceStatus()
+	asst.True(ok, "check instance status failed.")
 
 	err = conn.Close()
 	asst.Nil(err, "close connection failed.")
 
-	sql := "select ? as ok;"
-	result, err = Execute(sql, 1)
+	sql := "select 1 as ok;"
+	result, err = Execute(sql)
 	asst.Nil(err, "execute sql with global pool failed.")
 	actual, err := result.(*Result).GetIntByName(0, "ok")
 	asst.Nil(err, "execute sql with global pool failed.")

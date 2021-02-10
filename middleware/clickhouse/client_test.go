@@ -12,7 +12,7 @@ import (
 
 const (
 	addr   = "192.168.137.11:9000"
-	dbName = "pmm"
+	dbName = "default"
 	dbUser = ""
 	dbPass = ""
 )

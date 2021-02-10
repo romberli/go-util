@@ -1,4 +1,4 @@
-package mysql
+package clickhouse
 
 import (
 	"errors"
@@ -8,30 +8,30 @@ import (
 
 var _globalPool *Pool
 
-// InitMySQLGlobalPool returns a new *Pool and replaces it as global pool
-func InitMySQLGlobalPool(addr, dbName, dbUser, dbPass string,
-	maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval int) error {
-	cfg := NewPoolConfig(addr, dbName, dbUser, dbPass, maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval)
+// InitClickhouseGlobalPool returns a new *Pool and replaces it as global pool
+func InitClickhouseGlobalPool(addr, dbName, dbUser, dbPass string, debug bool, readTimeout, writeTimeout int,
+	maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval int, altHosts ...string) error {
+	cfg := NewPoolConfig(addr, dbName, dbUser, dbPass, debug, readTimeout, writeTimeout, maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval, altHosts...)
 
-	return InitMySQLGlobalPoolWithPoolConfig(cfg)
+	return InitClickhouseGlobalPoolWithPoolConfig(cfg)
 }
 
-// InitMySQLGlobalPoolWithDefault returns a new *Pool with default configuration and replaces it as global pool
-func InitMySQLGlobalPoolWithDefault(addr, dbName, dbUser, dbPass string) error {
-	return InitMySQLGlobalPool(addr, dbName, dbUser, dbPass,
+// InitClickhouseGlobalPoolWithDefault returns a new *Pool with default configuration and replaces it as global pool
+func InitClickhouseGlobalPoolWithDefault(addr, dbName, dbUser, dbPass string) error {
+	return InitClickhouseGlobalPool(addr, dbName, dbUser, dbPass, false, DefaultReadTimeout, DefaultWriteTimeout,
 		DefaultMaxConnections, DefaultInitConnections, DefaultMaxIdleConnections, DefaultMaxIdleTime, DefaultKeepAliveInterval)
 }
 
-// InitMySQLGlobalPoolWithConfig returns a new *Pool with a Config object and replaces it as global pool
-func InitMySQLGlobalPoolWithConfig(config Config, maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval int) error {
+// InitClickhouseGlobalPoolWithConfig returns a new *Pool with a Config object and replaces it as global pool
+func InitClickhouseGlobalPoolWithConfig(config Config, maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval int) error {
 	cfg := NewPoolConfigWithConfig(config, maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval)
 
-	return InitMySQLGlobalPoolWithPoolConfig(cfg)
+	return InitClickhouseGlobalPoolWithPoolConfig(cfg)
 }
 
-// InitMySQLGlobalPoolWithPoolConfig returns a new *Pool with a PoolConfig object and replaces it as global pool
-func InitMySQLGlobalPoolWithPoolConfig(config PoolConfig) error {
-	pool, err := NewMySQLPoolWithPoolConfig(config)
+// InitClickhouseGlobalPoolWithPoolConfig returns a new *Pool with a PoolConfig object and replaces it as global pool
+func InitClickhouseGlobalPoolWithPoolConfig(config PoolConfig) error {
+	pool, err := NewClickhousePoolWithPoolConfig(config)
 	if err != nil {
 		return err
 	}

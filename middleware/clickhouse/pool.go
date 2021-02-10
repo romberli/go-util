@@ -175,29 +175,29 @@ type Pool struct {
 	isClosed        bool
 }
 
-// NewMySQLPool returns a new *Pool
-func NewMySQLPool(addr, dbName, dbUser, dbPass string, debug bool, readTimeout, writeTimeout int,
+// NewClickhousePool returns a new *Pool
+func NewClickhousePool(addr, dbName, dbUser, dbPass string, debug bool, readTimeout, writeTimeout int,
 	maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval int, altHosts ...string) (*Pool, error) {
 	cfg := NewPoolConfig(addr, dbName, dbUser, dbPass, debug, readTimeout, writeTimeout,
 		maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval, altHosts...)
 
-	return NewMySQLPoolWithPoolConfig(cfg)
+	return NewClickhousePoolWithPoolConfig(cfg)
 }
 
-// NewMySQLPoolWithDefault returns a new *Pool with default configuration
-func NewMySQLPoolWithDefault(addr, dbName, dbUser, dbPass string) (*Pool, error) {
-	return NewMySQLPool(addr, dbName, dbUser, dbPass, false, DefaultReadTimeout, DefaultWriteTimeout,
+// NewClickhousePoolWithDefault returns a new *Pool with default configuration
+func NewClickhousePoolWithDefault(addr, dbName, dbUser, dbPass string) (*Pool, error) {
+	return NewClickhousePool(addr, dbName, dbUser, dbPass, false, DefaultReadTimeout, DefaultWriteTimeout,
 		DefaultMaxConnections, DefaultInitConnections, DefaultMaxIdleConnections, DefaultMaxIdleTime, DefaultKeepAliveInterval)
 }
 
-// NewMySQLPoolWithConfig returns a new *Pool with a Config object
-func NewMySQLPoolWithConfig(config Config, maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval int) (*Pool, error) {
+// NewClickhousePoolWithConfig returns a new *Pool with a Config object
+func NewClickhousePoolWithConfig(config Config, maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval int) (*Pool, error) {
 	cfg := NewPoolConfigWithConfig(config, maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval)
-	return NewMySQLPoolWithPoolConfig(cfg)
+	return NewClickhousePoolWithPoolConfig(cfg)
 }
 
-// NewMySQLPoolWithPoolConfig returns a new *Pool with a PoolConfig object
-func NewMySQLPoolWithPoolConfig(config PoolConfig) (*Pool, error) {
+// NewClickhousePoolWithPoolConfig returns a new *Pool with a PoolConfig object
+func NewClickhousePoolWithPoolConfig(config PoolConfig) (*Pool, error) {
 	p := &Pool{
 		PoolConfig:      config,
 		freeConnChan:    make(chan *PoolConn, config.MaxConnections),

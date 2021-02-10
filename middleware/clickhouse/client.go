@@ -12,6 +12,7 @@ import (
 )
 
 const (
+	DefaultDatabase     = "default"
 	DefaultReadTimeout  = 10
 	DefaultWriteTimeout = 10
 )
@@ -88,8 +89,11 @@ func (c *Config) AltHostsString() string {
 // GetConnectString generates connection string to clickhouse
 func (c *Config) GetConnectionString() string {
 	connStr := fmt.Sprintf("tcp://%s?", c.Addr)
-	if c.Debug {
-		connStr += "debug=true&"
+
+	if c.DBName == constant.EmptyString {
+		connStr += fmt.Sprintf("database=%s&", DefaultDatabase)
+	} else {
+		connStr += fmt.Sprintf("database=%s&", c.DBName)
 	}
 	if c.DBUser != constant.EmptyString {
 		connStr += fmt.Sprintf("username=%s&", c.DBUser)
@@ -97,8 +101,9 @@ func (c *Config) GetConnectionString() string {
 	if c.DBPass != constant.EmptyString {
 		connStr += fmt.Sprintf("password=%s&", c.DBPass)
 	}
-	if c.DBName != constant.EmptyString {
-		connStr += fmt.Sprintf("database=%s&", c.DBName)
+
+	if c.Debug {
+		connStr += "debug=true&"
 	}
 	if c.ReadTimeout != constant.ZeroInt {
 		connStr += fmt.Sprintf("read_timeout=%d&", c.ReadTimeout)

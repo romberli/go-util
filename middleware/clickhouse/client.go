@@ -150,7 +150,7 @@ func NewClickhouseConnWithDefault(addr, dbName, dbUser, dbPass string, altHosts 
 	return NewClickhouseConnWithConfig(config)
 }
 
-// Execute executes given sqls with arguments and return a result
+// Execute executes given sql with arguments and return a result
 func (conn *Conn) Execute(command string, args ...interface{}) (*Result, error) {
 	// prepare
 	stmt, err := conn.Prepare(command)
@@ -166,7 +166,7 @@ func (conn *Conn) Execute(command string, args ...interface{}) (*Result, error) 
 
 	sqlType := sqls.GetType(command)
 	if sqlType == sqls.Select {
-		// this is a select sqls
+		// this is a select sql
 		rows, err := stmt.Query(values)
 		if err != nil {
 			return nil, err
@@ -176,7 +176,7 @@ func (conn *Conn) Execute(command string, args ...interface{}) (*Result, error) 
 		return NewResult(rows), nil
 	}
 
-	// this is not a select sqls
+	// this is not a select sql
 	_, err = stmt.Exec(values)
 	if err != nil {
 		return nil, err

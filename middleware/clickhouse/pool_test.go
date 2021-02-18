@@ -27,15 +27,15 @@ func TestPool(t *testing.T) {
 
 	// get connection from the pool
 	conn, err = pool.Get()
-	asst.Nil(err, "get connection from pool failed.")
+	asst.Nil(err, "get connection from pool failed")
 
 	// test connection
 	ok := conn.(*PoolConn).CheckInstanceStatus()
 	asst.True(ok, "check instance failed")
 
 	err = conn.Close()
-	asst.Nil(err, "close connection failed.")
+	asst.Nil(err, "close connection failed")
 
 	err = pool.Close()
-	asst.Nil(err, "close pool failed.")
+	asst.Nil(err, "close pool failed")
 }

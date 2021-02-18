@@ -36,32 +36,32 @@ func TestPool(t *testing.T) {
 
 	// get connection from the pool
 	conn, err = pool.Get()
-	asst.Nil(err, "get connection from pool failed.")
+	asst.Nil(err, "get connection from pool failed")
 
 	// test connection
 	slaveList, err = conn.(*PoolConn).GetReplicationSlaveList()
-	asst.Nil(err, "get replication slave list failed.")
+	asst.Nil(err, "get replication slave list failed")
 	t.Logf("replication slave list: %v", slaveList)
 
 	err = conn.Close()
-	asst.Nil(err, "close connection failed.")
+	asst.Nil(err, "close connection failed")
 	conn, err = pool.Get()
-	asst.Nil(err, "get connection from pool failed.")
+	asst.Nil(err, "get connection from pool failed")
 
 	result, err = conn.(*PoolConn).GetReplicationSlavesStatus()
-	asst.Nil(err, "get replication slave status failed.")
+	asst.Nil(err, "get replication slave status failed")
 	if result.RowNumber() > 0 {
 		t.Logf("show slave status: %v", result.Values)
 	} else {
-		t.Logf("this is not a slave node.")
+		t.Logf("this is not a slave node")
 	}
 	repRole, err = conn.(*PoolConn).GetReplicationRole()
-	asst.Nil(err, "get replication role failed.")
+	asst.Nil(err, "get replication role failed")
 	t.Logf("replication role: %s", repRole)
 
 	// sleep to test maintain mechanism
 	time.Sleep(20 * time.Second)
 
 	err = pool.Close()
-	asst.Nil(err, "close pool failed.")
+	asst.Nil(err, "close pool failed")
 }

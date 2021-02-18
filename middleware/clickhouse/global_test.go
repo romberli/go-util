@@ -24,25 +24,25 @@ func TestClickhouseGlobalPool(t *testing.T) {
 
 	// get connection from the pool
 	conn, err = Get()
-	asst.Nil(err, "get connection from pool failed.")
+	asst.Nil(err, "get connection from pool failed")
 
 	// test connection
 	ok := conn.CheckInstanceStatus()
-	asst.True(ok, "check instance status failed.")
+	asst.True(ok, "check instance status failed")
 
 	err = conn.Close()
-	asst.Nil(err, "close connection failed.")
+	asst.Nil(err, "close connection failed")
 
 	sql := "select 1 as ok;"
 	result, err = Execute(sql)
-	asst.Nil(err, "execute sql with global pool failed.")
+	asst.Nil(err, "execute sql with global pool failed")
 	actual, err := result.(*Result).GetIntByName(0, "ok")
-	asst.Nil(err, "execute sql with global pool failed.")
-	asst.Equal(int64(1), actual, "expected and actual values are not equal.")
+	asst.Nil(err, "execute sql with global pool failed")
+	asst.Equal(int64(1), actual, "expected and actual values are not equal")
 
 	// sleep to test maintain mechanism
 	time.Sleep(10 * time.Second)
 
 	err = Close()
-	asst.Nil(err, "close global pool failed.")
+	asst.Nil(err, "close global pool failed")
 }

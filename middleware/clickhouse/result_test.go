@@ -18,7 +18,7 @@ func TestResult(t *testing.T) {
 	asst.Nil(err, "create pool failed. addr: %s, dbName: %s, dbUser: %s, dbPass: %s", addr, dbName, dbUser, dbPass)
 	// get connection from the pool
 	conn, err = Get()
-	asst.Nil(err, "get connection from pool failed.")
+	asst.Nil(err, "get connection from pool failed")
 	// create table
 	sql := `
 		create table t01

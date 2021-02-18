@@ -27,21 +27,21 @@ func TestMySQLConnection(t *testing.T) {
 		addr, dbName, dbUser, dbPass)
 	defer func() {
 		err = conn.Close()
-		asst.Nil(err, "close connection failed.")
+		asst.Nil(err, "close connection failed")
 	}()
 
 	slaveList, err = conn.GetReplicationSlaveList()
-	asst.Nil(err, "get replication slave list failed.")
+	asst.Nil(err, "get replication slave list failed")
 	t.Logf("replication slave list: %v", slaveList)
 
 	result, err = conn.GetReplicationSlavesStatus()
-	asst.Nil(err, "get replication slave status failed.")
+	asst.Nil(err, "get replication slave status failed")
 	if result.RowNumber() > 0 {
 		t.Logf("show slave status: %v", result.Values)
 	} else {
 		t.Logf("this is not a slave node.")
 	}
 	repRole, err = conn.GetReplicationRole()
-	asst.Nil(err, "get replication role failed.")
+	asst.Nil(err, "get replication role failed")
 	t.Logf("replication role: %s", repRole)
 }

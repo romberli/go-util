@@ -49,7 +49,7 @@ func TestResult(t *testing.T) {
 	// map to struct
 	sql := `select id, env_name, del_flag, create_time, last_update_time from t_meta_env_info;`
 	result, err = conn.Execute(sql)
-	asst.Nil(err, "execute sql failed.")
+	asst.Nil(err, "execute sql failed")
 	envInfoList := make([]*EnvInfo, result.RowNumber())
 	for i := range envInfoList {
 		envInfoList[i] = &EnvInfo{}

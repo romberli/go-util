@@ -123,7 +123,7 @@ func NewPoolConnWithPool(pool *Pool, addr, dbName, dbUser, dbPass string, debug 
 		return pc, nil
 	}
 
-	_ = pc.DisConnect()
+	_ = pc.Disconnect()
 
 	return nil, errors.New("new created connection is not valid")
 }
@@ -131,7 +131,7 @@ func NewPoolConnWithPool(pool *Pool, addr, dbName, dbUser, dbPass string, debug 
 // Close returns connection back to the pool
 func (pc *PoolConn) Close() error {
 	if pc.Pool.isClosed == true || pc.Pool == nil {
-		return pc.DisConnect()
+		return pc.Disconnect()
 	}
 
 	pc.Pool.Lock()
@@ -144,7 +144,7 @@ func (pc *PoolConn) Close() error {
 
 // DisConnect disconnects from mysql, normally when using connection pool,
 // there is no need to disconnect manually, consider to use Close() instead.
-func (pc *PoolConn) DisConnect() error {
+func (pc *PoolConn) Disconnect() error {
 	pc.Pool = nil
 	return pc.Conn.Close()
 }
@@ -327,7 +327,7 @@ func (p *Pool) get() (*PoolConn, error) {
 			return pc, nil
 		}
 
-		err := pc.DisConnect()
+		err := pc.Disconnect()
 		if err != nil {
 			return nil, fmt.Errorf(
 				"disconnecting invalid connection failed when getting connection from the pool.%w",
@@ -416,7 +416,7 @@ func (p *Pool) keepAlive(num int) error {
 				continue
 			}
 
-			err := pc.DisConnect()
+			err := pc.Disconnect()
 			if err != nil {
 				merr = multierror.Append(merr, err)
 			}
@@ -453,7 +453,7 @@ func (p *Pool) release(num int) error {
 		case pc, ok := <-p.freeConnChan:
 			if ok {
 				// disconnect
-				err := pc.DisConnect()
+				err := pc.Disconnect()
 				if err != nil {
 					merr = multierror.Append(merr, err)
 				}

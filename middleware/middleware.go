@@ -238,7 +238,7 @@ type PoolConn interface {
 	// Close returns connection back to the pool
 	Close() error
 	// DisConnect disconnects from the middleware, normally when using connection pool
-	DisConnect() error
+	Disconnect() error
 	// IsValid validates if connection is valid
 	IsValid() bool
 	// Execute executes given command and placeholders on the middleware

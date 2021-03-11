@@ -4,12 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"time"
 
 	"github.com/romberli/go-util/common"
 	"github.com/romberli/go-util/constant"
 	"github.com/romberli/go-util/middleware"
 
-	"github.com/jinzhu/now"
 	"github.com/siddontang/go-mysql/mysql"
 )
 
@@ -277,8 +277,7 @@ func (r *Result) mapToStructByRowIndex(in interface{}, row int, tag string) erro
 			// for now, only support time.Time data type,
 			// so if data type of field of struct is not time.Time,
 			// it will return error
-			now.TimeFormats = append(now.TimeFormats, constant.DefaultTimeLayout)
-			t, err := now.Parse(stringVal)
+			t, err := time.ParseInLocation(constant.DefaultTimeLayout, stringVal, time.Local)
 			if err != nil {
 				return err
 			}

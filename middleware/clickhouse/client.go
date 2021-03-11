@@ -7,6 +7,7 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go"
 
+	"github.com/romberli/go-util/common"
 	"github.com/romberli/go-util/constant"
 	"github.com/romberli/go-util/middleware/sqls"
 )
@@ -154,6 +155,11 @@ func NewClickhouseConnWithDefault(addr, dbName, dbUser, dbPass string, altHosts 
 func (conn *Conn) Execute(command string, args ...interface{}) (*Result, error) {
 	// prepare
 	stmt, err := conn.Prepare(command)
+	if err != nil {
+		return nil, err
+	}
+
+	err = common.SetRandomValueToNil(args...)
 	if err != nil {
 		return nil, err
 	}

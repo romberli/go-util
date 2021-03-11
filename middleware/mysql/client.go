@@ -5,6 +5,7 @@ import (
 
 	"github.com/siddontang/go-mysql/client"
 
+	"github.com/romberli/go-util/common"
 	"github.com/romberli/go-util/constant"
 )
 
@@ -70,6 +71,11 @@ func NewMySQLConn(addr string, dbName string, dbUser string, dbPass string) (*Co
 
 // Execute executes given sql with arguments and return a result
 func (conn *Conn) Execute(command string, args ...interface{}) (*Result, error) {
+	err := common.SetRandomValueToNil(args...)
+	if err != nil {
+		return nil, err
+	}
+
 	result, err := conn.Conn.Execute(command, args...)
 	if err != nil {
 		return nil, err

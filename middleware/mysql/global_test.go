@@ -36,7 +36,7 @@ func TestMySQLGlobalPool(t *testing.T) {
 	conn, err = Get()
 	asst.Nil(err, "get connection from pool failed")
 
-	// test connection
+	// testStruct connection
 	slaveList, err = conn.GetReplicationSlaveList()
 	asst.Nil(err, "get replication slave list failed")
 	t.Logf("replication slave list: %v", slaveList)
@@ -51,7 +51,7 @@ func TestMySQLGlobalPool(t *testing.T) {
 	asst.Nil(err, "execute sql with global pool failed")
 	asst.Equal(int64(1), actual, "expected and actual values are not equal")
 
-	// sleep to test maintain mechanism
+	// sleep to testStruct maintain mechanism
 	time.Sleep(10 * time.Second)
 
 	err = Close()

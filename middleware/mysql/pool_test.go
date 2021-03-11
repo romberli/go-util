@@ -26,7 +26,7 @@ func TestPool(t *testing.T) {
 	log.SetLevel(zapcore.DebugLevel)
 
 	addr := "192.168.137.11:3306"
-	dbName := "test"
+	dbName := "testStruct"
 	dbUser := "root"
 	dbPass := "root"
 
@@ -38,7 +38,7 @@ func TestPool(t *testing.T) {
 	conn, err = pool.Get()
 	asst.Nil(err, "get connection from pool failed")
 
-	// test connection
+	// testStruct connection
 	slaveList, err = conn.(*PoolConn).GetReplicationSlaveList()
 	asst.Nil(err, "get replication slave list failed")
 	t.Logf("replication slave list: %v", slaveList)
@@ -59,7 +59,7 @@ func TestPool(t *testing.T) {
 	asst.Nil(err, "get replication role failed")
 	t.Logf("replication role: %s", repRole)
 
-	// sleep to test maintain mechanism
+	// sleep to testStruct maintain mechanism
 	time.Sleep(20 * time.Second)
 
 	err = pool.Close()

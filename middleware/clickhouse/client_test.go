@@ -8,6 +8,8 @@ import (
 	"github.com/ClickHouse/clickhouse-go"
 	"github.com/romberli/log"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/romberli/go-util/constant"
 )
 
 const (
@@ -43,14 +45,14 @@ func TestConn_Execute(t *testing.T) {
 
 	// create table
 	sql := `
-		create table t01
+		create table if not exists t01
 		(
 			id               Int64,
-			name             LowCardinality(String),
-			group            Array(LowCardinality(String)),
+			name             Nullable(String),
+			group            Array(String),
 			type             Enum8('a'=0, 'b'=1, 'c'=2),
 			del_flag         Int8,
-			create_time      Datetime,
+			create_time      Nullable(Datetime),
 			last_update_time Datetime
 		)
 			engine = MergeTree PARTITION BY toYYYYMMDD(last_update_time)
@@ -62,7 +64,14 @@ func TestConn_Execute(t *testing.T) {
 	err = conn.Begin()
 	asst.Nil(err, "test Execute() failed")
 	sql = `insert into t01(id, name, group, type, del_flag, create_time, last_update_time) values(?, ?, ?, ?, ?, ?, ?)`
-	_, err = conn.Execute(sql, 1, "aaa", clickhouse.Array([]string{"group1", "group2", "group3"}), "a", 0, time.Now(), time.Now())
+	_, err = conn.Execute(sql, 1, constant.DefaultRandomString, clickhouse.Array([]string{"group1", "group2", "group3"}), "a", 0, constant.DefaultRandomTime, time.Now())
+	asst.Nil(err, "test Execute() failed")
+	err = conn.Commit()
+	asst.Nil(err, "test Execute() failed")
+	err = conn.Begin()
+	asst.Nil(err, "test Execute() failed")
+	sql = `insert into t01(id, name, group, type, del_flag, create_time, last_update_time) values(?, ?, ?, ?, ?, ?, ?)`
+	_, err = conn.Execute(sql, 2, constant.DefaultRandomString, clickhouse.Array([]string{}), "a", 0, constant.DefaultRandomTime, time.Now())
 	asst.Nil(err, "test Execute() failed")
 	err = conn.Commit()
 	asst.Nil(err, "test Execute() failed")
@@ -70,7 +79,7 @@ func TestConn_Execute(t *testing.T) {
 	sql = `select id, name, group, type, del_flag, create_time, last_update_time from t01`
 	result, err := conn.Execute(sql)
 	asst.Nil(err, "test Execute() failed")
-	asst.Equal(1, result.RowNumber(), "test execute failed")
+	asst.Equal(2, result.RowNumber(), "test execute failed")
 	// map to struct
 	r := &testRow{}
 	err = result.MapToStructByRowIndex(r, 0, "middleware")

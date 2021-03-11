@@ -5,14 +5,95 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"time"
 
-	"github.com/jinzhu/now"
 	"github.com/romberli/dynamic-struct"
 
 	json "github.com/json-iterator/go"
 
 	"github.com/romberli/go-util/constant"
 )
+
+// SetRandomValueToNil set each value in slice values if value is a random value
+func SetRandomValueToNil(values ...interface{}) error {
+	for i, value := range values {
+		if value == nil {
+			continue
+		}
+
+		switch value.(type) {
+		case int:
+			if value == constant.DefaultRandomInt {
+				values[i] = nil
+			}
+		case int8:
+			if int(value.(int8)) == constant.DefaultRandomInt {
+				values[i] = nil
+			}
+		case int16:
+			if int(value.(int16)) == constant.DefaultRandomInt {
+				values[i] = nil
+			}
+		case int32:
+			if int(value.(int32)) == constant.DefaultRandomInt {
+				values[i] = nil
+			}
+		case int64:
+			if int(value.(int64)) == constant.DefaultRandomInt {
+				values[i] = nil
+			}
+		case uint:
+			if int(value.(uint)) == constant.DefaultRandomInt {
+				values[i] = nil
+			}
+		case uint8:
+			if int(value.(uint8)) == constant.DefaultRandomInt {
+				values[i] = nil
+			}
+		case uint16:
+			if int(value.(uint16)) == constant.DefaultRandomInt {
+				values[i] = nil
+			}
+		case uint32:
+			if int(value.(uint32)) == constant.DefaultRandomInt {
+				values[i] = nil
+			}
+		case uint64:
+			if int(value.(uint64)) == constant.DefaultRandomInt {
+				values[i] = nil
+			}
+		case float32:
+			if int(value.(float32)) == constant.DefaultRandomInt {
+				values[i] = nil
+			}
+		case float64:
+			if int(value.(float64)) == constant.DefaultRandomInt {
+				values[i] = nil
+			}
+		case string:
+			if value.(string) == constant.DefaultRandomString {
+				values[i] = nil
+			}
+		case time.Time:
+			if value.(time.Time).Format(constant.DefaultTimeLayout) == constant.DefaultRandomTimeString {
+				values[i] = nil
+			}
+		default:
+			val := reflect.ValueOf(value)
+			switch val.Kind() {
+			case reflect.Ptr, reflect.Slice, reflect.Map:
+				if val.IsNil() {
+					values[i] = nil
+					continue
+				}
+			default:
+				return errors.New(fmt.Sprintf("unsupported data type: %T", value))
+			}
+		}
+	}
+
+	return nil
+}
 
 // CombineMessageWithError returns a new string which combines given message and error
 func CombineMessageWithError(message string, err error) string {
@@ -227,8 +308,7 @@ func SetValueOfStructByKind(in interface{}, field string, value interface{}, kin
 			return err
 		}
 
-		now.TimeFormats = append(now.TimeFormats, constant.DefaultTimeLayout)
-		t, err := now.Parse(v)
+		t, err := time.ParseInLocation(constant.DefaultTimeLayout, v, time.Local)
 		if err != nil {
 			return err
 		}

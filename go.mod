@@ -2,11 +2,12 @@ module github.com/romberli/go-util
 
 go 1.15
 
+replace github.com/ClickHouse/clickhouse-go v1.4.3 => github.com/romberli/clickhouse-go v1.4.4-0.20210311033512-91aca38ba7b3
+
 require (
 	github.com/ClickHouse/clickhouse-go v1.4.3
 	github.com/Shopify/sarama v1.26.1
 	github.com/hashicorp/go-multierror v1.1.0
-	github.com/jinzhu/now v1.1.1
 	github.com/json-iterator/go v1.1.10
 	github.com/pingcap/errors v0.11.4
 	github.com/pkg/errors v0.9.1

@@ -4,7 +4,31 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/romberli/go-util/constant"
 )
+
+type testStruct struct {
+	Name string
+	Col1 int
+	Col2 float64
+}
+
+func newTestStruct(name string, col1 int, col2 float64) *testStruct {
+	return &testStruct{
+		Name: name,
+		Col1: col1,
+		Col2: col2,
+	}
+}
+
+func newTestStructWithDefault() *testStruct {
+	return &testStruct{
+		Name: constant.DefaultRandomString,
+		Col1: constant.DefaultRandomInt,
+		Col2: float64(constant.DefaultRandomInt),
+	}
+}
 
 func TestMySQLConnection(t *testing.T) {
 	var (
@@ -29,6 +53,11 @@ func TestMySQLConnection(t *testing.T) {
 		err = conn.Close()
 		asst.Nil(err, "close connection failed")
 	}()
+
+	ts := newTestStructWithDefault()
+	sql := `insert into t05(name, col1, col2) values(?, ?, ?);`
+	result, err = conn.Execute(sql, ts.Name, ts.Col1, ts.Col2)
+	asst.Nil(err, "execute insert sql failed")
 
 	slaveList, err = conn.GetReplicationSlaveList()
 	asst.Nil(err, "get replication slave list failed")

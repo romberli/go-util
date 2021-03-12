@@ -193,7 +193,7 @@ func GetValueOfStruct(in interface{}, field string) (interface{}, error) {
 	return v.Interface(), nil
 }
 
-// SetValueOfStruct set value of specified field of input struct,
+// SetValueOfStruct sets value of specified field of input struct,
 // the field must exist and be exported, otherwise, it will return an error,
 // the first argument must be a pointer to struct
 func SetValueOfStruct(in interface{}, field string, value interface{}) error {
@@ -214,6 +214,24 @@ func SetValueOfStruct(in interface{}, field string, value interface{}) error {
 	}
 
 	v.Set(reflect.ValueOf(value))
+
+	return nil
+}
+
+// SetValuesWithMap sets values of input struct with given map,
+// the field of map must exist and be exported, otherwise, it will return an error,
+// the first argument must be a pointer to struct
+func SetValuesWithMap(in interface{}, fields map[string]interface{}) error {
+	if reflect.TypeOf(in).Kind() != reflect.Ptr {
+		return errors.New("first argument must be a pointer to struct")
+	}
+
+	for field, value := range fields {
+		err := SetValueOfStruct(in, field, value)
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
 }

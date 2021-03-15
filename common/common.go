@@ -23,7 +23,7 @@ func SetRandomValueToNil(values ...interface{}) error {
 
 		switch value.(type) {
 		case int:
-			if value == constant.DefaultRandomInt {
+			if value.(int) == constant.DefaultRandomInt {
 				values[i] = nil
 			}
 		case int8:
@@ -63,11 +63,11 @@ func SetRandomValueToNil(values ...interface{}) error {
 				values[i] = nil
 			}
 		case float32:
-			if int(value.(float32)) == constant.DefaultRandomInt {
+			if float64(value.(float32)) == constant.DefaultRandomFloat {
 				values[i] = nil
 			}
 		case float64:
-			if int(value.(float64)) == constant.DefaultRandomInt {
+			if value.(float64) == constant.DefaultRandomFloat {
 				values[i] = nil
 			}
 		case string:
@@ -179,7 +179,7 @@ func TrimSpaceOfStructString(in interface{}) error {
 }
 
 // GetValueOfStruct get value of specified field of input struct,
-// the field must exist and be exported, otherwise, it will return an error,
+// the fields must exist and be exported, otherwise, it will return an error,
 // the first argument must be a pointer to struct
 func GetValueOfStruct(in interface{}, field string) (interface{}, error) {
 	if reflect.TypeOf(in).Kind() != reflect.Ptr {
@@ -194,7 +194,7 @@ func GetValueOfStruct(in interface{}, field string) (interface{}, error) {
 }
 
 // SetValueOfStruct sets value of specified field of input struct,
-// the field must exist and be exported, otherwise, it will return an error,
+// the fields must exist and be exported, otherwise, it will return an error,
 // the first argument must be a pointer to struct
 func SetValueOfStruct(in interface{}, field string, value interface{}) error {
 	if reflect.TypeOf(in).Kind() != reflect.Ptr {
@@ -219,7 +219,7 @@ func SetValueOfStruct(in interface{}, field string, value interface{}) error {
 }
 
 // SetValuesWithMap sets values of input struct with given map,
-// the field of map must exist and be exported, otherwise, it will return an error,
+// the fields of map must exist and be exported, otherwise, it will return an error,
 // the first argument must be a pointer to struct
 func SetValuesWithMap(in interface{}, fields map[string]interface{}) error {
 	if reflect.TypeOf(in).Kind() != reflect.Ptr {
@@ -228,6 +228,73 @@ func SetValuesWithMap(in interface{}, fields map[string]interface{}) error {
 
 	for field, value := range fields {
 		err := SetValueOfStruct(in, field, value)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// SetValuesWithMapAndRandom sets values of input struct with given map,
+// if fields in struct does not exist in given map, some of them--depends on the data type--will be set with default value,
+// the fields of map must exist and be exported, otherwise, it will return an error,
+// the first argument must be a pointer to struct
+func SetValuesWithMapAndRandom(in interface{}, fields map[string]interface{}) error {
+	if reflect.TypeOf(in).Kind() != reflect.Ptr {
+		return errors.New("first argument must be a pointer to struct")
+	}
+
+	inVal := reflect.ValueOf(in).Elem()
+	inType := inVal.Type()
+	for i := 0; i < inVal.NumField(); i++ {
+		fieldName := inType.Field(i).Name
+		fieldValue, exists := fields[fieldName]
+		if !exists {
+			// set default value
+			switch fieldValue.(type) {
+			case int:
+				if fieldValue.(int) == constant.DefaultRandomInt {
+					fieldValue = constant.DefaultRandomInt
+				}
+			case int32:
+				if int(fieldValue.(int32)) == constant.DefaultRandomInt {
+					fieldValue = constant.DefaultRandomInt
+				}
+			case int64:
+				if int(fieldValue.(int64)) == constant.DefaultRandomInt {
+					fieldValue = constant.DefaultRandomInt
+				}
+			case uint:
+				if int(fieldValue.(uint)) == constant.DefaultRandomInt {
+					fieldValue = constant.DefaultRandomInt
+				}
+			case uint32:
+				if int(fieldValue.(uint32)) == constant.DefaultRandomInt {
+					fieldValue = constant.DefaultRandomInt
+				}
+			case uint64:
+				if int(fieldValue.(uint64)) == constant.DefaultRandomInt {
+					fieldValue = constant.DefaultRandomInt
+				}
+			case float64:
+				if fieldValue.(float64) == constant.DefaultRandomFloat {
+					fieldValue = constant.DefaultRandomFloat
+				}
+			case string:
+				if fieldValue.(string) == constant.DefaultRandomString {
+					fieldValue = constant.DefaultRandomString
+				}
+			case time.Time:
+				if fieldValue.(time.Time).Format(constant.DefaultTimeLayout) == constant.DefaultRandomTimeString {
+					fieldValue = constant.DefaultRandomTime
+				}
+			default:
+				// TODO: for now, do nothing here
+			}
+		}
+
+		err := SetValueOfStruct(in, fieldName, fieldValue)
 		if err != nil {
 			return err
 		}

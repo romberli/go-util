@@ -20,7 +20,8 @@ const (
 	EmptyString                         = ""
 	CurrentDir                          = "./"
 	DefaultRandomString                 = "sadfio3mj23gsk9lj8ou"
-	DefaultRandomInt                    = 345920654907418
+	DefaultRandomInt                    = 2053167498
+	DefaultRandomFloat      float64     = DefaultRandomInt
 	TrueString                          = "true"
 	FalseString                         = "false"
 	CRLFString                          = "\n"

@@ -211,6 +211,7 @@ func SetValueOfStruct(in interface{}, field string, value interface{}) error {
 	valueType := reflect.TypeOf(value)
 
 	if valueType == nil {
+		// set zero value
 		v.Set(reflect.Zero(vType))
 		return nil
 	}
@@ -220,6 +221,7 @@ func SetValueOfStruct(in interface{}, field string, value interface{}) error {
 			field, v.Type().String(), valueType.String()))
 	}
 
+	// set value
 	v.Set(reflect.ValueOf(value))
 
 	return nil

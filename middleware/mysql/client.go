@@ -102,26 +102,20 @@ func (conn *Conn) CheckInstanceStatus() bool {
 
 // GetReplicationSlaveList returns slave list of this server
 func (conn *Conn) GetReplicationSlaveList() (slaveList []string, err error) {
-	var (
-		result *Result
-		host   string
-		port   int64
-	)
-
 	slaveList = []string{}
 
-	result, err = conn.Execute(ShowSlaveStatusSQL)
+	result, err := conn.Execute(ShowSlaveStatusSQL)
 	if err != nil {
 		return nil, err
 	}
 
 	for i := 0; i < result.RowNumber(); i++ {
-		host, err = result.GetStringByName(i, HostString)
+		host, err := result.GetStringByName(i, HostString)
 		if err != nil {
 			return nil, err
 		}
 
-		port, err = result.GetIntByName(i, PortString)
+		port, err := result.GetIntByName(i, PortString)
 		if err != nil {
 			return nil, err
 		}
@@ -140,14 +134,9 @@ func (conn *Conn) GetReplicationSlavesStatus() (result *Result, err error) {
 
 // GetReplicationRole returns replication role
 func (conn *Conn) GetReplicationRole() (role string, err error) {
-	var (
-		slaveList []string
-		result    *Result
-	)
-
 	role = ReplicationMaster
 
-	result, err = conn.GetReplicationSlavesStatus()
+	result, err := conn.GetReplicationSlavesStatus()
 	if err != nil {
 		return "", err
 	}
@@ -156,7 +145,7 @@ func (conn *Conn) GetReplicationRole() (role string, err error) {
 		role = ReplicationSlave
 	}
 
-	slaveList, err = conn.GetReplicationSlaveList()
+	slaveList, err := conn.GetReplicationSlaveList()
 	if err != nil {
 		return "", err
 	}

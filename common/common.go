@@ -196,6 +196,7 @@ func GetValueOfStruct(in interface{}, field string) (interface{}, error) {
 // SetValueOfStruct sets value of specified field of input struct,
 // the fields must exist and be exported, otherwise, it will return an error,
 // the first argument must be a pointer to struct
+// if value is nil, the field value will be set to ZERO value of the type
 func SetValueOfStruct(in interface{}, field string, value interface{}) error {
 	if reflect.TypeOf(in).Kind() != reflect.Ptr {
 		return errors.New("first argument must be a pointer to struct")
@@ -208,6 +209,12 @@ func SetValueOfStruct(in interface{}, field string, value interface{}) error {
 
 	vType := v.Type()
 	valueType := reflect.TypeOf(value)
+
+	if valueType == nil {
+		v.Set(reflect.Zero(vType))
+		return nil
+	}
+
 	if vType != valueType {
 		return errors.New(fmt.Sprintf("types of field %s(%s) and value(%s) mismatched",
 			field, v.Type().String(), valueType.String()))
@@ -291,6 +298,7 @@ func SetValuesWithMapAndRandom(in interface{}, fields map[string]interface{}) er
 				}
 			default:
 				// TODO: for now, do nothing here
+				continue
 			}
 		}
 

@@ -113,36 +113,46 @@ func ConvertToBool(in interface{}) (bool, error) {
 	}
 }
 
-func ConvertToUint(in interface{}) (uint64, error) {
+func ConvertToInt(in interface{}) (int, error) {
 	switch v := in.(type) {
 	case int:
-		return uint64(v), nil
+		return v, nil
 	case int8:
-		return uint64(v), nil
+		return int(v), nil
 	case int16:
-		return uint64(v), nil
+		return int(v), nil
 	case int32:
-		return uint64(v), nil
+		return int(v), nil
 	case int64:
-		return uint64(v), nil
+		return int(v), nil
 	case uint:
-		return uint64(v), nil
+		return int(v), nil
 	case uint8:
-		return uint64(v), nil
+		return int(v), nil
 	case uint16:
-		return uint64(v), nil
+		return int(v), nil
 	case uint32:
-		return uint64(v), nil
+		return int(v), nil
 	case uint64:
-		return uint64(v), nil
+		return int(v), nil
 	case float32:
-		return uint64(v), nil
+		return int(v), nil
 	case float64:
-		return uint64(v), nil
+		return int(v), nil
 	case string:
-		return strconv.ParseUint(v, 10, 64)
+		value, err := strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			return constant.ZeroInt, err
+		}
+
+		return int(value), nil
 	case []byte:
-		return strconv.ParseUint(string(v), 10, 64)
+		value, err := strconv.ParseInt(string(v), 10, 64)
+		if err != nil {
+			return constant.ZeroInt, err
+		}
+
+		return int(value), nil
 	case nil:
 		return constant.ZeroInt, nil
 	default:
@@ -150,13 +160,13 @@ func ConvertToUint(in interface{}) (uint64, error) {
 	}
 }
 
-func ConvertToInt(in interface{}) (int64, error) {
-	value, err := ConvertToUint(in)
+func ConvertToUint(in interface{}) (uint, error) {
+	value, err := ConvertToInt(in)
 	if err != nil {
 		return constant.ZeroInt, err
 	}
 
-	return int64(value), nil
+	return uint(value), nil
 }
 
 func ConvertToFloat(in interface{}) (float64, error) {
@@ -233,7 +243,7 @@ func ConvertToSlice(in interface{}, kind reflect.Kind) (interface{}, error) {
 			if err != nil {
 				return nil, err
 			}
-			result[i] = uint(value)
+			result[i] = value
 		}
 
 		return result, nil
@@ -281,7 +291,7 @@ func ConvertToSlice(in interface{}, kind reflect.Kind) (interface{}, error) {
 			if err != nil {
 				return nil, err
 			}
-			result[i] = value
+			result[i] = uint64(value)
 		}
 
 		return result, nil
@@ -293,7 +303,7 @@ func ConvertToSlice(in interface{}, kind reflect.Kind) (interface{}, error) {
 			if err != nil {
 				return nil, err
 			}
-			result[i] = int(value)
+			result[i] = value
 		}
 
 		return result, nil
@@ -341,7 +351,7 @@ func ConvertToSlice(in interface{}, kind reflect.Kind) (interface{}, error) {
 			if err != nil {
 				return nil, err
 			}
-			result[i] = value
+			result[i] = int64(value)
 		}
 
 		return result, nil

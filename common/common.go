@@ -327,14 +327,14 @@ func SetValueOfStructByKind(in interface{}, field string, value interface{}, kin
 		}
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		v, err := ConvertToUint(value)
+		v, err := ConvertToInt(value)
 		if err != nil {
 			return err
 		}
 
 		switch kind {
 		case reflect.Int:
-			err = SetValueOfStruct(in, field, int(v))
+			err = SetValueOfStruct(in, field, v)
 		case reflect.Int8:
 			err = SetValueOfStruct(in, field, int8(v))
 		case reflect.Int16:
@@ -352,7 +352,7 @@ func SetValueOfStructByKind(in interface{}, field string, value interface{}, kin
 		case reflect.Uint32:
 			err = SetValueOfStruct(in, field, uint32(v))
 		case reflect.Uint64:
-			err = SetValueOfStruct(in, field, v)
+			err = SetValueOfStruct(in, field, uint64(v))
 		}
 		if err != nil {
 			return err

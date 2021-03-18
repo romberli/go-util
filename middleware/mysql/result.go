@@ -84,23 +84,43 @@ func (r *Result) IsNullByName(row int, name string) (bool, error) {
 }
 
 // GetUint returns uint64 type value of given row and column number
-func (r *Result) GetUint(row, column int) (uint64, error) {
-	return r.Result.GetUint(row, column)
+func (r *Result) GetUint(row, column int) (uint, error) {
+	v, err := r.Result.GetUint(row, column)
+	if err != nil {
+		return constant.ZeroInt, err
+	}
+
+	return uint(v), nil
 }
 
 // GetUintByName returns uint64 type value of given row number and column name
-func (r *Result) GetUintByName(row int, name string) (uint64, error) {
-	return r.Result.GetUintByName(row, name)
+func (r *Result) GetUintByName(row int, name string) (uint, error) {
+	v, err := r.Result.GetUintByName(row, name)
+	if err != nil {
+		return constant.ZeroInt, err
+	}
+
+	return uint(v), nil
 }
 
 // GetInt returns int64 type value of given row and column number
-func (r *Result) GetInt(row, column int) (int64, error) {
-	return r.Result.GetInt(row, column)
+func (r *Result) GetInt(row, column int) (int, error) {
+	v, err := r.Result.GetInt(row, column)
+	if err != nil {
+		return constant.ZeroInt, err
+	}
+
+	return int(v), nil
 }
 
 // GetIntByName returns int64 type value of given row number and column name
-func (r *Result) GetIntByName(row int, name string) (int64, error) {
-	return r.Result.GetIntByName(row, name)
+func (r *Result) GetIntByName(row int, name string) (int, error) {
+	v, err := r.Result.GetIntByName(row, name)
+	if err != nil {
+		return constant.ZeroInt, err
+	}
+
+	return int(v), nil
 }
 
 // GetFloat returns float64 type value of given row and column number

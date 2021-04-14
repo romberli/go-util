@@ -142,7 +142,7 @@ func (pc *PoolConn) Close() error {
 	return nil
 }
 
-// DisConnect disconnects from mysql, normally when using connection pool,
+// Disconnect disconnects from mysql, normally when using connection pool,
 // there is no need to disconnect manually, consider to use Close() instead.
 func (pc *PoolConn) Disconnect() error {
 	pc.Pool = nil

@@ -243,7 +243,7 @@ func (r *Result) mapToStructByRowIndex(in interface{}, row int, tag string) erro
 			}
 			switch fieldKind {
 			case reflect.Int:
-				err = common.SetValueOfStruct(in, fieldName, int(intVal))
+				err = common.SetValueOfStruct(in, fieldName, intVal)
 			case reflect.Int8:
 				err = common.SetValueOfStruct(in, fieldName, int8(intVal))
 			case reflect.Int16:

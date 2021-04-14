@@ -2,12 +2,12 @@ package common
 
 import (
 	"fmt"
-	"github.com/pingcap/errors"
-	"github.com/siddontang/go/hack"
-
 	"reflect"
 	"strconv"
 	"unsafe"
+
+	"github.com/pingcap/errors"
+	"github.com/siddontang/go/hack"
 
 	"github.com/romberli/go-util/constant"
 )

@@ -21,78 +21,91 @@ func SetRandomValueToNil(values ...interface{}) error {
 			continue
 		}
 
-		switch value.(type) {
-		case int:
-			if value.(int) == constant.DefaultRandomInt {
-				values[i] = nil
-			}
-		case int8:
-			if int(value.(int8)) == constant.DefaultRandomInt {
-				values[i] = nil
-			}
-		case int16:
-			if int(value.(int16)) == constant.DefaultRandomInt {
-				values[i] = nil
-			}
-		case int32:
-			if int(value.(int32)) == constant.DefaultRandomInt {
-				values[i] = nil
-			}
-		case int64:
-			if int(value.(int64)) == constant.DefaultRandomInt {
-				values[i] = nil
-			}
-		case uint:
-			if int(value.(uint)) == constant.DefaultRandomInt {
-				values[i] = nil
-			}
-		case uint8:
-			if int(value.(uint8)) == constant.DefaultRandomInt {
-				values[i] = nil
-			}
-		case uint16:
-			if int(value.(uint16)) == constant.DefaultRandomInt {
-				values[i] = nil
-			}
-		case uint32:
-			if int(value.(uint32)) == constant.DefaultRandomInt {
-				values[i] = nil
-			}
-		case uint64:
-			if int(value.(uint64)) == constant.DefaultRandomInt {
-				values[i] = nil
-			}
-		case float32:
-			if float64(value.(float32)) == constant.DefaultRandomFloat {
-				values[i] = nil
-			}
-		case float64:
-			if value.(float64) == constant.DefaultRandomFloat {
-				values[i] = nil
-			}
-		case string:
-			if value.(string) == constant.DefaultRandomString {
-				values[i] = nil
-			}
-		case time.Time:
-			if value.(time.Time).Format(constant.DefaultTimeLayout) == constant.DefaultRandomTimeString {
-				values[i] = nil
-			}
-		default:
-			val := reflect.ValueOf(value)
-			switch val.Kind() {
-			case reflect.Ptr, reflect.Slice, reflect.Map:
-				if val.IsNil() {
-					values[i] = nil
-					continue
-				}
-			default:
-				return errors.New(fmt.Sprintf("unsupported data type: %T", value))
-			}
+		isRandom, err := IsRandomValue(value)
+		if err != nil {
+			return nil
+		}
+
+		if isRandom {
+			values[i] = nil
 		}
 	}
 
 	return nil
+}
+
+// IsRandomValue checks if given value is a random value
+func IsRandomValue(value interface{}) (bool, error) {
+	switch value.(type) {
+	case int:
+		if value.(int) == constant.DefaultRandomInt {
+			return true, nil
+		}
+	case int8:
+		if int(value.(int8)) == constant.DefaultRandomInt {
+			return true, nil
+		}
+	case int16:
+		if int(value.(int16)) == constant.DefaultRandomInt {
+			return true, nil
+		}
+	case int32:
+		if int(value.(int32)) == constant.DefaultRandomInt {
+			return true, nil
+		}
+	case int64:
+		if int(value.(int64)) == constant.DefaultRandomInt {
+			return true, nil
+		}
+	case uint:
+		if int(value.(uint)) == constant.DefaultRandomInt {
+			return true, nil
+		}
+	case uint8:
+		if int(value.(uint8)) == constant.DefaultRandomInt {
+			return true, nil
+		}
+	case uint16:
+		if int(value.(uint16)) == constant.DefaultRandomInt {
+			return true, nil
+		}
+	case uint32:
+		if int(value.(uint32)) == constant.DefaultRandomInt {
+			return true, nil
+		}
+	case uint64:
+		if int(value.(uint64)) == constant.DefaultRandomInt {
+			return true, nil
+		}
+	case float32:
+		if float64(value.(float32)) == constant.DefaultRandomFloat {
+			return true, nil
+		}
+	case float64:
+		if value.(float64) == constant.DefaultRandomFloat {
+			return true, nil
+		}
+	case string:
+		if value.(string) == constant.DefaultRandomString {
+			return true, nil
+		}
+	case time.Time:
+		if value.(time.Time).Format(constant.DefaultTimeLayout) == constant.DefaultRandomTimeString {
+			return true, nil
+		}
+	default:
+		val := reflect.ValueOf(value)
+		switch val.Kind() {
+		case reflect.Ptr, reflect.Slice, reflect.Map:
+			if val.IsNil() {
+				return true, nil
+			}
+		default:
+			return false, errors.New(fmt.Sprintf("unsupported data type: %T", value))
+		}
+	}
+
+	return false, nil
 }
 
 // CombineMessageWithError returns a new string which combines given message and error
@@ -511,7 +524,7 @@ func MarshalStructWithFields(in interface{}, fields ...string) ([]byte, error) {
 	return json.Marshal(newInstance)
 }
 
-// MarshalStructWithFields marshals input struct using json.Marshal() without given fields,
+// MarshalStructWithoutFields marshals input struct using json.Marshal() without given fields,
 // first argument must be a pointer to struct, not the struct itself
 func MarshalStructWithoutFields(in interface{}, fields ...string) ([]byte, error) {
 	if reflect.TypeOf(in).Kind() != reflect.Ptr {
@@ -639,7 +652,7 @@ Loop:
 	return result, nil
 }
 
-// UnmarshalToMapWithStructTag converts given string to []byte and then call UnmarshalToMapWithStructTag() function
+// UnmarshalToMapWithStructTagFromString converts given string to []byte and then call UnmarshalToMapWithStructTag() function
 func UnmarshalToMapWithStructTagFromString(s string, in interface{}, tag string) (map[string]interface{}, error) {
 	return UnmarshalToMapWithStructTag([]byte(s), in, tag)
 }

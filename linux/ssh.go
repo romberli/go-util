@@ -707,7 +707,7 @@ func (conn *MySSHConn) CopyDirFromRemote(dirNameSource, dirNameDest string) (err
 	return nil
 }
 
-// CopyDirFromRemote copies a directory with all subdirectories and files from local to remote
+// CopyDirToRemote copies a directory with all subdirectories and files from local to remote
 func (conn *MySSHConn) CopyDirToRemote(dirNameSource, dirNameDest string) (err error) {
 	dirNameSource = strings.TrimSpace(dirNameSource)
 	dirNameDest = strings.TrimSpace(dirNameDest)
@@ -807,7 +807,7 @@ func (conn *MySSHConn) CopyFromRemote(pathSource, pathDest string) (err error) {
 	return conn.CopySingleFileFromRemote(pathSource, pathDest)
 }
 
-// CopyFromRemote copies no matter a directory or a file from local to remote
+// CopyToRemote copies no matter a directory or a file from local to remote
 func (conn *MySSHConn) CopyToRemote(pathSource, pathDest string) (err error) {
 	pathSource = strings.TrimSpace(pathSource)
 	pathDest = strings.TrimSpace(pathDest)

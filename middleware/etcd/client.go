@@ -46,7 +46,7 @@ func NewEtcdConn(endpoints []string) (*Conn, error) {
 	}, nil
 }
 
-// NewEtcdConn returns connection to etcd, it uses client v3 library api
+// NewEtcdConnWithConnectTimeout returns connection to etcd, it uses client v3 library api
 func NewEtcdConnWithConnectTimeout(endpoints []string, timeout time.Duration) (*Conn, error) {
 	cfg := clientv3.Config{
 		Endpoints:   endpoints,
@@ -71,7 +71,7 @@ func (conn *Conn) Close() error {
 	return conn.Client.Close()
 }
 
-// GetLeaseRespByKey returns lease response by mutex key name which was maintained when successfully get the mutex
+// GetLeaseIDByKey returns lease response by mutex key name which was maintained when successfully get the mutex
 func (conn *Conn) GetLeaseIDByKey(key string) (clientv3.LeaseID, error) {
 	leaseID, ok := conn.KeyLeaseIDMap.Load(key)
 	if !ok {

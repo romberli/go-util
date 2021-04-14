@@ -43,7 +43,7 @@ func NewClickhouseConfig(addr, dbName, dbUser, dbPass string, debug bool, readTi
 	}
 }
 
-// NewClickhouseConfig returns a new Config with default value
+// NewClickhouseConfigWithDefault returns a new Config with default value
 func NewClickhouseConfigWithDefault(addr, dbName, dbUser, dbPass string, altHosts ...string) Config {
 	return Config{
 		Addr:         addr,
@@ -57,7 +57,7 @@ func NewClickhouseConfigWithDefault(addr, dbName, dbUser, dbPass string, altHost
 	}
 }
 
-// AltHostExists checks if alternative hosts is empty
+// AltHostsExist checks if alternative hosts is empty
 func (c *Config) AltHostsExist() bool {
 	if c.AltHosts != nil && len(c.AltHosts) > constant.ZeroInt {
 		return true
@@ -87,7 +87,7 @@ func (c *Config) AltHostsString() string {
 	}
 }
 
-// GetConnectString generates connection string to clickhouse
+// GetConnectionString generates connection string to clickhouse
 func (c *Config) GetConnectionString() string {
 	connStr := fmt.Sprintf("tcp://%s?", c.Addr)
 
@@ -124,7 +124,7 @@ type Conn struct {
 	clickhouse.Clickhouse
 }
 
-// NewMySQLConn returns connection to mysql database with given Config
+// NewClickhouseConnWithConfig returns connection to mysql database with given Config
 func NewClickhouseConnWithConfig(config Config) (*Conn, error) {
 	// connect to Clickhouse
 	client, err := clickhouse.OpenDirect(config.GetConnectionString())

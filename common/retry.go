@@ -28,7 +28,7 @@ func NewRetryOption(attempts int64, delay, timeout time.Duration) RetryOption {
 	}
 }
 
-// RetryWithRetryOption retries the func until it returns no error or reaches attempts limit or
+// Retry retries the func until it returns no error or reaches attempts limit or
 // timed out, either one is earlier
 func Retry(doFunc func() error, attempts int64, delay, timeout time.Duration) error {
 	retryOption := NewRetryOption(attempts, delay, timeout)

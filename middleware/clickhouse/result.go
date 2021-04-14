@@ -62,7 +62,7 @@ func (r *Result) LastInsertID() (uint64, error) {
 	return constant.ZeroInt, errors.New("LastInsertID() for clickhouse is not supported, never call this function")
 }
 
-// LastInsertID always returns error, because clickhouse does not support this,
+// RowsAffected always returns error, because clickhouse does not support this,
 // this function is only for implementing the middleware.Result interface
 func (r *Result) RowsAffected() (uint64, error) {
 	return constant.ZeroInt, errors.New("RowsAffected() for clickhouse is not supported, never call this function")
@@ -240,7 +240,7 @@ func (r *Result) GetSlice(row, column int) ([]interface{}, error) {
 	return v, nil
 }
 
-// GetStringByName returns []interface type value of given row number and column name
+// GetSliceByName returns []interface type value of given row number and column name
 func (r *Result) GetSliceByName(row int, name string) ([]interface{}, error) {
 	column, err := r.NameIndex(name)
 	if err != nil {

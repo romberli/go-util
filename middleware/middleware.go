@@ -228,16 +228,14 @@ type Result interface {
 	// so set tag to each field that need to be mapped,
 	// using "middleware" as the tag is recommended.
 	MapToStructByRowIndex(in interface{}, row int, tag string) error
-	// must implement SliceResult Interface
 	SliceResult
-	// must implement MapResult Interface
 	MapResult
 }
 
 type PoolConn interface {
 	// Close returns connection back to the pool
 	Close() error
-	// DisConnect disconnects from the middleware, normally when using connection pool
+	// Disconnect disconnects from the middleware, normally when using connection pool
 	Disconnect() error
 	// IsValid validates if connection is valid
 	IsValid() bool

@@ -3,10 +3,11 @@ package kafka
 import (
 	"errors"
 	"fmt"
-	"github.com/Shopify/sarama"
-	"github.com/romberli/log"
 	"reflect"
 	"time"
+
+	"github.com/Shopify/sarama"
+	"github.com/romberli/log"
 )
 
 type AsyncProducer struct {

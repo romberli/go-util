@@ -60,7 +60,7 @@ func IsDir(path string) (isDir bool, err error) {
 	return fileInfo.IsDir(), nil
 }
 
-// ReadDir returns subdirectories and files of given directory on the remote host, it returns a slice of os.FileInfo
+// Readdir returns subdirectories and files of given directory on the remote host, it returns a slice of os.FileInfo
 func Readdir(dirName string) (fileInfoList []os.FileInfo, err error) {
 	isDir, err := IsDir(dirName)
 	if err != nil {

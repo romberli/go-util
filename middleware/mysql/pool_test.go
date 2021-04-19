@@ -16,7 +16,7 @@ func TestPool(t *testing.T) {
 		err       error
 		pool      *Pool
 		conn      middleware.PoolConn
-		repRole   string
+		repRole   ReplicationRole
 		slaveList []string
 		result    *Result
 	)

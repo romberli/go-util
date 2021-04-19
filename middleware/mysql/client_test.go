@@ -34,7 +34,7 @@ func TestMySQLConnection(t *testing.T) {
 	var (
 		err       error
 		conn      *Conn
-		repRole   string
+		repRole   ReplicationRole
 		slaveList []string
 		result    *Result
 	)

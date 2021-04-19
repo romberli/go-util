@@ -93,6 +93,7 @@ func (conn *Conn) Execute(command string, args ...interface{}) (*Result, error) 
 	return NewResult(result), nil
 }
 
+// GetVersion returns mysql version
 func (conn *Conn) GetVersion() (Version, error) {
 	result, err := conn.Execute(SelectVersionSQL)
 	if err != nil {

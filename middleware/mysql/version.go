@@ -15,9 +15,13 @@ const (
 )
 
 type Version interface {
+	// GetMajor returns major
 	GetMajor() int
+	// GetMinor returns minor
 	GetMinor() int
+	// GetRelease returns release
 	GetRelease() int
+	// String returns string format of version
 	String() string
 }
 
@@ -27,6 +31,7 @@ type version struct {
 	release int
 }
 
+// NewVersion returns a new instance of Version
 func NewVersion(major, minor, release int) Version {
 	return &version{
 		major,
@@ -35,10 +40,12 @@ func NewVersion(major, minor, release int) Version {
 	}
 }
 
+// Parse parses given version string and returns a new instance of Version
 func Parse(v string) (Version, error) {
 	return parse(v)
 }
 
+// parse parses given version string and returns a new instance of version
 func parse(v string) (*version, error) {
 	vSlice := strings.Split(v, "-")
 	versionSlice := strings.Split(vSlice[constant.ZeroInt], defaultSeparator)
@@ -49,36 +56,40 @@ func parse(v string) (*version, error) {
 	ver := &version{}
 
 	for i, vStr := range versionSlice {
-		vNum, err := strconv.Atoi(vStr)
+		vInt, err := strconv.Atoi(vStr)
 		if err != nil {
 			return nil, err
 		}
 
 		switch i {
 		case 0:
-			ver.major = vNum
+			ver.major = vInt
 		case 1:
-			ver.minor = vNum
+			ver.minor = vInt
 		case 2:
-			ver.release = vNum
+			ver.release = vInt
 		}
 	}
 
 	return ver, nil
 }
 
+// GetMajor returns major
 func (v *version) GetMajor() int {
 	return v.major
 }
 
+// GetMinor returns minor
 func (v *version) GetMinor() int {
 	return v.minor
 }
 
+// GetRelease returns release
 func (v *version) GetRelease() int {
 	return v.release
 }
 
+// String returns string format of version
 func (v *version) String() string {
 	return fmt.Sprintf("%d.%d.%d", v.major, v.minor, v.release)
 }

@@ -9,14 +9,23 @@ import (
 	"github.com/romberli/go-util/constant"
 )
 
+type ReplicationRole string
+
 const (
-	DefaultCharSet     = "utf8mb4"
-	ReplicationMaster  = "master"
-	ReplicationSlave   = "slave"
-	ReplicationRelay   = "relay" // it has master and slave roles at the same time
-	HostString         = "host"
-	PortString         = "port"
-	ShowSlaveStatusSQL = "show slave status"
+	DefaultCharSet       = "utf8mb4"
+	HostString           = "host"
+	PortString           = "port"
+	SelectVersionSQL     = "select @@version"
+	ShowSlaveStatusSQL   = "show slave status"
+	ShowReplicaStatusSQL = "show replica status"
+	ShowSlaveHostsSQL    = "show slave hosts"
+
+	// ReplicationSource represents mysql master, it's an alternative name
+	ReplicationSource ReplicationRole = "source"
+	// ReplicationReplica represents mysql slave, it's an alternative name
+	ReplicationReplica ReplicationRole = "replica"
+	// ReplicationRelay means this mysql instance has source and replica roles at the same time
+	ReplicationRelay ReplicationRole = "relay"
 )
 
 type Config struct {
@@ -84,6 +93,20 @@ func (conn *Conn) Execute(command string, args ...interface{}) (*Result, error) 
 	return NewResult(result), nil
 }
 
+func (conn *Conn) GetVersion() (Version, error) {
+	result, err := conn.Execute(SelectVersionSQL)
+	if err != nil {
+		return nil, err
+	}
+
+	versionStr, err := result.GetString(constant.ZeroInt, constant.ZeroInt)
+	if err != nil {
+		return nil, err
+	}
+
+	return Parse(versionStr)
+}
+
 // CheckInstanceStatus checks mysql instance status
 func (conn *Conn) CheckInstanceStatus() bool {
 	sql := "select 1 as ok;"
@@ -104,7 +127,7 @@ func (conn *Conn) CheckInstanceStatus() bool {
 func (conn *Conn) GetReplicationSlaveList() (slaveList []string, err error) {
 	slaveList = []string{}
 
-	result, err := conn.Execute(ShowSlaveStatusSQL)
+	result, err := conn.Execute(ShowSlaveHostsSQL)
 	if err != nil {
 		return nil, err
 	}
@@ -133,24 +156,24 @@ func (conn *Conn) GetReplicationSlavesStatus() (result *Result, err error) {
 }
 
 // GetReplicationRole returns replication role
-func (conn *Conn) GetReplicationRole() (role string, err error) {
-	role = ReplicationMaster
+func (conn *Conn) GetReplicationRole() (role ReplicationRole, err error) {
+	role = ReplicationSource
 
 	result, err := conn.GetReplicationSlavesStatus()
 	if err != nil {
-		return "", err
+		return constant.EmptyString, err
 	}
 
 	if result.RowNumber() != 0 {
-		role = ReplicationSlave
+		role = ReplicationReplica
 	}
 
 	slaveList, err := conn.GetReplicationSlaveList()
 	if err != nil {
-		return "", err
+		return constant.EmptyString, err
 	}
 
-	if len(slaveList) != 0 && role == ReplicationSlave {
+	if len(slaveList) != 0 && role == ReplicationReplica {
 		role = ReplicationRelay
 	}
 

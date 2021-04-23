@@ -26,12 +26,12 @@ func TestPool(t *testing.T) {
 	log.SetLevel(zapcore.DebugLevel)
 
 	addr := "192.168.137.11:3306"
-	dbName := "testStruct"
+	dbName := "test"
 	dbUser := "root"
 	dbPass := "root"
 
 	// create pool
-	pool, err = NewMySQLPoolWithDefault(addr, dbName, dbUser, dbPass)
+	pool, err = NewPoolWithDefault(addr, dbName, dbUser, dbPass)
 	asst.Nil(err, "create pool failed. addr: %s, dbName: %s, dbUser: %s, dbPass: %s", addr, dbName, dbUser, dbPass)
 
 	// get connection from the pool

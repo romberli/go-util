@@ -1,6 +1,7 @@
 package clickhouse
 
 import (
+	"context"
 	"errors"
 
 	"github.com/romberli/go-util/middleware"
@@ -8,30 +9,30 @@ import (
 
 var _globalPool *Pool
 
-// InitClickhouseGlobalPool returns a new *Pool and replaces it as global pool
-func InitClickhouseGlobalPool(addr, dbName, dbUser, dbPass string, debug bool, readTimeout, writeTimeout int,
+// InitGlobalPool returns a new *Pool and replaces it as global pool
+func InitGlobalPool(addr, dbName, dbUser, dbPass string, debug bool, readTimeout, writeTimeout int,
 	maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval int, altHosts ...string) error {
 	cfg := NewPoolConfig(addr, dbName, dbUser, dbPass, debug, readTimeout, writeTimeout, maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval, altHosts...)
 
-	return InitClickhouseGlobalPoolWithPoolConfig(cfg)
+	return InitGlobalPoolWithPoolConfig(cfg)
 }
 
-// InitClickhouseGlobalPoolWithDefault returns a new *Pool with default configuration and replaces it as global pool
-func InitClickhouseGlobalPoolWithDefault(addr, dbName, dbUser, dbPass string) error {
-	return InitClickhouseGlobalPool(addr, dbName, dbUser, dbPass, false, DefaultReadTimeout, DefaultWriteTimeout,
+// InitGlobalPoolWithDefault returns a new *Pool with default configuration and replaces it as global pool
+func InitGlobalPoolWithDefault(addr, dbName, dbUser, dbPass string) error {
+	return InitGlobalPool(addr, dbName, dbUser, dbPass, false, DefaultReadTimeout, DefaultWriteTimeout,
 		DefaultMaxConnections, DefaultInitConnections, DefaultMaxIdleConnections, DefaultMaxIdleTime, DefaultKeepAliveInterval)
 }
 
-// InitClickhouseGlobalPoolWithConfig returns a new *Pool with a Config object and replaces it as global pool
-func InitClickhouseGlobalPoolWithConfig(config Config, maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval int) error {
+// InitGlobalPoolWithConfig returns a new *Pool with a Config object and replaces it as global pool
+func InitGlobalPoolWithConfig(config Config, maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval int) error {
 	cfg := NewPoolConfigWithConfig(config, maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval)
 
-	return InitClickhouseGlobalPoolWithPoolConfig(cfg)
+	return InitGlobalPoolWithPoolConfig(cfg)
 }
 
-// InitClickhouseGlobalPoolWithPoolConfig returns a new *Pool with a PoolConfig object and replaces it as global pool
-func InitClickhouseGlobalPoolWithPoolConfig(config PoolConfig) error {
-	pool, err := NewClickhousePoolWithPoolConfig(config)
+// InitGlobalPoolWithPoolConfig returns a new *Pool with a PoolConfig object and replaces it as global pool
+func InitGlobalPoolWithPoolConfig(config PoolConfig) error {
+	pool, err := NewPoolWithPoolConfig(config)
 	if err != nil {
 		return err
 	}
@@ -89,8 +90,18 @@ func Release(num int) error {
 	return _globalPool.Release(num)
 }
 
-// Execute execute given sql statement
-func Execute(sql string, args ...interface{}) (middleware.Result, error) {
+// Execute executes given command
+func Execute(command string, args ...interface{}) (middleware.Result, error) {
+	return executeContext(context.Background(), command, args...)
+}
+
+// ExecuteContext executes given command with context
+func ExecuteContext(ctx context.Context, command string, args ...interface{}) (middleware.Result, error) {
+	return executeContext(ctx, command, args...)
+}
+
+// executeContext executes given command with context
+func executeContext(ctx context.Context, command string, args ...interface{}) (middleware.Result, error) {
 	if _globalPool == nil {
 		return nil, errors.New("global pool is nil, please initiate it first")
 	}
@@ -101,5 +112,5 @@ func Execute(sql string, args ...interface{}) (middleware.Result, error) {
 	}
 	defer func() { _ = pc.Close() }()
 
-	return pc.Execute(sql, args...)
+	return pc.ExecuteContext(ctx, command, args...)
 }

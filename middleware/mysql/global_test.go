@@ -11,7 +11,7 @@ import (
 	"github.com/romberli/go-util/middleware"
 )
 
-func TestMySQLGlobalPool(t *testing.T) {
+func TestGlobalPool(t *testing.T) {
 	var (
 		err       error
 		conn      *PoolConn
@@ -29,7 +29,7 @@ func TestMySQLGlobalPool(t *testing.T) {
 	dbPass := "root"
 
 	// create pool
-	err = InitMySQLGlobalPoolWithDefault(addr, dbName, dbUser, dbPass)
+	err = InitGlobalPoolWithDefault(addr, dbName, dbUser, dbPass)
 	asst.Nil(err, "create pool failed. addr: %s, dbName: %s, dbUser: %s, dbPass: %s", addr, dbName, dbUser, dbPass)
 
 	// get connection from the pool

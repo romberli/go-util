@@ -1,4 +1,4 @@
-package sqls
+package statement
 
 import (
 	"strings"
@@ -27,7 +27,7 @@ const (
 	dropPrefix   = "drop"
 )
 
-func GetType(sql string) Type {
+func GetSQLType(sql string) Type {
 	sql = strings.ToLower(strings.TrimSpace(sql))
 	if strings.HasPrefix(sql, selectPrefix) {
 		return Select

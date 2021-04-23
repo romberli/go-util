@@ -1,7 +1,9 @@
-package mysql
+package prometheus
 
 import (
+	"context"
 	"errors"
+	"net/http"
 
 	"github.com/romberli/go-util/middleware"
 )
@@ -9,16 +11,15 @@ import (
 var _globalPool *Pool
 
 // InitGlobalPool returns a new *Pool and replaces it as global pool
-func InitGlobalPool(addr, dbName, dbUser, dbPass string,
-	maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval int) error {
-	cfg := NewPoolConfig(addr, dbName, dbUser, dbPass, maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval)
+func InitGlobalPool(addr string, rt http.RoundTripper, maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval int) error {
+	cfg := NewPoolConfig(addr, rt, maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval)
 
 	return InitGlobalPoolWithPoolConfig(cfg)
 }
 
 // InitGlobalPoolWithDefault returns a new *Pool with default configuration and replaces it as global pool
-func InitGlobalPoolWithDefault(addr, dbName, dbUser, dbPass string) error {
-	return InitGlobalPool(addr, dbName, dbUser, dbPass,
+func InitGlobalPoolWithDefault(addr string) error {
+	return InitGlobalPool(addr, DefaultRoundTripper,
 		DefaultMaxConnections, DefaultInitConnections, DefaultMaxIdleConnections, DefaultMaxIdleTime, DefaultKeepAliveInterval)
 }
 
@@ -90,7 +91,17 @@ func Release(num int) error {
 }
 
 // Execute execute given sql statement
-func Execute(sql string, args ...interface{}) (middleware.Result, error) {
+func Execute(command string, args ...interface{}) (middleware.Result, error) {
+	return executeContext(context.Background(), command, args...)
+}
+
+// ExecuteContext executes given command with context
+func ExecuteContext(ctx context.Context, command string, args ...interface{}) (middleware.Result, error) {
+	return executeContext(ctx, command, args...)
+}
+
+// executeContext executes given command with context
+func executeContext(ctx context.Context, command string, args ...interface{}) (middleware.Result, error) {
 	if _globalPool == nil {
 		return nil, errors.New("global pool is nil, please initiate it first")
 	}
@@ -101,5 +112,5 @@ func Execute(sql string, args ...interface{}) (middleware.Result, error) {
 	}
 	defer func() { _ = pc.Close() }()
 
-	return pc.Execute(sql, args...)
+	return pc.ExecuteContext(ctx, command, args...)
 }

@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/siddontang/go-mysql/client"
@@ -35,8 +36,8 @@ type Config struct {
 	DBPass string
 }
 
-// NewMySQLConfig returns a new Config
-func NewMySQLConfig(addr string, dbName string, dbUser string, dbPass string) Config {
+// NewConfig returns a new Config
+func NewConfig(addr string, dbName string, dbUser string, dbPass string) Config {
 	return Config{
 		Addr:   addr,
 		DBName: dbName,
@@ -50,9 +51,9 @@ type Conn struct {
 	*client.Conn
 }
 
-// NewMySQLConn returns connection to mysql database, be aware that addr is host:port style, default charset is utf8mb4
-func NewMySQLConn(addr string, dbName string, dbUser string, dbPass string) (*Conn, error) {
-	config := NewMySQLConfig(addr, dbName, dbUser, dbPass)
+// NewConn returns connection to mysql database, be aware that addr is host:port style, default charset is utf8mb4
+func NewConn(addr string, dbName string, dbUser string, dbPass string) (*Conn, error) {
+	config := NewConfig(addr, dbName, dbUser, dbPass)
 
 	// connect to mysql
 	conn, err := client.Connect(addr, dbUser, dbPass, dbName)
@@ -78,8 +79,38 @@ func NewMySQLConn(addr string, dbName string, dbUser string, dbPass string) (*Co
 	}, nil
 }
 
-// Execute executes given sql with arguments and return a result
+// Prepare prepares a statement and returns a *Statement
+func (conn *Conn) Prepare(command string) (*Statement, error) {
+	return conn.prepareContext(context.Background(), command)
+}
+
+// PrepareContext prepares a statement with context and returns a *Statement
+func (conn *Conn) PrepareContext(ctx context.Context, command string) (*Statement, error) {
+	return conn.prepareContext(ctx, command)
+}
+
+// prepareContext prepares a statement with context and returns a *Statement
+func (conn *Conn) prepareContext(ctx context.Context, command string) (*Statement, error) {
+	stmt, err := conn.Conn.Prepare(command)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewStatement(stmt), nil
+}
+
+// Execute executes given sql and placeholders and returns a result
 func (conn *Conn) Execute(command string, args ...interface{}) (*Result, error) {
+	return conn.executeContext(context.Background(), command, args...)
+}
+
+// ExecuteContext executes given sql and placeholders with context and returns a result
+func (conn *Conn) ExecuteContext(ctx context.Context, command string, args ...interface{}) (*Result, error) {
+	return conn.executeContext(ctx, command, args...)
+}
+
+// executeContext executes given sql and placeholders with context and returns a result
+func (conn *Conn) executeContext(ctx context.Context, command string, args ...interface{}) (*Result, error) {
 	err := common.SetRandomValueToNil(args...)
 	if err != nil {
 		return nil, err
@@ -153,7 +184,7 @@ func (conn *Conn) GetReplicationSlaveList() (slaveList []string, err error) {
 
 // GetReplicationSlavesStatus returns replication slave status, like sql: "show slave status;"
 func (conn *Conn) GetReplicationSlavesStatus() (result *Result, err error) {
-	return conn.Execute(ShowSlaveStatusSQL)
+	return conn.executeContext(context.Background(), ShowSlaveStatusSQL)
 }
 
 // GetReplicationRole returns replication role

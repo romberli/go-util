@@ -2,7 +2,7 @@ module github.com/romberli/go-util
 
 go 1.15
 
-replace github.com/ClickHouse/clickhouse-go v1.4.3 => github.com/romberli/clickhouse-go v1.4.4-0.20210311033512-91aca38ba7b3
+replace github.com/ClickHouse/clickhouse-go v1.4.3 => github.com/romberli/clickhouse-go v1.4.4-0.20210422094559-b05fc8c4dbe9
 
 require (
 	github.com/ClickHouse/clickhouse-go v1.4.3
@@ -12,6 +12,8 @@ require (
 	github.com/pingcap/errors v0.11.4
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.12.0
+	github.com/prometheus/client_golang v1.10.0
+	github.com/prometheus/common v0.18.0
 	github.com/romberli/dynamic-struct v1.2.1
 	github.com/romberli/log v1.0.20
 	github.com/shirou/gopsutil/v3 v3.20.11

@@ -1,15 +1,13 @@
 package clickhouse
 
 import (
-	"database/sql/driver"
+	"context"
 	"fmt"
 	"strings"
 
 	"github.com/ClickHouse/clickhouse-go"
-
 	"github.com/romberli/go-util/common"
 	"github.com/romberli/go-util/constant"
-	"github.com/romberli/go-util/middleware/sqls"
 )
 
 const (
@@ -29,8 +27,8 @@ type Config struct {
 	AltHosts     []string
 }
 
-// NewClickhouseConfig returns a new Config
-func NewClickhouseConfig(addr, dbName, dbUser, dbPass string, debug bool, readTimeout, writeTimeout int, altHosts ...string) Config {
+// NewConfig returns a new Config
+func NewConfig(addr, dbName, dbUser, dbPass string, debug bool, readTimeout, writeTimeout int, altHosts ...string) Config {
 	return Config{
 		Addr:         addr,
 		DBName:       dbName,
@@ -43,8 +41,8 @@ func NewClickhouseConfig(addr, dbName, dbUser, dbPass string, debug bool, readTi
 	}
 }
 
-// NewClickhouseConfigWithDefault returns a new Config with default value
-func NewClickhouseConfigWithDefault(addr, dbName, dbUser, dbPass string, altHosts ...string) Config {
+// NewConfigWithDefault returns a new Config with default value
+func NewConfigWithDefault(addr, dbName, dbUser, dbPass string, altHosts ...string) Config {
 	return Config{
 		Addr:         addr,
 		DBName:       dbName,
@@ -124,8 +122,8 @@ type Conn struct {
 	clickhouse.Clickhouse
 }
 
-// NewClickhouseConnWithConfig returns connection to mysql database with given Config
-func NewClickhouseConnWithConfig(config Config) (*Conn, error) {
+// NewConnWithConfig returns connection to mysql database with given Config
+func NewConnWithConfig(config Config) (*Conn, error) {
 	// connect to Clickhouse
 	client, err := clickhouse.OpenDirect(config.GetConnectionString())
 	if err != nil {
@@ -138,59 +136,66 @@ func NewClickhouseConnWithConfig(config Config) (*Conn, error) {
 	}, nil
 }
 
-// NewClickhouseConn returns connection to Clickhouse database, be aware that addr is host:port style
-func NewClickhouseConn(addr, dbName, dbUser, dbPass string, debug bool, readTimeout, writeTimeout int, altHosts ...string) (*Conn, error) {
-	config := NewClickhouseConfig(addr, dbName, dbUser, dbPass, debug, readTimeout, writeTimeout, altHosts...)
+// NewConn returns connection to Clickhouse database, be aware that addr is host:port style
+func NewConn(addr, dbName, dbUser, dbPass string, debug bool, readTimeout, writeTimeout int, altHosts ...string) (*Conn, error) {
+	config := NewConfig(addr, dbName, dbUser, dbPass, debug, readTimeout, writeTimeout, altHosts...)
 
-	return NewClickhouseConnWithConfig(config)
+	return NewConnWithConfig(config)
 }
 
-func NewClickhouseConnWithDefault(addr, dbName, dbUser, dbPass string, altHosts ...string) (*Conn, error) {
-	config := NewClickhouseConfigWithDefault(addr, dbName, dbUser, dbPass, altHosts...)
+func NewConnWithDefault(addr, dbName, dbUser, dbPass string, altHosts ...string) (*Conn, error) {
+	config := NewConfigWithDefault(addr, dbName, dbUser, dbPass, altHosts...)
 
-	return NewClickhouseConnWithConfig(config)
+	return NewConnWithConfig(config)
 }
 
-// Execute executes given sql with arguments and return a result
-func (conn *Conn) Execute(command string, args ...interface{}) (*Result, error) {
-	// prepare
-	stmt, err := conn.Prepare(command)
+// Prepare prepares a statement and returns a *Statement
+func (conn *Conn) Prepare(command string) (*Statement, error) {
+	return conn.prepareContext(context.Background(), command)
+}
+
+// PrepareContext prepares a statement with context and returns a *Statement
+func (conn *Conn) PrepareContext(ctx context.Context, command string) (*Statement, error) {
+	return conn.prepareContext(ctx, command)
+}
+
+// prepareContext prepares a statement with context and returns a *Statement
+func (conn *Conn) prepareContext(ctx context.Context, command string) (*Statement, error) {
+	stmt, err := conn.Clickhouse.PrepareContext(ctx, command)
 	if err != nil {
 		return nil, err
 	}
 
+	return NewStatement(stmt), nil
+}
+
+// Execute executes given sql with arguments and return a result
+func (conn *Conn) Execute(command string, args ...interface{}) (*Result, error) {
+	return conn.executeContext(context.Background(), command, args...)
+}
+
+// ExecuteContext executes given sql with arguments and context then return a result
+func (conn *Conn) ExecuteContext(ctx context.Context, command string, args ...interface{}) (*Result, error) {
+	return conn.executeContext(ctx, command, args...)
+}
+
+// execute executes given sql with arguments and context then return a result
+func (conn *Conn) executeContext(ctx context.Context, command string, args ...interface{}) (*Result, error) {
+	// prepare
+	stmt, err := conn.prepareContext(ctx, command)
+	if err != nil {
+		return nil, err
+	}
+	// set random value to nil
 	err = common.SetRandomValueToNil(args...)
 	if err != nil {
 		return nil, err
 	}
 
-	var values []driver.Value
-
-	for _, arg := range args {
-		values = append(values, arg)
-	}
-
-	sqlType := sqls.GetType(command)
-	if sqlType == sqls.Select {
-		// this is a select sql
-		rows, err := stmt.Query(values)
-		if err != nil {
-			return nil, err
-		}
-		defer func() { _ = rows.Close() }()
-
-		return NewResult(rows), nil
-	}
-
-	// this is not a select sql
-	_, err = stmt.Exec(values)
-	if err != nil {
-		return nil, err
-	}
-
-	return NewEmptyResult(), nil
+	return stmt.executeContext(ctx, args...)
 }
 
+// CheckInstanceStatus returns if instance is ok
 func (conn *Conn) CheckInstanceStatus() bool {
 	sql := "select 1 as ok;"
 	result, err := conn.Execute(sql)
@@ -206,16 +211,19 @@ func (conn *Conn) CheckInstanceStatus() bool {
 	return ok == 1
 }
 
+// Begin begins a new transaction
 func (conn *Conn) Begin() error {
 	_, err := conn.Clickhouse.Begin()
 
 	return err
 }
 
+// Commit commits the transaction
 func (conn *Conn) Commit() error {
 	return conn.Clickhouse.Commit()
 }
 
+// Rollback rollbacks the transaction
 func (conn *Conn) Rollback() error {
 	return conn.Clickhouse.Rollback()
 }

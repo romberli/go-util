@@ -1,9 +1,10 @@
-package clickhouse
+package prometheus
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"sync"
 	"time"
 
@@ -37,12 +38,9 @@ type PoolConfig struct {
 }
 
 // NewPoolConfig returns a new PoolConfig
-func NewPoolConfig(addr, dbName, dbUser, dbPass string, debug bool, readTimeout, writeTimeout int,
-	maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval int, altHosts ...string) PoolConfig {
-	config := NewConfig(addr, dbName, dbUser, dbPass, debug, readTimeout, writeTimeout, altHosts...)
-
+func NewPoolConfig(addr string, rt http.RoundTripper, maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval int) PoolConfig {
 	return PoolConfig{
-		Config:             config,
+		Config:             NewConfig(addr, rt),
 		MaxConnections:     maxConnections,
 		InitConnections:    initConnections,
 		MaxIdleConnections: maxIdleConnections,
@@ -52,8 +50,7 @@ func NewPoolConfig(addr, dbName, dbUser, dbPass string, debug bool, readTimeout,
 }
 
 // NewPoolConfigWithConfig returns a new PoolConfig
-func NewPoolConfigWithConfig(config Config, maxConnections, initConnections, maxIdleConnections,
-	maxIdleTime, keepAliveInterval int) PoolConfig {
+func NewPoolConfigWithConfig(config Config, maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval int) PoolConfig {
 	return PoolConfig{
 		Config:             config,
 		MaxConnections:     maxConnections,
@@ -99,8 +96,8 @@ type PoolConn struct {
 }
 
 // NewPoolConn returns a new *PoolConn
-func NewPoolConn(addr, dbName, dbUser, dbPass string, debug bool, readTimeout, writeTimeout int, alterHosts ...string) (*PoolConn, error) {
-	conn, err := NewConn(addr, dbName, dbUser, dbPass, debug, readTimeout, writeTimeout, alterHosts...)
+func NewPoolConn(addr string, rt http.RoundTripper) (*PoolConn, error) {
+	conn, err := NewConn(addr, rt)
 	if err != nil {
 		return nil, err
 	}
@@ -112,8 +109,8 @@ func NewPoolConn(addr, dbName, dbUser, dbPass string, debug bool, readTimeout, w
 }
 
 // NewPoolConnWithPool returns a new *PoolConn
-func NewPoolConnWithPool(pool *Pool, addr, dbName, dbUser, dbPass string, debug bool, readTimeout, writeTimeout int, alterHosts ...string) (*PoolConn, error) {
-	pc, err := NewPoolConn(addr, dbName, dbUser, dbPass, debug, readTimeout, writeTimeout, alterHosts...)
+func NewPoolConnWithPool(pool *Pool, addr string, rt http.RoundTripper) (*PoolConn, error) {
+	pc, err := NewPoolConn(addr, rt)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +144,8 @@ func (pc *PoolConn) Close() error {
 // there is no need to disconnect manually, consider to use Close() instead.
 func (pc *PoolConn) Disconnect() error {
 	pc.Pool = nil
-	return pc.Conn.Close()
+
+	return nil
 }
 
 // IsValid validates if connection is valid
@@ -157,12 +155,19 @@ func (pc *PoolConn) IsValid() bool {
 
 // Prepare prepares a statement and returns a *Statement
 func (pc *PoolConn) Prepare(command string) (middleware.Statement, error) {
-	return pc.Conn.prepareContext(context.Background(), command)
+	return pc.prepare()
 }
 
 // PrepareContext prepares a statement with context and returns a *Statement
 func (pc *PoolConn) PrepareContext(ctx context.Context, command string) (middleware.Statement, error) {
-	return pc.Conn.prepareContext(ctx, command)
+	return pc.prepare()
+}
+
+// prepare prepares a statement and returns a *Statement,
+// as prometheus does not support prepare a statement,
+// simply returns an error here
+func (pc *PoolConn) prepare() (middleware.Statement, error) {
+	return nil, errors.New("prometheus does not support prepare command, never call this function")
 }
 
 // Execute executes given sql and placeholders on the mysql server
@@ -197,23 +202,21 @@ type Pool struct {
 }
 
 // NewPool returns a new *Pool
-func NewPool(addr, dbName, dbUser, dbPass string, debug bool, readTimeout, writeTimeout int,
-	maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval int, altHosts ...string) (*Pool, error) {
-	cfg := NewPoolConfig(addr, dbName, dbUser, dbPass, debug, readTimeout, writeTimeout,
-		maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval, altHosts...)
+func NewPool(addr string, rt http.RoundTripper, maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval int) (*Pool, error) {
+	cfg := NewPoolConfig(addr, rt, maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval)
 
 	return NewPoolWithPoolConfig(cfg)
 }
 
 // NewPoolWithDefault returns a new *Pool with default configuration
-func NewPoolWithDefault(addr, dbName, dbUser, dbPass string) (*Pool, error) {
-	return NewPool(addr, dbName, dbUser, dbPass, false, DefaultReadTimeout, DefaultWriteTimeout,
-		DefaultMaxConnections, DefaultInitConnections, DefaultMaxIdleConnections, DefaultMaxIdleTime, DefaultKeepAliveInterval)
+func NewPoolWithDefault(addr string) (*Pool, error) {
+	return NewPool(addr, DefaultRoundTripper, DefaultMaxConnections, DefaultInitConnections, DefaultMaxIdleConnections, DefaultMaxIdleTime, DefaultKeepAliveInterval)
 }
 
 // NewPoolWithConfig returns a new *Pool with a Config object
 func NewPoolWithConfig(config Config, maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval int) (*Pool, error) {
 	cfg := NewPoolConfigWithConfig(config, maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval)
+
 	return NewPoolWithPoolConfig(cfg)
 }
 
@@ -278,7 +281,7 @@ func (p *Pool) supply(num int) error {
 
 	for i := 0; i < num; i++ {
 		if len(p.freeConnChan)+p.usedConnections < p.MaxConnections {
-			pc, err := NewPoolConnWithPool(p, p.Addr, p.DBName, p.DBUser, p.DBPass, p.Debug, p.ReadTimeout, p.WriteTimeout, p.AltHosts...)
+			pc, err := NewPoolConnWithPool(p, p.Address, p.RoundTripper)
 			if err != nil {
 				merr = multierror.Append(merr, err)
 				continue
@@ -357,7 +360,7 @@ func (p *Pool) get() (*PoolConn, error) {
 	}
 
 	// there is no valid connection in the free connection channel, therefore create a new one
-	pc, err := NewPoolConnWithPool(p, p.Addr, p.DBName, p.DBUser, p.DBPass, p.Debug, p.ReadTimeout, p.WriteTimeout, p.AltHosts...)
+	pc, err := NewPoolConnWithPool(p, p.Address, p.RoundTripper)
 	if err != nil {
 		return nil, err
 	}
@@ -368,7 +371,7 @@ func (p *Pool) get() (*PoolConn, error) {
 
 // Transaction simply returns *PoolConn, because it had implemented Transaction interface
 func (p *Pool) Transaction() (middleware.Transaction, error) {
-	return p.get()
+	return nil, errors.New("prometheus does not support transaction, never call this function")
 }
 
 // maintainFreeChan maintains free connection channel, if there are insufficient connection in the free connection channel,

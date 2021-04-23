@@ -1,11 +1,12 @@
 package mysql
 
 import (
+	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/romberli/go-util/constant"
+	"github.com/romberli/log"
+	"github.com/stretchr/testify/assert"
 )
 
 type testStruct struct {
@@ -30,10 +31,45 @@ func newTestStructWithDefault() *testStruct {
 	}
 }
 
+var conn = initConn()
+
+func initConn() *Conn {
+	addr := "192.168.137.11:3306"
+	dbName := "test"
+	dbUser := "root"
+	dbPass := "root"
+
+	c, err := NewConn(addr, dbName, dbUser, dbPass)
+	if err != nil {
+		log.Error(fmt.Sprintf("init connection failed.\n%s", err.Error()))
+		return nil
+	}
+
+	return c
+}
+
+func createTable() error {
+	sql := `
+		create table if not exists t10(
+			id int(11) auto_increment primary key,
+			name varchar(100),
+			col1 int(11),
+			col2 decimal(16, 4)
+		) engine=innodb character set utf8mb4;
+	`
+	_, err := conn.Execute(sql)
+	return err
+}
+
+func dropTable() error {
+	sql := `drop table t10;`
+	_, err := conn.Execute(sql)
+	return err
+}
+
 func TestMySQLConnection(t *testing.T) {
 	var (
 		err       error
-		conn      *Conn
 		repRole   ReplicationRole
 		slaveList []string
 		result    *Result
@@ -41,24 +77,19 @@ func TestMySQLConnection(t *testing.T) {
 
 	asst := assert.New(t)
 
-	addr := "192.168.137.11:3306"
-	dbName := "test"
-	dbUser := "root"
-	dbPass := "root"
-
-	conn, err = NewMySQLConn(addr, dbName, dbUser, dbPass)
-	asst.Nil(err, "connect to mysql failed. addr: %s, dbName: %s, dbUser: %s, dbPass: %s",
-		addr, dbName, dbUser, dbPass)
-	defer func() {
-		err = conn.Close()
-		asst.Nil(err, "close connection failed")
-	}()
-
+	// defer func() {
+	// 	err = conn.Close()
+	// 	asst.Nil(err, "close connection failed")
+	// }()
+	// create table
+	err = createTable()
+	asst.Nil(err, "execute create sql failed")
+	// insert data
 	ts := newTestStructWithDefault()
 	sql := `insert into t05(name, col1, col2) values(?, ?, ?);`
 	result, err = conn.Execute(sql, ts.Name, ts.Col1, ts.Col2)
 	asst.Nil(err, "execute insert sql failed")
-
+	// check replication
 	slaveList, err = conn.GetReplicationSlaveList()
 	asst.Nil(err, "get replication slave list failed")
 	t.Logf("replication slave list: %v", slaveList)
@@ -73,4 +104,7 @@ func TestMySQLConnection(t *testing.T) {
 	repRole, err = conn.GetReplicationRole()
 	asst.Nil(err, "get replication role failed")
 	t.Logf("replication role: %s", repRole)
+	// drop table
+	err = dropTable()
+	asst.Nil(err, "execute drop sql failed")
 }

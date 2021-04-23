@@ -39,7 +39,7 @@ func TestResult(t *testing.T) {
 	dbPass := "root"
 
 	// create pool
-	pool, err = NewMySQLPoolWithDefault(addr, dbName, dbUser, dbPass)
+	pool, err = NewPoolWithDefault(addr, dbName, dbUser, dbPass)
 	asst.Nil(err, "create pool failed. addr: %s, dbName: %s, dbUser: %s, dbPass: %s", addr, dbName, dbUser, dbPass)
 
 	// get connection from the pool

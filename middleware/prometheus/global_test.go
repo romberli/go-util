@@ -1,4 +1,4 @@
-package clickhouse
+package prometheus
 
 import (
 	"testing"
@@ -19,8 +19,9 @@ func TestGlobalPool(t *testing.T) {
 	asst := assert.New(t)
 
 	// create pool
-	err = InitGlobalPoolWithDefault(addr, dbName, dbUser, dbPass)
-	asst.Nil(err, "create pool failed. addr: %s, dbName: %s, dbUser: %s, dbPass: %s", addr, dbName, dbUser, dbPass)
+	config := NewConfigWithBasicAuth(defaultAddr, defaultUser, defaultPass)
+	err = InitGlobalPoolWithConfig(config, DefaultMaxConnections, DefaultInitConnections, DefaultMaxIdleConnections, DefaultMaxIdleTime, DefaultKeepAliveInterval)
+	asst.Nil(err, "create pool failed. addr: %s, user: %s, pass: %s", defaultAddr, defaultUser, defaultPass)
 
 	// get connection from the pool
 	conn, err = Get()
@@ -33,12 +34,12 @@ func TestGlobalPool(t *testing.T) {
 	err = conn.Close()
 	asst.Nil(err, "close connection failed")
 
-	sql := "select 1 as ok;"
-	result, err = Execute(sql)
+	query := "1"
+	result, err = Execute(query)
 	asst.Nil(err, "execute sql with global pool failed")
-	actual, err := result.(*Result).GetIntByName(0, "ok")
+	actual, err := result.GetIntByName(0, "value")
 	asst.Nil(err, "execute sql with global pool failed")
-	asst.Equal(int64(1), actual, "expected and actual values are not equal")
+	asst.Equal(1, actual, "expected and actual values are not equal")
 
 	// sleep to test maintain mechanism
 	time.Sleep(10 * time.Second)

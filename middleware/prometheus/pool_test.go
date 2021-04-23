@@ -1,4 +1,4 @@
-package clickhouse
+package prometheus
 
 import (
 	"testing"
@@ -22,8 +22,9 @@ func TestPool(t *testing.T) {
 	log.SetLevel(zapcore.DebugLevel)
 
 	// create pool
-	pool, err = NewPoolWithDefault(addr, dbName, dbUser, dbPass)
-	asst.Nil(err, "create pool failed. addr: %s, dbName: %s, dbUser: %s, dbPass: %s", addr, dbName, dbUser, dbPass)
+	config := NewConfigWithBasicAuth(defaultAddr, defaultUser, defaultPass)
+	pool, err = NewPoolWithConfig(config, DefaultMaxConnections, DefaultInitConnections, DefaultMaxIdleConnections, DefaultMaxIdleTime, DefaultKeepAliveInterval)
+	asst.Nil(err, "create pool failed. addr: %s, user: %s, pass: %s", defaultAddr, defaultAddr, defaultAddr)
 
 	// get connection from the pool
 	conn, err = pool.Get()

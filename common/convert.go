@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"time"
 	"unsafe"
 
 	"github.com/pingcap/errors"
@@ -156,7 +157,7 @@ func ConvertToInt(in interface{}) (int, error) {
 	case nil:
 		return constant.ZeroInt, nil
 	default:
-		return constant.ZeroInt, errors.Errorf("data type is %T", v)
+		return constant.ZeroInt, errors.Errorf("unsupported data type: %T", v)
 	}
 }
 
@@ -202,7 +203,7 @@ func ConvertToFloat(in interface{}) (float64, error) {
 	case nil:
 		return constant.ZeroInt, nil
 	default:
-		return constant.ZeroInt, errors.Errorf("data type is %T", v)
+		return constant.ZeroInt, errors.Errorf("unsupported data type: %T", v)
 	}
 }
 
@@ -221,8 +222,10 @@ func ConvertToString(in interface{}) (string, error) {
 		return strconv.FormatFloat(v, 'f', -1, 64), nil
 	case nil:
 		return constant.EmptyString, nil
+	case time.Time:
+		return v.Format(constant.DefaultTimeLayout), nil
 	default:
-		return constant.EmptyString, errors.Errorf("data type is %T", v)
+		return constant.EmptyString, errors.Errorf("unsupported data type: %T", v)
 	}
 }
 

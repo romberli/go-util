@@ -14,7 +14,7 @@ func TestResult(t *testing.T) {
 	asst := assert.New(t)
 
 	// create pool
-	err := InitClickhouseGlobalPoolWithDefault(addr, dbName, dbUser, dbPass)
+	err := InitGlobalPoolWithDefault(addr, dbName, dbUser, dbPass)
 	asst.Nil(err, "create pool failed. addr: %s, dbName: %s, dbUser: %s, dbPass: %s", addr, dbName, dbUser, dbPass)
 	// get connection from the pool
 	conn, err = Get()

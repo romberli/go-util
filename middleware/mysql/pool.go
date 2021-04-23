@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sync"
@@ -38,7 +39,7 @@ type PoolConfig struct {
 // NewPoolConfig returns a new PoolConfig
 func NewPoolConfig(addr, dbName, dbUser, dbPass string,
 	maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval int) PoolConfig {
-	config := NewMySQLConfig(addr, dbName, dbUser, dbPass)
+	config := NewConfig(addr, dbName, dbUser, dbPass)
 
 	return PoolConfig{
 		Config:             config,
@@ -99,7 +100,7 @@ type PoolConn struct {
 
 // NewPoolConn returns a new *PoolConn
 func NewPoolConn(addr, dbName, dbUser, dbPass string) (*PoolConn, error) {
-	conn, err := NewMySQLConn(addr, dbName, dbUser, dbPass)
+	conn, err := NewConn(addr, dbName, dbUser, dbPass)
 	if err != nil {
 		return nil, err
 	}
@@ -154,9 +155,29 @@ func (pc *PoolConn) IsValid() bool {
 	return pc.CheckInstanceStatus()
 }
 
+// Prepare prepares a statement and returns a *Statement
+func (pc *PoolConn) Prepare(command string) (middleware.Statement, error) {
+	return pc.Conn.prepareContext(context.Background(), command)
+}
+
+// PrepareContext prepares a statement with context and returns a *Statement
+func (pc *PoolConn) PrepareContext(ctx context.Context, command string) (middleware.Statement, error) {
+	return pc.Conn.prepareContext(ctx, command)
+}
+
 // Execute executes given sql and placeholders on the mysql server
 func (pc *PoolConn) Execute(command string, args ...interface{}) (middleware.Result, error) {
-	result, err := pc.Conn.Execute(command, args...)
+	return pc.executeContext(context.Background(), command, args...)
+}
+
+// ExecuteContext executes given sql and placeholders on the mysql server
+func (pc *PoolConn) ExecuteContext(ctx context.Context, command string, args ...interface{}) (middleware.Result, error) {
+	return pc.executeContext(ctx, command, args...)
+}
+
+// Execute executes given sql and placeholders on the mysql server
+func (pc *PoolConn) executeContext(ctx context.Context, command string, args ...interface{}) (middleware.Result, error) {
+	result, err := pc.Conn.executeContext(ctx, command, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -175,28 +196,28 @@ type Pool struct {
 	isClosed        bool
 }
 
-// NewMySQLPool returns a new *Pool
-func NewMySQLPool(addr, dbName, dbUser, dbPass string,
+// NewPool returns a new *Pool
+func NewPool(addr, dbName, dbUser, dbPass string,
 	maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval int) (*Pool, error) {
 	cfg := NewPoolConfig(addr, dbName, dbUser, dbPass, maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval)
 
-	return NewMySQLPoolWithPoolConfig(cfg)
+	return NewPoolWithPoolConfig(cfg)
 }
 
-// NewMySQLPoolWithDefault returns a new *Pool with default configuration
-func NewMySQLPoolWithDefault(addr, dbName, dbUser, dbPass string) (*Pool, error) {
-	return NewMySQLPool(addr, dbName, dbUser, dbPass,
+// NewPoolWithDefault returns a new *Pool with default configuration
+func NewPoolWithDefault(addr, dbName, dbUser, dbPass string) (*Pool, error) {
+	return NewPool(addr, dbName, dbUser, dbPass,
 		DefaultMaxConnections, DefaultInitConnections, DefaultMaxIdleConnections, DefaultMaxIdleTime, DefaultKeepAliveInterval)
 }
 
-// NewMySQLPoolWithConfig returns a new *Pool with a Config object
-func NewMySQLPoolWithConfig(config Config, maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval int) (*Pool, error) {
+// NewPoolWithConfig returns a new *Pool with a Config object
+func NewPoolWithConfig(config Config, maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval int) (*Pool, error) {
 	cfg := NewPoolConfigWithConfig(config, maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval)
-	return NewMySQLPoolWithPoolConfig(cfg)
+	return NewPoolWithPoolConfig(cfg)
 }
 
-// NewMySQLPoolWithPoolConfig returns a new *Pool with a PoolConfig object
-func NewMySQLPoolWithPoolConfig(config PoolConfig) (*Pool, error) {
+// NewPoolWithPoolConfig returns a new *Pool with a PoolConfig object
+func NewPoolWithPoolConfig(config PoolConfig) (*Pool, error) {
 	p := &Pool{
 		PoolConfig:      config,
 		freeConnChan:    make(chan *PoolConn, config.MaxConnections),

@@ -26,24 +26,17 @@ type testRow struct {
 }
 
 func initConn() *Conn {
-	config := NewClickhouseConfigWithDefault(addr, dbName, dbUser, dbPass)
-	conn, err := NewClickhouseConnWithConfig(config)
+	config := NewConfigWithDefault(addr, dbName, dbUser, dbPass)
+	c, err := NewConnWithConfig(config)
 	if err != nil {
 		log.Error(fmt.Sprintf("init connection failed.\n%s", err.Error()))
 		return nil
 	}
 
-	return conn
+	return c
 }
 
-func TestAll(t *testing.T) {
-	TestConn_Execute(t)
-}
-
-func TestConn_Execute(t *testing.T) {
-	asst := assert.New(t)
-
-	// create table
+func createTable() error {
 	sql := `
 		create table if not exists t01
 		(
@@ -59,11 +52,31 @@ func TestConn_Execute(t *testing.T) {
 			ORDER BY (id, last_update_time) SETTINGS index_granularity = 8192;
 	`
 	_, err := conn.Execute(sql)
+
+	return err
+}
+
+func dropTable() error {
+	sql := `drop table if exists t01;`
+	_, err := conn.Execute(sql)
+
+	return err
+}
+
+func TestConnAll(t *testing.T) {
+	TestConn_Execute(t)
+}
+
+func TestConn_Execute(t *testing.T) {
+	asst := assert.New(t)
+
+	// create table
+	err := createTable()
 	asst.Nil(err, "test Execute() failed")
 	// insert data
 	err = conn.Begin()
 	asst.Nil(err, "test Execute() failed")
-	sql = `insert into t01(id, name, group, type, del_flag, create_time, last_update_time) values(?, ?, ?, ?, ?, ?, ?)`
+	sql := `insert into t01(id, name, group, type, del_flag, create_time, last_update_time) values(?, ?, ?, ?, ?, ?, ?)`
 	_, err = conn.Execute(sql, 1, constant.DefaultRandomString, clickhouse.Array([]string{"group1", "group2", "group3"}), "a", 0, constant.DefaultRandomTime, time.Now())
 	asst.Nil(err, "test Execute() failed")
 	err = conn.Commit()
@@ -84,7 +97,6 @@ func TestConn_Execute(t *testing.T) {
 	r := &testRow{}
 	err = result.MapToStructByRowIndex(r, 0, "middleware")
 	// drop table
-	sql = `drop table if exists t01;`
-	_, err = conn.Execute(sql)
+	err = dropTable()
 	asst.Nil(err, "test Execute() failed")
 }

@@ -18,7 +18,7 @@ require (
 	github.com/romberli/log v1.0.20
 	github.com/shirou/gopsutil/v3 v3.20.11
 	github.com/siddontang/go v0.0.0-20180604090527-bdc77568d726
-	github.com/siddontang/go-mysql v1.1.0
+	github.com/go-mysql-org/go-mysql v1.1.2
 	github.com/stretchr/testify v1.6.1
 	go.etcd.io/etcd v0.0.0-20200520232829-54ba9589114f
 	go.uber.org/zap v1.16.0

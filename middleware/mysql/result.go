@@ -6,7 +6,7 @@ import (
 	"github.com/romberli/go-util/middleware"
 	"github.com/romberli/go-util/middleware/result"
 
-	"github.com/siddontang/go-mysql/mysql"
+	"github.com/go-mysql-org/go-mysql/mysql"
 )
 
 const middlewareType = "mysql"

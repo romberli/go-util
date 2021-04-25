@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/siddontang/go-mysql/client"
+	"github.com/go-mysql-org/go-mysql/client"
 
 	"github.com/romberli/go-util/common"
 	"github.com/romberli/go-util/constant"

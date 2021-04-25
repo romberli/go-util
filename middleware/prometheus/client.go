@@ -3,6 +3,7 @@ package prometheus
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"strings"
@@ -114,20 +115,27 @@ func (conn *Conn) CheckInstanceStatus() bool {
 	return status == 1
 }
 
-// Execute executes given command with arguments and return a result,
-// note that args should must be either time.Time or apiv1.Range of prometheus golang client package
+// Execute executes given command with arguments and return a result
 func (conn *Conn) Execute(command string, args ...interface{}) (*Result, error) {
 	return conn.executeContext(context.Background(), command, args...)
 }
 
-// ExecuteContext executes given command with arguments and return a result,
-// note that args should must be either time.Time or apiv1.Range of prometheus golang client package
+// ExecuteContext executes given command with arguments and return a result
 func (conn *Conn) ExecuteContext(ctx context.Context, command string, args ...interface{}) (*Result, error) {
 	return conn.executeContext(ctx, command, args...)
 }
 
-// executeContext executes given command with arguments and return a result,
-// note that args should must be either time.Time or apiv1.Range of prometheus golang client package
+// executeContext executes given command with arguments and return a result.
+// if args length is 0:
+// 		it use time.Now() as the time series
+// if args length is 1:
+// 		argument type must be time.Time or TimeRange
+// if args length is 2:
+// 		argument types must be time.Time and time.Time, represent start time and end time, it uses 1 minute as step
+// if args length is 3:
+//		argument types muse be in order of time.Time, time.Time and time.Duration, represent start time, end time and step
+// if args length is larger than 3:
+// 		it returns error
 func (conn *Conn) executeContext(ctx context.Context, command string, args ...interface{}) (*Result, error) {
 	var (
 		arg      interface{}
@@ -141,8 +149,27 @@ func (conn *Conn) executeContext(ctx context.Context, command string, args ...in
 		arg = time.Now()
 	case 1:
 		arg = args[constant.ZeroInt]
+	case 2:
+		start, startOK := args[0].(time.Time)
+		end, endOK := args[1].(time.Time)
+		if !(startOK && endOK) {
+			return nil, errors.New(
+				"args length is 2, should be in order of time.Time, time.Time, represent start time, end time")
+		}
+
+		arg = NewTimeRange(start, end, DefaultStep)
+	case 3:
+		start, startOK := args[0].(time.Time)
+		end, endOK := args[1].(time.Time)
+		step, stepOK := args[2].(time.Duration)
+		if !(startOK && endOK && stepOK) {
+			return nil, errors.New(
+				"args length is 3, should be in order of time.Time, time.Time and time.Duration, represent start time, end time and step")
+		}
+
+		arg = NewTimeRange(start, end, step)
 	default:
-		return nil, errors.New("two many arguments, argument number should be either 0 or 1")
+		return nil, errors.New(fmt.Sprintf("args length shoud be less or equal to 3, %d is not valid", len(args)))
 	}
 
 	switch arg.(type) {
@@ -151,13 +178,13 @@ func (conn *Conn) executeContext(ctx context.Context, command string, args ...in
 		if err != nil {
 			return nil, err
 		}
-	case apiv1.Range:
-		value, warnings, err = conn.QueryRange(ctx, command, arg.(apiv1.Range))
+	case TimeRange:
+		value, warnings, err = conn.QueryRange(ctx, command, arg.(TimeRange).GetRange())
 		if err != nil {
 			return nil, err
 		}
 	default:
-		return nil, errors.New("args must be either time.Time or apiv1.Range of prometheus golang client package")
+		return nil, errors.New(fmt.Sprintf("unsupported argument type: %T", arg))
 	}
 
 	return NewResult(value, warnings), nil

@@ -11,10 +11,10 @@ import (
 )
 
 const (
-	middlewareType   = "prometheus"
 	defaultColumnNum = 2
-	valueColumn      = "value"
+	middlewareType   = "prometheus"
 	timestampColumn  = "timestamp"
+	valueColumn      = "value"
 	warningsColumn   = "warnings"
 )
 

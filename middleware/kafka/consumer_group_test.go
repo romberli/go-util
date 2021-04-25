@@ -2,10 +2,11 @@ package kafka
 
 import (
 	"context"
-	"github.com/Shopify/sarama"
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"github.com/Shopify/sarama"
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -18,7 +19,7 @@ func TestConsume(t *testing.T) {
 		cg  *ConsumerGroup
 	)
 
-	assert := assert.New(t)
+	asst := assert.New(t)
 
 	kafkaVersion := "2.2.0"
 	brokerList := []string{"10.0.0.63:9092", "10.0.0.84:9092", "10.0.0.92:9092"}
@@ -28,14 +29,14 @@ func TestConsume(t *testing.T) {
 	handler := DefaultConsumerGroupHandler{}
 
 	cg, err = NewConsumerGroup(kafkaVersion, brokerList, groupName, sarama.OffsetNewest)
-	assert.Nil(err, "create consumer group failed. group: %s, topic: %s", groupName, topicName)
+	asst.Nil(err, "create consumer group failed. group: %s, topic: %s", groupName, topicName)
 
 	go func() {
 		err = cg.Consume(ctx, topicName, handler)
-		assert.Nil(err, "consume failed. group: %s, topic: %s", groupName, topicName)
+		asst.Nil(err, "consume failed. group: %s, topic: %s", groupName, topicName)
 
 		err = ctx.Err()
-		assert.EqualError(err, "context canceled", "context error is not nil. group: %s, topic: %s, message: %s", groupName, topicName, err.Error())
+		asst.EqualError(err, "context canceled", "context error is not nil. group: %s, topic: %s, message: %s", groupName, topicName, err.Error())
 	}()
 
 	time.Sleep(DefaultConsumeSeconds)
@@ -43,5 +44,5 @@ func TestConsume(t *testing.T) {
 	cancel()
 
 	err = ctx.Err()
-	assert.EqualError(err, "context canceled", "context error is not nil. group: %s, topic: %s, message: %s", groupName, topicName, err.Error())
+	asst.EqualError(err, "context canceled", "context error is not nil. group: %s, topic: %s, message: %s", groupName, topicName, err.Error())
 }

@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/romberli/go-util/constant"
 	"github.com/romberli/log"
 	"github.com/stretchr/testify/assert"
@@ -33,15 +32,18 @@ func initConn() *Conn {
 func TestConn_Execute(t *testing.T) {
 	asst := assert.New(t)
 
-	query := "1"
-	// query := `rate(mysql_global_status_queries)[1m]`
+	// query := "1"
+	query := `rate(mysql_global_status_queries)[1m]`
 	// query := `mysql_global_status_queries`
-	r := apiv1.Range{
-		Start: time.Now().Add(-time.Hour),
-		End:   time.Now(),
-		Step:  time.Minute,
-	}
-	result, err := conn.Execute(query, r)
+	start := time.Now().Add(-time.Hour)
+	end := time.Now()
+	step := time.Minute
+	// r := apiv1.Range{
+	// 	Start: start,
+	// 	End:   end,
+	// 	Step:  step,
+	// }
+	result, err := conn.Execute(query, start, end, step)
 	asst.Nil(err, "test Execute() failed")
 	s, err := result.GetString(constant.ZeroInt, constant.ZeroInt)
 	asst.Nil(err, "test Execute() failed")

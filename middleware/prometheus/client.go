@@ -157,7 +157,7 @@ func (conn *Conn) executeContext(ctx context.Context, command string, args ...in
 		end, endOK := args[1].(time.Time)
 		if !(startOK && endOK) {
 			return nil, errors.New(
-				"args length is 2, should be in order of time.Time, time.Time, represent start time, end time")
+				"args length is 2, both of them should be time.Time, represent start time, end time")
 		}
 
 		arg = NewTimeRange(start, end, DefaultStep)
@@ -192,7 +192,7 @@ func (conn *Conn) executeContext(ctx context.Context, command string, args ...in
 			return nil, err
 		}
 	default:
-		return nil, errors.New(fmt.Sprintf("unsupported argument type: %T", arg))
+		return nil, errors.New(fmt.Sprintf("unsupported argument data type: %T", arg))
 	}
 
 	return NewResult(value, warnings), nil

@@ -23,6 +23,13 @@ func NewTimeRange(start, end time.Time, step time.Duration) TimeRange {
 	}
 }
 
+// NewTimeRangeWithRange returns a new TimeRange with given apiv1.Range
+func NewTimeRangeWithRange(r apiv1.Range) TimeRange {
+	return TimeRange{
+		r,
+	}
+}
+
 // GetRange returns apiv1.Range
 func (tr TimeRange) GetRange() apiv1.Range {
 	return tr.Range

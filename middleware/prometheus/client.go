@@ -132,7 +132,7 @@ func (conn *Conn) ExecuteContext(ctx context.Context, command string, args ...in
 // if args length is 0:
 // 		it uses time.Now() as the time series
 // if args length is 1:
-// 		argument type must be either time.Time or TimeRange
+// 		argument type must be either time.Time, TimeRange or apiv1.Range
 // if args length is 2:
 // 		argument types must be time.Time and time.Time, represent start time and end time, it uses 1 minute as step
 // if args length is 3:
@@ -175,14 +175,19 @@ func (conn *Conn) executeContext(ctx context.Context, command string, args ...in
 		return nil, errors.New(fmt.Sprintf("args length shoud be less or equal to 3, %d is not valid", len(args)))
 	}
 
-	switch arg.(type) {
+	switch in := arg.(type) {
 	case time.Time:
-		value, warnings, err = conn.Query(ctx, command, arg.(time.Time))
+		value, warnings, err = conn.Query(ctx, command, in)
 		if err != nil {
 			return nil, err
 		}
 	case TimeRange:
-		value, warnings, err = conn.QueryRange(ctx, command, arg.(TimeRange).GetRange())
+		value, warnings, err = conn.QueryRange(ctx, command, in.GetRange())
+		if err != nil {
+			return nil, err
+		}
+	case apiv1.Range:
+		value, warnings, err = conn.QueryRange(ctx, command, in)
 		if err != nil {
 			return nil, err
 		}

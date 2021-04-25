@@ -115,21 +115,21 @@ func (conn *Conn) CheckInstanceStatus() bool {
 	return status == 1
 }
 
-// Execute executes given command with arguments and return a result
+// Execute executes given command with arguments and returns a result
 func (conn *Conn) Execute(command string, args ...interface{}) (*Result, error) {
 	return conn.executeContext(context.Background(), command, args...)
 }
 
-// ExecuteContext executes given command with arguments and return a result
+// ExecuteContext executes given command with arguments and returns a result
 func (conn *Conn) ExecuteContext(ctx context.Context, command string, args ...interface{}) (*Result, error) {
 	return conn.executeContext(ctx, command, args...)
 }
 
-// executeContext executes given command with arguments and return a result.
+// executeContext executes given command with arguments and returns a result.
 // if args length is 0:
-// 		it use time.Now() as the time series
+// 		it uses time.Now() as the time series
 // if args length is 1:
-// 		argument type must be time.Time or TimeRange
+// 		argument type must be either time.Time or TimeRange
 // if args length is 2:
 // 		argument types must be time.Time and time.Time, represent start time and end time, it uses 1 minute as step
 // if args length is 3:

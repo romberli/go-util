@@ -19,6 +19,7 @@ type Result struct {
 	result.Map
 }
 
+// NewResult returns *Result
 func NewResult(r *mysql.Result) *Result {
 	columns := make([]string, r.ColumnNumber())
 	for fieldName, fieldIndex := range r.FieldNames {

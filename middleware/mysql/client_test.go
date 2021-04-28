@@ -50,7 +50,7 @@ func initConn() *Conn {
 
 func createTable() error {
 	sql := `
-		create table if not exists t10(
+		create table if not exists t05(
 			id int(11) auto_increment primary key,
 			name varchar(100),
 			col1 int(11),

@@ -6,8 +6,6 @@ import (
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
-const DefaultStep = time.Minute
-
 type TimeRange struct {
 	apiv1.Range
 }
@@ -25,9 +23,7 @@ func NewTimeRange(start, end time.Time, step time.Duration) TimeRange {
 
 // NewTimeRangeWithRange returns a new TimeRange with given apiv1.Range
 func NewTimeRangeWithRange(r apiv1.Range) TimeRange {
-	return TimeRange{
-		r,
-	}
+	return TimeRange{r}
 }
 
 // GetRange returns apiv1.Range

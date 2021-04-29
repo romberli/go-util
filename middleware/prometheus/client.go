@@ -17,11 +17,14 @@ import (
 )
 
 const (
-	defaultHTTPPrefix          = "http://"
-	defaultHTTPSPrefix         = "https://"
-	defaultDialTimeout         = 30 * time.Second
-	defaultKeepAlive           = 30 * time.Second
-	defaultTLSHandshakeTimeout = 10 * time.Second
+	DefaultStep = time.Minute
+
+	DefaultDialTimeout         = 30 * time.Second
+	DefaultKeepAlive           = 30 * time.Second
+	DefaultTLSHandshakeTimeout = 10 * time.Second
+
+	defaultHTTPPrefix  = "http://"
+	defaultHTTPSPrefix = "https://"
 )
 
 type Config struct {
@@ -31,8 +34,8 @@ type Config struct {
 // DefaultRoundTripper is used if no RoundTripper is set in Config,
 var DefaultRoundTripper http.RoundTripper = &http.Transport{
 	Proxy:               http.ProxyFromEnvironment,
-	DialContext:         (&net.Dialer{Timeout: defaultDialTimeout, KeepAlive: defaultKeepAlive}).DialContext,
-	TLSHandshakeTimeout: defaultTLSHandshakeTimeout,
+	DialContext:         (&net.Dialer{Timeout: DefaultDialTimeout, KeepAlive: DefaultKeepAlive}).DialContext,
+	TLSHandshakeTimeout: DefaultTLSHandshakeTimeout,
 }
 
 // NewConfig returns a new client.Config with given address and round tripper

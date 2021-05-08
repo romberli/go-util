@@ -50,4 +50,9 @@ func TestConn_Execute(t *testing.T) {
 	ts, err := result.GetString(constant.ZeroInt, 1)
 	asst.Nil(err, "test Execute() failed")
 	t.Log(s, ts)
+
+	query = `sum(avg by (node_name,mode) (clamp_max(((avg by (mode,node_name) ( (clamp_max(rate(node_cpu_seconds_total{node_name=~"192-168-137-11",mode!="idle"}[5s]),1)) or (clamp_max(irate(node_cpu_seconds_total{node_name=~"192-168-137-11",mode!="idle"}[5m]),1)) ))*100 or (avg_over_time(node_cpu_average{node_name=~"192-168-137-11", mode!="total", mode!="idle"}[5s]) or avg_over_time(node_cpu_average{node_name=~"192-168-137-11", mode!="total", mode!="idle"}[5m]))),100)))`
+	cpuUsageData, err := conn.Execute(query, start, end, step)
+	asst.Nil(err, "test Execute() failed")
+	t.Log(cpuUsageData)
 }

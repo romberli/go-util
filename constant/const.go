@@ -10,6 +10,7 @@ const (
 	DefaultKillSignal                   = 15
 	DefaultNormalExitCode               = 0
 	DefaultAbnormalExitCode             = 1
+	MaxPercentage                       = 100
 	ZeroInt                             = 0
 	MinUInt                 uint        = 0
 	MaxUInt                             = ^uint(0)

@@ -31,7 +31,8 @@ const (
 	TimeLayoutSecond                    = "2006-01-02 15:04:05"
 	TimeLayoutMicrosecond               = "2006-01-02 15:04:05.999999"
 	DefaultTimeLayout                   = TimeLayoutMicrosecond
-	DefaultMarshalTag                   = "json"
+	DefaultMarshalTag                   = DefaultJSONTag
+	DefaultJSONTag                      = "json"
 	DefaultMiddlewareTag                = "middleware"
 	DefaultListenIP                     = "0.0.0.0"
 	DefaultLocalHostName                = "localhost"

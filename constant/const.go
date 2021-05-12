@@ -28,7 +28,9 @@ const (
 	CRLFString                          = "\n"
 	CommaString                         = ","
 	DefaultRandomTimeString             = "9999-07-02 09:55:32.346082"
-	DefaultTimeLayout                   = "2006-01-02 15:04:05.999999"
+	TimeLayoutSecond                    = "2006-01-02 15:04:05"
+	TimeLayoutMicrosecond               = "2006-01-02 15:04:05.999999"
+	DefaultTimeLayout                   = TimeLayoutMicrosecond
 	DefaultMarshalTag                   = "json"
 	DefaultMiddlewareTag                = "middleware"
 	DefaultListenIP                     = "0.0.0.0"

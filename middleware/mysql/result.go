@@ -53,3 +53,7 @@ func (r *Result) LastInsertID() (int, error) {
 func (r *Result) RowsAffected() (int, error) {
 	return int(r.Raw.AffectedRows), nil
 }
+
+func (r *Result) GetRaw() interface{} {
+	return r.Raw
+}

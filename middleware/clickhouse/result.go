@@ -33,3 +33,8 @@ func NewResult(rows driver.Rows) *Result {
 func NewEmptyResult() *Result {
 	return &Result{}
 }
+
+// GetRaw returns the raw data of the result
+func (r *Result) GetRaw() interface{} {
+	return r.Raw
+}

@@ -106,6 +106,7 @@ func NewConnWithConfig(config Config) (*Conn, error) {
 	return &Conn{apiv1.NewAPI(cli)}, nil
 }
 
+// CheckInstanceStatus checks prometheus instance status
 func (conn *Conn) CheckInstanceStatus() bool {
 	query := "1"
 	result, err := conn.Execute(query)

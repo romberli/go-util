@@ -7,6 +7,7 @@ import (
 )
 
 type Result interface {
+	result.Raw
 	result.Metadata
 	result.Value
 	result.Number

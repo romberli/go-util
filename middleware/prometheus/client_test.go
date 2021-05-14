@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	defaultAddr = "192.168.10.210:80/prometheus"
+	defaultAddr = "192.168.137.11:80/prometheus"
 	defaultUser = "admin"
 	defaultPass = "admin"
 )
@@ -63,7 +63,7 @@ func TestConn_Execute(t *testing.T) {
 	asst.Nil(err, "test Execute() failed")
 	t.Log(result)
 
-	query = `topk(10, avg by (service_name,schema,table) (sum(mysql_info_schema_table_rows{service_name=~"192-168-10-210:3306"}) by (service_name, schema, table))) > 0`
+	query = `topk(10, avg by (service_name,schema,table) (sum(mysql_info_schema_table_rows{service_name=~"192-168-137-11:3306"}) by (service_name, schema, table))) > 0`
 	result, err = conn.Execute(query, start, end, step)
 	asst.Nil(err, "test Execute() failed")
 	t.Log(result)

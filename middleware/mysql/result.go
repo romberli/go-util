@@ -27,13 +27,10 @@ func NewResult(r *mysql.Result) *Result {
 	}
 
 	values := make([][]driver.Value, r.RowNumber())
-	row := make([]driver.Value, r.ColumnNumber())
 	for i := 0; i < r.RowNumber(); i++ {
 		for j := 0; j < r.ColumnNumber(); j++ {
-			row[j] = r.Values[i][j].Value()
+			values[i][j] = r.Values[i][j].Value()
 		}
-
-		values[i] = row
 	}
 
 	return &Result{

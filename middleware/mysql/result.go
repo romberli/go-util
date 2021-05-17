@@ -28,6 +28,8 @@ func NewResult(r *mysql.Result) *Result {
 
 	values := make([][]driver.Value, r.RowNumber())
 	for i := 0; i < r.RowNumber(); i++ {
+		values[i] = make([]driver.Value, r.ColumnNumber())
+
 		for j := 0; j < r.ColumnNumber(); j++ {
 			values[i][j] = r.Values[i][j].Value()
 		}

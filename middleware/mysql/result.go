@@ -21,21 +21,18 @@ type Result struct {
 
 // NewResult returns *Result
 func NewResult(r *mysql.Result) *Result {
-	var values [][]driver.Value
-
 	columns := make([]string, r.ColumnNumber())
 	for fieldName, fieldIndex := range r.FieldNames {
 		columns[fieldIndex] = fieldName
 	}
 
+	values := make([][]driver.Value, r.RowNumber())
 	for i := 0; i < r.RowNumber(); i++ {
-		row := make([]driver.Value, r.ColumnNumber())
+		values[i] = make([]driver.Value, r.ColumnNumber())
 
 		for j := 0; j < r.ColumnNumber(); j++ {
-			row[j] = r.Values[i][j].Value()
+			values[i][j] = r.Values[i][j].Value()
 		}
-
-		values = append(values, row)
 	}
 
 	return &Result{

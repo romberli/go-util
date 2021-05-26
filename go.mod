@@ -10,7 +10,6 @@ replace (
 require (
 	github.com/ClickHouse/clickhouse-go v1.4.3
 	github.com/Shopify/sarama v1.26.1
-	github.com/XiaoMi/soar v0.8.2-0.20210518042745-dd44876e6b4d
 	github.com/go-mysql-org/go-mysql v1.1.2
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/json-iterator/go v1.1.10

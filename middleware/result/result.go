@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/pingcap/errors"
+	"github.com/pkg/errors"
 	"github.com/romberli/go-util/common"
 	"github.com/romberli/go-util/constant"
 )
@@ -52,8 +52,8 @@ func NewRowsWithRows(rows driver.Rows) *Rows {
 	}
 }
 
-// NewEmptyRaw returns an empty *Result
-func NewEmptyRaw() *Rows {
+// NewEmptyRows returns an empty *Rows
+func NewEmptyRows() *Rows {
 	return &Rows{}
 }
 
@@ -101,7 +101,7 @@ func (r *Rows) NameIndex(name string) (int, error) {
 func (r *Rows) GetValueByName(row int, name string) (interface{}, error) {
 	column, err := r.NameIndex(name)
 	if err != nil {
-		return nil, errors.Trace(err)
+		return nil, err
 	}
 
 	return r.GetValue(row, column)

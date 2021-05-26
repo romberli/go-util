@@ -15,9 +15,7 @@ const (
 	Create
 	Alter
 	Drop
-)
 
-const (
 	selectPrefix = "select"
 	insertPrefix = "insert"
 	updatePrefix = "update"
@@ -27,29 +25,25 @@ const (
 	dropPrefix   = "drop"
 )
 
-func GetSQLType(sql string) Type {
+func GetType(sql string) Type {
 	sql = strings.ToLower(strings.TrimSpace(sql))
-	if strings.HasPrefix(sql, selectPrefix) {
-		return Select
-	}
-	if strings.HasPrefix(sql, insertPrefix) {
-		return Insert
-	}
-	if strings.HasPrefix(sql, updatePrefix) {
-		return Update
-	}
-	if strings.HasPrefix(sql, deletePrefix) {
-		return Delete
-	}
-	if strings.HasPrefix(sql, createPrefix) {
-		return Create
-	}
-	if strings.HasPrefix(sql, alterPrefix) {
-		return Alter
-	}
-	if strings.HasPrefix(sql, dropPrefix) {
-		return Drop
-	}
 
-	return Unknown
+	switch {
+	case strings.HasPrefix(sql, selectPrefix):
+		return Select
+	case strings.HasPrefix(sql, insertPrefix):
+		return Insert
+	case strings.HasPrefix(sql, updatePrefix):
+		return Update
+	case strings.HasPrefix(sql, deletePrefix):
+		return Delete
+	case strings.HasPrefix(sql, createPrefix):
+		return Create
+	case strings.HasPrefix(sql, alterPrefix):
+		return Alter
+	case strings.HasPrefix(sql, dropPrefix):
+		return Drop
+	default:
+		return Unknown
+	}
 }

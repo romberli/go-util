@@ -5,7 +5,7 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go"
 	"github.com/romberli/go-util/middleware"
-	"github.com/romberli/go-util/middleware/statement"
+	"github.com/romberli/go-util/middleware/sql/statement"
 )
 
 var _ middleware.Statement = (*Statement)(nil)
@@ -31,7 +31,7 @@ func (stmt *Statement) ExecuteContext(ctx context.Context, args ...interface{}) 
 // executeContext executes given sql and placeholders with context and returns a result
 func (stmt *Statement) executeContext(ctx context.Context, args ...interface{}) (*Result, error) {
 	// get sql type
-	sqlType := statement.GetSQLType(stmt.GetQuery())
+	sqlType := statement.GetType(stmt.GetQuery())
 	if sqlType == statement.Select {
 		// this is a select sql
 		rows, err := stmt.QueryContext(ctx, middleware.ConvertArgsToNamedValues(args...))

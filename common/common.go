@@ -117,13 +117,33 @@ func CombineMessageWithError(message string, err error) string {
 	return fmt.Sprintf("%s\n%s", message, err.Error())
 }
 
+// StringInSlice checks if a string is in the slice
+func StringInSlice(s []string, str string) bool {
+	for i := range s {
+		if s[i] == str {
+			return true
+		}
+	}
+
+	return false
+}
+
+// StringKeyInMap checks if a string key is in the map
+func StringKeyInMap(m map[string]string, str string) bool {
+	if _, ok := m[str]; ok {
+		return true
+	}
+
+	return false
+}
+
 // ElementInSlice checks if given element is in the slice
-func ElementInSlice(e interface{}, s interface{}) (bool, error) {
+func ElementInSlice(s interface{}, e interface{}) (bool, error) {
 	sType := reflect.TypeOf(s)
 	sValue := reflect.ValueOf(s)
 
 	if sType.Kind() != reflect.Slice {
-		return false, errors.New("second argument must be array or slice")
+		return false, errors.New("first argument must be array or slice")
 	}
 
 	for i := 0; i < sValue.Len(); i++ {
@@ -136,9 +156,9 @@ func ElementInSlice(e interface{}, s interface{}) (bool, error) {
 }
 
 // KeyInMap checks if given key is in the map
-func KeyInMap(k interface{}, m interface{}) (bool, error) {
+func KeyInMap(m interface{}, k interface{}) (bool, error) {
 	if reflect.TypeOf(m).Kind() != reflect.Map {
-		return false, errors.New("second argument must be map")
+		return false, errors.New("first argument must be map")
 	}
 
 	iter := reflect.ValueOf(m).MapRange()
@@ -152,9 +172,9 @@ func KeyInMap(k interface{}, m interface{}) (bool, error) {
 }
 
 // ValueInMap checks if given value is in the map
-func ValueInMap(v interface{}, m interface{}) (bool, error) {
+func ValueInMap(m interface{}, v interface{}) (bool, error) {
 	if reflect.TypeOf(m).Kind() != reflect.Map {
-		return false, errors.New("second argument must be map")
+		return false, errors.New("first argument must be map")
 	}
 
 	iter := reflect.ValueOf(m).MapRange()
@@ -172,7 +192,7 @@ func TrimSpaceOfStructString(in interface{}) error {
 	inType := reflect.TypeOf(in)
 
 	if inType.Kind() != reflect.Ptr {
-		return errors.New("argument must be a pointer to struct")
+		return errors.New("first must be a pointer to struct")
 	}
 
 	inVal := reflect.ValueOf(in).Elem()
@@ -457,7 +477,7 @@ func CopyStructWithFields(in interface{}, fields ...string) (interface{}, error)
 
 	for i := 0; i < inVal.NumField(); i++ {
 		fieldName := inType.Field(i).Name
-		ok, err := ElementInSlice(fieldName, fields)
+		ok, err := ElementInSlice(fields, fieldName)
 		if err != nil {
 			return nil, err
 		}

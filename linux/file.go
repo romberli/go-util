@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"github.com/pingcap/errors"
+	"github.com/pkg/errors"
 
 	"github.com/romberli/go-util/constant"
 )
@@ -142,7 +142,7 @@ func GetFileNameDest(fileNameSource, dirDest string) string {
 func TailN(fileName string, n int) (lines []string, err error) {
 	file, err := os.Open(fileName)
 	if err != nil {
-		return nil, errors.AddStack(err)
+		return nil, err
 	}
 	defer func() { _ = file.Close() }()
 
@@ -150,7 +150,7 @@ func TailN(fileName string, n int) (lines []string, err error) {
 
 	stat, err := os.Stat(fileName)
 	if err != nil {
-		return nil, errors.AddStack(err)
+		return nil, err
 	}
 
 	start := int(stat.Size()) - n*estimateLineSize
@@ -160,7 +160,7 @@ func TailN(fileName string, n int) (lines []string, err error) {
 
 	_, err = file.Seek(int64(start), MinStartPosition /*means relative to the origin of the file*/)
 	if err != nil {
-		return nil, errors.AddStack(err)
+		return nil, err
 	}
 
 	scanner := bufio.NewScanner(file)

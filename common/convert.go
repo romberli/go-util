@@ -7,7 +7,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/pingcap/errors"
+	"github.com/pkg/errors"
 	"github.com/siddontang/go/hack"
 
 	"github.com/romberli/go-util/constant"

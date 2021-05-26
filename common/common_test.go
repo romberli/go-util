@@ -156,39 +156,39 @@ func TestCommon(t *testing.T) {
 	t.Log("==========test ConvertInterfaceToMapInterfaceInterface() completed==========")
 
 	t.Log("==========test ElementInSlice() started==========")
-	exists, err = ElementInSlice(str1, sliceStr)
+	exists, err = ElementInSlice(sliceStr, str1)
 	asst.Nil(err, "test ElementInSlice str1 sliceStr failed")
 	asst.True(exists, "test ElementInSlice str1 sliceStr failed")
 
-	exists, err = ElementInSlice(str1, sliceInt)
+	exists, err = ElementInSlice(sliceInt, str1)
 	asst.Nil(err, "test ElementInSlice str1 sliceInt failed")
 	asst.False(exists, "test ElementInSlice str1 sliceInt failed")
 
-	exists, err = ElementInSlice(str2, sliceStr)
+	exists, err = ElementInSlice(sliceStr, str2)
 	asst.Nil(err, "test ElementInSlice str1 failed")
 	asst.False(exists, "test ElementInSlice str2 failed")
 	t.Log("==========test ElementInSlice() completed==========")
 
 	t.Log("==========test KeyInMap() started==========")
-	exists, err = KeyInMap(str1, mapStrInt)
+	exists, err = KeyInMap(mapStrInt, str1)
 	asst.Nil(err, "test KeyInMap str1 mapStrInt failed")
 	asst.True(exists, "test ElementInSlice str1 mapStrInt failed")
 
-	exists, err = KeyInMap(str2, mapStrStr)
+	exists, err = KeyInMap(mapStrStr, str2)
 	asst.Nil(err, "test ElementInSlice str1 failed")
 	asst.False(exists, "test ElementInSlice str2 failed")
 	t.Log("==========test KeyInMap() completed==========")
 
 	t.Log("==========test ValueInMap() started==========")
-	exists, err = ValueInMap(str1, mapStrInt)
+	exists, err = ValueInMap(mapStrInt, str1)
 	asst.Nil(err, "test ValueInMap str1 mapStrInt failed")
 	asst.False(exists, "test ValueInMap str1 mapStrInt failed")
 
-	exists, err = ValueInMap(str1, mapStrStr)
+	exists, err = ValueInMap(mapStrStr, str1)
 	asst.Nil(err, "test ValueInMap str1 mapStrStr failed")
 	asst.False(exists, "test ValueInMap str2 mapStrStr failed")
 
-	exists, err = ValueInMap(str2, mapStrStr)
+	exists, err = ValueInMap(mapStrStr, str2)
 	asst.Nil(err, "test ValueInMap str2 mapStrStr failed")
 	asst.True(exists, "test ValueInMap str2 mapStrStr failed")
 	t.Log("==========test ValueInMap() completed==========")

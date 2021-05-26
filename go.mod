@@ -10,10 +10,10 @@ replace (
 require (
 	github.com/ClickHouse/clickhouse-go v1.4.3
 	github.com/Shopify/sarama v1.26.1
-	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // indirect
 	github.com/go-mysql-org/go-mysql v1.1.2
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/json-iterator/go v1.1.10
+	github.com/percona/go-mysql v0.0.0-20210427141028-73d29c6da78c
 	github.com/pingcap/parser v0.0.0-20210525032559-c37778aff307
 	github.com/pingcap/tidb v1.1.0-beta.0.20210526073135-acf5e52ffc78
 	github.com/pkg/errors v0.9.1

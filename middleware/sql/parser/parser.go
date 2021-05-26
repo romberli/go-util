@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"github.com/percona/go-mysql/query"
 	"github.com/pingcap/parser"
 	"github.com/romberli/go-util/constant"
 )
@@ -54,4 +55,13 @@ func (p *Parser) Split(sqls string) ([]string, []error, error) {
 	}
 
 	return sqlList, nil, nil
+}
+
+// GetFingerprint returns fingerprint fo given sql
+func (p *Parser) GetFingerprint(sql string) string {
+	return query.Fingerprint(sql)
+}
+
+func (p *Parser) GetSQLID(sql string) string {
+	return query.Id(p.GetFingerprint(sql))
 }

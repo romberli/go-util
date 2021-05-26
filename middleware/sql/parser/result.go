@@ -3,6 +3,7 @@ package parser
 import (
 	"encoding/json"
 
+	"github.com/romberli/go-util/common"
 	"github.com/romberli/go-util/constant"
 )
 
@@ -37,6 +38,72 @@ func NewEmptyResult() *Result {
 		ColumnNames:    []string{},
 		ColumnComments: make(map[string]string),
 	}
+}
+
+// GetSQLType returns the sql type
+func (r *Result) GetSQLType() string {
+	return r.SQLType
+}
+
+// GetDBNames returns the db names
+func (r *Result) GetDBNames() []string {
+	return r.DBNames
+}
+
+// GetTableNames returns the table names
+func (r *Result) GetTableNames() []string {
+	return r.TableNames
+}
+
+// GetTableComments returns the table comments
+func (r *Result) GetTableComments() map[string]string {
+	return r.TableComments
+}
+
+// GetColumnNames returns the column names
+func (r *Result) GetColumnNames() []string {
+	return r.ColumnNames
+}
+
+// GetColumnComments returns the column comments
+func (r *Result) GetColumnComments() map[string]string {
+	return r.ColumnComments
+}
+
+// SetSQLType sets the sql type
+func (r *Result) SetSQLType(sqlType string) {
+	r.SQLType = sqlType
+}
+
+// AddDBName adds db name to the result
+func (r *Result) AddDBName(dbName string) {
+	if !common.StringInSlice(r.DBNames, dbName) {
+		r.DBNames = append(r.DBNames, dbName)
+	}
+}
+
+// AddTableName adds table name to the result
+func (r *Result) AddTableName(tableName string) {
+	if !common.StringInSlice(r.TableNames, tableName) {
+		r.TableNames = append(r.TableNames, tableName)
+	}
+}
+
+// SetTableComment sets table comment of corresponding table
+func (r *Result) SetTableComment(tableName string, tableComment string) {
+	r.TableComments[tableName] = tableComment
+}
+
+// AddColumn adds column name to the result
+func (r *Result) AddColumn(columnName string) {
+	if !common.StringInSlice(r.ColumnNames, columnName) {
+		r.ColumnNames = append(r.ColumnNames, columnName)
+	}
+}
+
+// SetColumnComment sets column comment of corresponding column
+func (r *Result) SetColumnComment(columnName string, columnComment string) {
+	r.ColumnComments[columnName] = columnComment
 }
 
 // Marshal marshals result to json bytes

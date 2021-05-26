@@ -6,6 +6,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestParser_All(t *testing.T) {
+	TestParser_Parse(t)
+	TestParser_Split(t)
+}
+
 func TestParser_Parse(t *testing.T) {
 	asst := assert.New(t)
 
@@ -21,7 +26,7 @@ func TestParser_Parse(t *testing.T) {
 	 PRIMARY KEY (id),
 	 KEY idx_col1_col2_col3 (col1, col2, col3)
 	 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ;`
-	p := NewParser()
+	p := NewParserWithDefault()
 
 	result, warns, err := p.Parse(sql)
 	asst.Nil(warns, "test Parse() failed")
@@ -33,7 +38,7 @@ func TestParser_Split(t *testing.T) {
 	asst := assert.New(t)
 
 	sql := `select col1 from t01; select col2 from t02 where id in (select * from t03) and name = ";";select * from t04`
-	p := NewParser()
+	p := NewParserWithDefault()
 
 	sqlList, warns, err := p.Split(sql)
 	asst.Nil(warns, "test Split() failed")

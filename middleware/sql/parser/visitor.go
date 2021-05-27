@@ -186,7 +186,9 @@ func (v *Visitor) visitColumnDef(node *ast.ColumnDef) {
 	var columnComment string
 
 	columnName := node.Name.Name.L
+
 	v.result.AddColumn(columnName)
+	v.result.SetColumnType(columnName, node.Tp.InfoSchemaStr())
 
 	for _, columnOption := range node.Options {
 		if columnOption.Tp == ast.ColumnOptionComment {

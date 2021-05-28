@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/percona/go-mysql/query"
 	"github.com/pingcap/parser"
 	"github.com/pingcap/parser/ast"
@@ -53,38 +54,6 @@ func (p *Parser) GetVisitor() *Visitor {
 	return p.visitor
 }
 
-// Parse parses sql and returns the result,
-// not that only some kinds of statements will be parsed,
-// see the constants defined at the top of visitor.go file
-func (p *Parser) Parse(sql string) (*Result, []error, error) {
-	stmtNodes, warns, err := p.parser.Parse(sql, constant.EmptyString, constant.EmptyString)
-	if warns != nil || err != nil {
-		return nil, warns, err
-	}
-
-	for _, stmtNode := range stmtNodes {
-		stmtNode.Accept(p.visitor)
-	}
-
-	return p.visitor.result, nil, nil
-}
-
-// Split splits multiple sqls into a slice
-func (p *Parser) Split(sqls string) ([]string, []error, error) {
-	var sqlList []string
-
-	stmtNodes, warns, err := p.parser.Parse(sqls, constant.EmptyString, constant.EmptyString)
-	if warns != nil || err != nil {
-		return nil, warns, err
-	}
-
-	for _, stmtNode := range stmtNodes {
-		sqlList = append(sqlList, stmtNode.Text())
-	}
-
-	return sqlList, nil, nil
-}
-
 // GetFingerprint returns fingerprint of the given sql
 func (p *Parser) GetFingerprint(sql string) string {
 	return query.Fingerprint(sql)
@@ -95,11 +64,66 @@ func (p *Parser) GetSQLID(sql string) string {
 	return query.Id(p.GetFingerprint(sql))
 }
 
-// MergeDDLStatements merges ddl statements by table names,
+// Parse parses sql and returns the result,
+// not that only some kinds of statements will be parsed,
+// see the constants defined at the top of visitor.go file
+func (p *Parser) Parse(sql string) (*Result, error) {
+	stmtNodes, err := p.GetStatementNodes(sql)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, stmtNode := range stmtNodes {
+		stmtNode.Accept(p.visitor)
+	}
+
+	return p.visitor.result, nil
+}
+
+// GetStatementNodes gets the statement nodes of the given sql
+func (p *Parser) GetStatementNodes(sql string) ([]ast.StmtNode, error) {
+	stmtNodes, warns, err := p.GetTiDBParser().Parse(sql, constant.EmptyString, constant.EmptyString)
+	if err != nil || warns != nil {
+		merr := &multierror.Error{}
+
+		if err != nil {
+			merr = multierror.Append(merr, err)
+		}
+		if warns != nil {
+			for _, warn := range warns {
+				merr = multierror.Append(merr, warn)
+			}
+		}
+
+		return nil, merr.ErrorOrNil()
+	}
+
+	return stmtNodes, nil
+}
+
+// Split splits multiple sql statements into a slice
+func (p *Parser) Split(multiSQL string) ([]string, error) {
+	var sqlList []string
+
+	stmtNodes, err := p.GetStatementNodes(multiSQL)
+	if err != nil {
+		return nil, err
+
+	}
+
+	for _, stmtNode := range stmtNodes {
+		sqlList = append(sqlList, stmtNode.Text())
+	}
+
+	return sqlList, nil
+}
+
+// MergeDDLStatements merges ddl statements by table names.
 // note that only alter table statement and create index statement will be merged,
-// inputting other sql statements will return error
-func (p *Parser) MergeDDLStatements(sqls ...string) ([]string, []error, error) {
-	var result []string
+// inputting other sql statements will return error,
+// each argument in the input sqls could contain multiple sql statements
+func (p *Parser) MergeDDLStatements(sqls ...string) ([]string, error) {
+	var mergedSQLList []string
 
 	alterTableClauseMap := make(map[string][]string)
 
@@ -108,52 +132,60 @@ func (p *Parser) MergeDDLStatements(sqls ...string) ([]string, []error, error) {
 	createIndexExp := regexp.MustCompile(createIndexExpString)
 	indexNameExp := regexp.MustCompile(indexNameExpString)
 
-	for _, sql := range sqls {
-		sql = strings.Trim(sql, constant.SemicolonString)
-		// parse sql
-		stmtNodes, warns, err := p.GetTiDBParser().Parse(sql, constant.EmptyString, constant.EmptyString)
-		if err != nil || warns != nil {
-			return nil, warns, err
+	for _, sqlOrig := range sqls {
+		// try to split sql
+		sqlList, err := p.Split(sqlOrig)
+		if err != nil {
+			return nil, err
 		}
 
-		var (
-			alterTableClause string
-			dbName           string
-			tableName        string
-		)
-
-		for _, stmtNode := range stmtNodes {
-			switch node := stmtNode.(type) {
-			case *ast.AlterTableStmt:
-				tableName = node.Table.Name.L
-				dbName = node.Table.Schema.L
-
-				if alterTableExp.MatchString(sql) {
-					// get alter table clause
-					alterTableClause = fmt.Sprint(alterTableExp.ReplaceAllString(sql, constant.EmptyString))
-				}
-			case *ast.CreateIndexStmt:
-				tableName = node.Table.Name.L
-				dbName = node.Table.Schema.L
-
-				sqlExp := createIndexExp.ReplaceAllString(sql, constant.EmptyString)
-				indexName := strings.TrimSpace(indexNameExp.FindString(sqlExp))
-				sqlExp = string([]byte(sqlExp)[strings.Index(sqlExp, constant.LeftParenthesis):])
-				// get alter table clause
-				alterTableClause = fmt.Sprintf("%s %s %s", addIndexKeyword, indexName, sqlExp)
-			default:
-				return nil, nil, errors.New(fmt.Sprintf(
-					"sql statement must be either alter table statement or create index statement, this is not valid. sql:%s\n", sql))
+		for _, sql := range sqlList {
+			sql = strings.Trim(sql, constant.SemicolonString)
+			// parse sql
+			stmtNodes, err := p.GetStatementNodes(sql)
+			if err != nil {
+				return nil, err
 			}
 
-			if alterTableClause != constant.EmptyString && tableName != constant.EmptyString {
-				fullTableName := tableName
-				if dbName != constant.EmptyString {
-					fullTableName = fmt.Sprintf("%s.%s", dbName, tableName)
+			var (
+				alterTableClause string
+				dbName           string
+				tableName        string
+			)
+
+			for _, stmtNode := range stmtNodes {
+				switch node := stmtNode.(type) {
+				case *ast.AlterTableStmt:
+					tableName = node.Table.Name.L
+					dbName = node.Table.Schema.L
+
+					if alterTableExp.MatchString(sql) {
+						// get alter table clause
+						alterTableClause = fmt.Sprint(alterTableExp.ReplaceAllString(sql, constant.EmptyString))
+					}
+				case *ast.CreateIndexStmt:
+					tableName = node.Table.Name.L
+					dbName = node.Table.Schema.L
+
+					sqlExp := createIndexExp.ReplaceAllString(sql, constant.EmptyString)
+					indexName := strings.TrimSpace(indexNameExp.FindString(sqlExp))
+					sqlExp = string([]byte(sqlExp)[strings.Index(sqlExp, constant.LeftParenthesis):])
+					// get alter table clause
+					alterTableClause = fmt.Sprintf("%s %s %s", addIndexKeyword, indexName, sqlExp)
+				default:
+					return nil, errors.New(fmt.Sprintf(
+						"sql statement must be either alter table statement or create index statement, this is not valid. sql:%s\n", sql))
 				}
 
-				// add the alter table clause to the map
-				alterTableClauseMap[fullTableName] = append(alterTableClauseMap[fullTableName], alterTableClause)
+				if alterTableClause != constant.EmptyString && tableName != constant.EmptyString {
+					fullTableName := tableName
+					if dbName != constant.EmptyString {
+						fullTableName = fmt.Sprintf("%s.%s", dbName, tableName)
+					}
+
+					// add the alter table clause to the map
+					alterTableClauseMap[fullTableName] = append(alterTableClauseMap[fullTableName], alterTableClause)
+				}
 			}
 		}
 	}
@@ -163,8 +195,8 @@ func (p *Parser) MergeDDLStatements(sqls ...string) ([]string, []error, error) {
 		alterTableStatement := fmt.Sprintf("%s %s %s%s",
 			alterTablePrefix, fullTableName, strings.Join(alterClauseList, fmt.Sprintf("%s ", constant.CommaString)), constant.SemicolonString)
 
-		result = append(result, alterTableStatement)
+		mergedSQLList = append(mergedSQLList, alterTableStatement)
 	}
 
-	return result, nil, nil
+	return mergedSQLList, nil
 }

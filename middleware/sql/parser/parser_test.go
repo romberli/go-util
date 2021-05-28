@@ -9,6 +9,8 @@ import (
 func TestParser_All(t *testing.T) {
 	TestParser_Parse(t)
 	TestParser_Split(t)
+	TestParser_GetFingerprint(t)
+	TestParser_GetSQLID(t)
 }
 
 func TestParser_Parse(t *testing.T) {
@@ -59,6 +61,7 @@ func TestParser_GetFingerprint(t *testing.T) {
 
 	fp := p.GetFingerprint(sql)
 	asst.NotEmpty(fp, "test GetFingerprint() failed")
+	t.Log(fp)
 }
 
 func TestParser_GetSQLID(t *testing.T) {
@@ -69,4 +72,5 @@ func TestParser_GetSQLID(t *testing.T) {
 
 	id := p.GetSQLID(sql)
 	asst.NotEmpty(id, "test GetSQLID() failed")
+	t.Log(id)
 }

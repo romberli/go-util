@@ -7,29 +7,39 @@ import (
 )
 
 type Parser struct {
-	Parser  *parser.Parser
-	Visitor *Visitor
+	TiDBParser *parser.Parser
+	Visitor    *Visitor
 }
 
 // NewParser returns a new *Parser
 func NewParser(visitor *Visitor) *Parser {
 	return &Parser{
-		Parser:  parser.New(),
-		Visitor: visitor,
+		TiDBParser: parser.New(),
+		Visitor:    visitor,
 	}
 }
 
 // NewParserWithDefault returns a new *Parser with default visitor
 func NewParserWithDefault() *Parser {
 	return &Parser{
-		Parser:  parser.New(),
-		Visitor: NewVisitorWithDefault(),
+		TiDBParser: parser.New(),
+		Visitor:    NewVisitorWithDefault(),
 	}
+}
+
+// GetTiDBParser returns the TiDB parser
+func (p *Parser) GetTiDBParser() *parser.Parser {
+	return p.TiDBParser
+}
+
+// GetVisitor returns the visitor
+func (p *Parser) GetVisitor() *Visitor {
+	return p.Visitor
 }
 
 // Parse parses sql and returns the result
 func (p *Parser) Parse(sql string) (*Result, []error, error) {
-	stmtNodes, warns, err := p.Parser.Parse(sql, constant.EmptyString, constant.EmptyString)
+	stmtNodes, warns, err := p.TiDBParser.Parse(sql, constant.EmptyString, constant.EmptyString)
 	if warns != nil || err != nil {
 		return nil, warns, err
 	}
@@ -45,7 +55,7 @@ func (p *Parser) Parse(sql string) (*Result, []error, error) {
 func (p *Parser) Split(sqls string) ([]string, []error, error) {
 	var sqlList []string
 
-	stmtNodes, warns, err := p.Parser.Parse(sqls, constant.EmptyString, constant.EmptyString)
+	stmtNodes, warns, err := p.TiDBParser.Parse(sqls, constant.EmptyString, constant.EmptyString)
 	if warns != nil || err != nil {
 		return nil, warns, err
 	}

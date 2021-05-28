@@ -141,16 +141,16 @@ func (p *Parser) MergeDDLStatements(sqls ...string) ([]string, error) {
 
 		for _, sql := range sqlList {
 			sql = strings.Trim(sql, constant.SemicolonString)
-			// parse sql
+			// get statement nodes
 			stmtNodes, err := p.GetStatementNodes(sql)
 			if err != nil {
 				return nil, err
 			}
 
 			var (
-				alterTableClause string
 				dbName           string
 				tableName        string
+				alterTableClause string
 			)
 
 			for _, stmtNode := range stmtNodes {

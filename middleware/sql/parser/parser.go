@@ -127,7 +127,7 @@ func (p *Parser) MergeDDLStatements(sqls ...string) ([]string, error) {
 
 	alterTableClauseMap := make(map[string][]string)
 
-	// init regular expression
+	// init regular expression variables
 	alterTableExp := regexp.MustCompile(alterTableExpString)
 	createIndexExp := regexp.MustCompile(createIndexExpString)
 	indexNameExp := regexp.MustCompile(indexNameExpString)
@@ -194,7 +194,7 @@ func (p *Parser) MergeDDLStatements(sqls ...string) ([]string, error) {
 		// get merged alter table statement
 		alterTableStatement := fmt.Sprintf("%s %s %s%s",
 			alterTablePrefix, fullTableName, strings.Join(alterClauseList, fmt.Sprintf("%s ", constant.CommaString)), constant.SemicolonString)
-
+		// add to the result
 		mergedSQLList = append(mergedSQLList, alterTableStatement)
 	}
 

@@ -90,9 +90,7 @@ func (p *Parser) GetStatementNodes(sql string) ([]ast.StmtNode, error) {
 			merr = multierror.Append(merr, err)
 		}
 		if warns != nil {
-			for _, warn := range warns {
-				merr = multierror.Append(merr, warn)
-			}
+			merr = multierror.Append(merr, warns...)
 		}
 
 		return nil, merr.ErrorOrNil()
@@ -123,9 +121,12 @@ func (p *Parser) Split(multiSQL string) ([]string, error) {
 // inputting other sql statements will return error,
 // each argument in the input sqls could contain multiple sql statements
 func (p *Parser) MergeDDLStatements(sqls ...string) ([]string, error) {
-	var mergedSQLList []string
+	var (
+		mergedSQLList []string
+		stmtNodes     []ast.StmtNode
+	)
 
-	alterTableClauseMap := make(map[string][]string)
+	alterTableClauses := make(map[string][]string)
 
 	// init regular expression variables
 	alterTableExp := regexp.MustCompile(alterTableExpString)
@@ -142,7 +143,7 @@ func (p *Parser) MergeDDLStatements(sqls ...string) ([]string, error) {
 		for _, sql := range sqlList {
 			sql = strings.Trim(sql, constant.SemicolonString)
 			// get statement nodes
-			stmtNodes, err := p.GetStatementNodes(sql)
+			stmtNodes, err = p.GetStatementNodes(sql)
 			if err != nil {
 				return nil, err
 			}
@@ -156,16 +157,16 @@ func (p *Parser) MergeDDLStatements(sqls ...string) ([]string, error) {
 			for _, stmtNode := range stmtNodes {
 				switch node := stmtNode.(type) {
 				case *ast.AlterTableStmt:
-					tableName = node.Table.Name.L
 					dbName = node.Table.Schema.L
+					tableName = node.Table.Name.L
 
 					if alterTableExp.MatchString(sql) {
 						// get alter table clause
 						alterTableClause = fmt.Sprint(alterTableExp.ReplaceAllString(sql, constant.EmptyString))
 					}
 				case *ast.CreateIndexStmt:
-					tableName = node.Table.Name.L
 					dbName = node.Table.Schema.L
+					tableName = node.Table.Name.L
 
 					sqlExp := createIndexExp.ReplaceAllString(sql, constant.EmptyString)
 					indexName := strings.TrimSpace(indexNameExp.FindString(sqlExp))
@@ -184,13 +185,13 @@ func (p *Parser) MergeDDLStatements(sqls ...string) ([]string, error) {
 					}
 
 					// add the alter table clause to the map
-					alterTableClauseMap[fullTableName] = append(alterTableClauseMap[fullTableName], alterTableClause)
+					alterTableClauses[fullTableName] = append(alterTableClauses[fullTableName], alterTableClause)
 				}
 			}
 		}
 	}
 
-	for fullTableName, alterClauseList := range alterTableClauseMap {
+	for fullTableName, alterClauseList := range alterTableClauses {
 		// get merged alter table statement
 		alterTableStatement := fmt.Sprintf("%s %s %s%s",
 			alterTablePrefix, fullTableName, strings.Join(alterClauseList, fmt.Sprintf("%s ", constant.CommaString)), constant.SemicolonString)

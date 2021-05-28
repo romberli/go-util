@@ -11,6 +11,7 @@ func TestParser_All(t *testing.T) {
 	TestParser_Split(t)
 	TestParser_GetFingerprint(t)
 	TestParser_GetSQLID(t)
+	TestParser_MergeDDLStatements(t)
 }
 
 func TestParser_Parse(t *testing.T) {
@@ -73,4 +74,23 @@ func TestParser_GetSQLID(t *testing.T) {
 	id := p.GetSQLID(sql)
 	asst.NotEmpty(id, "test GetSQLID() failed")
 	t.Log(id)
+}
+
+func TestParser_MergeDDLStatements(t *testing.T) {
+	asst := assert.New(t)
+
+	sqls := []string{
+		`create index idx01_col1 on t01(col1);`,
+		`alter table t01 modify column col2 varchar(100);`,
+		`alter table t01 add column col3 int(11) comment 'this is column3' after col2;`,
+		`alter table t02 modify column col4 varchar(100);`,
+		`alter table t02 change col5 col5 int(11) after col4;`,
+	}
+
+	p := NewParserWithDefault()
+
+	result, warns, err := p.MergeDDLStatements(sqls...)
+	asst.Nil(warns, "test MergeDDLStatements() failed")
+	asst.Nil(err, "test MergeDDLStatements() failed")
+	t.Log(result)
 }

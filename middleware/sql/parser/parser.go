@@ -37,7 +37,9 @@ func (p *Parser) GetVisitor() *Visitor {
 	return p.visitor
 }
 
-// Parse parses sql and returns the result
+// Parse parses sql and returns the result,
+// not that only some kinds of statements will be parsed,
+// see the constants defined at the top of visitor.go file
 func (p *Parser) Parse(sql string) (*Result, []error, error) {
 	stmtNodes, warns, err := p.parser.Parse(sql, constant.EmptyString, constant.EmptyString)
 	if warns != nil || err != nil {

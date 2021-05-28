@@ -86,6 +86,7 @@ func (v *Visitor) GetResult() *Result {
 }
 
 // Enter enters into the given node, it will traverse each child node to find useful information such as table name, column name...
+// note that it only traverses some kinds of node types, see the constants at the top of this file
 func (v *Visitor) Enter(in ast.Node) (out ast.Node, skipChildren bool) {
 	astType := reflect.TypeOf(in).String()
 

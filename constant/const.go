@@ -5,6 +5,9 @@ import (
 )
 
 const (
+	GOOSLinux                           = "linux"
+	GOOSDarwin                          = "darwin"
+	GOOSWindows                         = "windows"
 	DefaultFileMode         os.FileMode = 0644
 	DefaultExecFileMode     os.FileMode = 0755
 	DefaultKillSignal                   = 15

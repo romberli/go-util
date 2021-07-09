@@ -56,7 +56,7 @@ func (p *Parser) GetVisitor() *Visitor {
 
 // GetFingerprint returns fingerprint of the given sql
 func (p *Parser) GetFingerprint(sql string) string {
-	return query.Fingerprint(sql)
+	return query.Fingerprint(p.RemoveSQLComments(sql))
 }
 
 // GetSQLID returns the sql id of the given sql
@@ -200,4 +200,27 @@ func (p *Parser) MergeDDLStatements(sqls ...string) ([]string, error) {
 	}
 
 	return mergedSQLList, nil
+}
+
+// RemoveSQLComments removes comments of the sql
+func (p *Parser) RemoveSQLComments(sql string) string {
+	sql = strings.Trim(sql, constant.SemicolonString)
+	buf := []byte(sql)
+	// ("(""|[^"]|(\"))*") 双引号中的内容, "", "\""
+	// ('(''|[^']|(\'))*') 单引号中的内容, '', '\''
+	// (--[^\n\r]*) 双减号注释
+	// (#.*) 井号注释
+	// (/\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+/) 多行注释
+	commentRegex := regexp.MustCompile(`("(""|[^"]|(\"))*")|('(''|[^']|(\'))*')|(--[^\n\r]*)|(#.*)|(/\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+/)`)
+
+	res := commentRegex.ReplaceAllFunc(buf, func(s []byte) []byte {
+		if (s[0] == '"' && s[len(s)-1] == '"') ||
+			(s[0] == '\'' && s[len(s)-1] == '\'') ||
+			(string(s[:3]) == "/*!") {
+			return s
+		}
+		return []byte("")
+	})
+
+	return strings.TrimSpace(string(res))
 }

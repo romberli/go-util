@@ -17,7 +17,7 @@ func TestParser_All(t *testing.T) {
 func TestParser_GetFingerprint(t *testing.T) {
 	asst := assert.New(t)
 
-	sql := `select col1 from t01 where id = 1; select col2 from t02 where id in (select * from t03) and name = ';';select * from t04 where col1='abc'`
+	sql := `select col1 from t01 where id = 1; select col2 from t02 where id in (select * from t03) and name = ';';select * from t04 where col1='abc';select * from t_meta_db_info where create_time<'2021-01-01';`
 	p := NewParserWithDefault()
 
 	fp := p.GetFingerprint(sql)
@@ -28,12 +28,23 @@ func TestParser_GetFingerprint(t *testing.T) {
 func TestParser_GetSQLID(t *testing.T) {
 	asst := assert.New(t)
 
-	sql := `select col1 from t01 where id = 1; select col2 from t02 where id in (select * from t03) and name = ';';select * from t04 where col1='abc'`
+	sql := `select col1 from t01 where id = 1; select col2 from t02 where id in (select * from t03) and name = ';';select * from t04 where col1='abc';`
 	p := NewParserWithDefault()
 
 	id := p.GetSQLID(sql)
 	asst.NotEmpty(id, "test GetSQLID() failed")
 	t.Log(id)
+
+	sql = `select * from t_meta_db_info where create_time<'2021-01-01'`
+	id = p.GetSQLID(sql)
+	asst.NotEmpty(id, "test GetSQLID() failed")
+	t.Log(id)
+
+	sql = `select              sleep(1)`
+	fingerprint := p.GetFingerprint(sql)
+	id = p.GetSQLID(sql)
+
+	t.Log(fingerprint, id)
 }
 
 func TestParser_Parse(t *testing.T) {

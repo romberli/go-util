@@ -73,11 +73,11 @@ func TestFile(t *testing.T) {
 	t.Log("==========test IsEmptyDir() started.==========")
 	isEmpty, err = IsEmptyDir(dirName)
 	asst.Nil(err, "test IsEmptyDir() failed")
-	asst.False(isEmpty, isEmpty, "test IsEmptyDir() failed")
+	asst.False(isEmpty, "test IsEmptyDir() failed")
 
 	isEmpty, err = IsEmptyDir(empDirName)
 	asst.Nil(err, "test IsEmptyDir() failed")
-	asst.True(isEmpty, isEmpty, "test IsEmptyDir() failed")
+	asst.True(isEmpty, "test IsEmptyDir() failed")
 
 	isEmpty, err = IsEmptyDir(fileName)
 	asst.NotNil(err, "test IsEmptyDir() failed")

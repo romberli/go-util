@@ -22,6 +22,7 @@ const (
 	MinPort                             = 1
 	MaxPort                             = 65535
 	EmptyString                         = ""
+	RootDir                             = "/"
 	CurrentDir                          = "./"
 	DefaultRandomString                 = "sadfio3mj23gsk9lj8ou"
 	DefaultRandomInt                    = 2053167498

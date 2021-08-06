@@ -116,7 +116,7 @@ func (v *Visitor) Enter(in ast.Node) (out ast.Node, skipChildren bool) {
 	return in, false
 }
 
-// Leave leaves the the given node, traversal is over
+// Leave leaves the given node, traversal is over
 func (v *Visitor) Leave(in ast.Node) (out ast.Node, ok bool) {
 	return in, true
 }

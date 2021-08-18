@@ -4,9 +4,11 @@ import (
 	"database/sql/driver"
 	"errors"
 	"fmt"
-	"reflect"
+	"strconv"
+	"time"
 
 	"github.com/romberli/go-util/constant"
+	"github.com/siddontang/go/hack"
 )
 
 // ConvertArgsToNamedValues converts args to named values
@@ -53,14 +55,21 @@ func ConvertSliceToString(args ...interface{}) (string, error) {
 // ConvertToString converts an interface type argument to string,
 // it's usually used to generate "in clause" of a select statement
 func ConvertToString(arg interface{}) (string, error) {
-	switch arg.(type) {
+	switch v := arg.(type) {
+	case int, int8, int16, int32, int64,
+		uint, uint8, uint16, uint32, uint64:
+		return fmt.Sprintf("%d", v), nil
+	case float32:
+		return strconv.FormatFloat(float64(v), 'f', -1, 64), nil
+	case float64:
+		return strconv.FormatFloat(v, 'f', -1, 64), nil
+	case []byte:
+		return fmt.Sprintf("'%s'", hack.String(v)), nil
 	case string:
-		return fmt.Sprintf("'%s'", arg), nil
-	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
-		return fmt.Sprintf("%d", arg), nil
-	case float32, float64:
-		return fmt.Sprintf("%f", arg), nil
+		return fmt.Sprintf("'%s'", v), nil
+	case time.Time:
+		return fmt.Sprintf("'%s'", v.Format(constant.DefaultTimeLayout)), nil
 	default:
-		return constant.EmptyString, errors.New(fmt.Sprintf("only support string, integer, float type convertion, %s is not valid", reflect.TypeOf(arg).String()))
+		return constant.EmptyString, errors.New(fmt.Sprintf("unsupported data type: %T", v))
 	}
 }

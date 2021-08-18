@@ -62,7 +62,7 @@ func createTable() error {
 }
 
 func dropTable() error {
-	sql := `drop table t10;`
+	sql := `drop table if exists t10;`
 	_, err := conn.Execute(sql)
 	return err
 }
@@ -77,10 +77,11 @@ func TestMySQLConnection(t *testing.T) {
 
 	asst := assert.New(t)
 
-	// defer func() {
-	// 	err = conn.Close()
-	// 	asst.Nil(err, "close connection failed")
-	// }()
+	defer func() {
+		err = conn.Close()
+		asst.Nil(err, "close connection failed")
+	}()
+
 	// create table
 	err = createTable()
 	asst.Nil(err, "execute create sql failed")

@@ -3,8 +3,10 @@ package mysql
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/romberli/go-util/constant"
+	"github.com/romberli/go-util/middleware"
 	"github.com/romberli/log"
 	"github.com/stretchr/testify/assert"
 )
@@ -54,7 +56,8 @@ func createTable() error {
 			id int(11) auto_increment primary key,
 			name varchar(100),
 			col1 int(11),
-			col2 decimal(16, 4)
+			col2 decimal(16, 4),
+			last_update_time datetime(6) not null default current_timestamp(6) on update current_timestamp(6)
 		) engine=innodb character set utf8mb4;
 	`
 	_, err := conn.Execute(sql)
@@ -62,7 +65,7 @@ func createTable() error {
 }
 
 func dropTable() error {
-	sql := `drop table if exists t10;`
+	sql := `drop table if exists t05;`
 	_, err := conn.Execute(sql)
 	return err
 }
@@ -73,6 +76,7 @@ func TestMySQLConnection(t *testing.T) {
 		repRole   ReplicationRole
 		slaveList []string
 		result    *Result
+		inClause  string
 	)
 
 	asst := assert.New(t)
@@ -82,14 +86,28 @@ func TestMySQLConnection(t *testing.T) {
 		asst.Nil(err, "close connection failed")
 	}()
 
+	// drop table
+	err = dropTable()
+	asst.Nil(err, "execute drop table sql failed")
 	// create table
 	err = createTable()
-	asst.Nil(err, "execute create sql failed")
+	asst.Nil(err, "execute create table sql failed")
 	// insert data
-	ts := newTestStructWithDefault()
-	sql := `insert into t05(name, col1, col2) values(?, ?, ?);`
-	result, err = conn.Execute(sql, ts.Name, ts.Col1, ts.Col2)
+	ts := newTestStruct("aa", 1, 3.14)
+	tsEmpty := newTestStructWithDefault()
+	sql := `insert into t05(name, col1, col2) values(?, ?, ?), (?, ?, ?);`
+	result, err = conn.Execute(sql, ts.Name, ts.Col1, ts.Col2, tsEmpty.Name, tsEmpty.Col1, tsEmpty.Col2)
 	asst.Nil(err, "execute insert sql failed")
+
+	// select data
+	inClause, err = middleware.ConvertSliceToString(ts.Name)
+	timeStr := time.Now().Add(-time.Second * 10).Format(constant.DefaultTimeLayout)
+	sql = `select id, name, col1, col2, last_update_time from t05 where name in (%s) and last_update_time >= ?`
+	sql = fmt.Sprintf(sql, inClause)
+	result, err = conn.Execute(sql, timeStr)
+	asst.Nil(err, "execute select failed")
+	asst.Equal(1, result.RowNumber(), "execute select failed")
+
 	// check replication
 	slaveList, err = conn.GetReplicationSlaveList()
 	asst.Nil(err, "get replication slave list failed")

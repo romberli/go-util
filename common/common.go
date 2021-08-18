@@ -591,7 +591,7 @@ func MarshalStructWithTag(in interface{}, tag string) ([]byte, error) {
 
 // NewMapWithStructTag returns a new map as the result,
 // it loops the keys of given map and tags of the struct,
-// if key and tag are same, the field of the the input struct will be the key of the new map,
+// if key and tag are same, the field of the input struct will be the key of the new map,
 // the value of the given map will be the value of the new map,
 // if any key in the given map could not match any tag in the struct,
 // it will return error, so make sure that each key the given map could match a field tag in the struct
@@ -622,9 +622,9 @@ Loop:
 }
 
 // UnmarshalToMapWithStructTag returns a map as the result, it works as following logic:
-// 1. unmarshals given data to to a temporary map to get keys
+// 1. unmarshals given data to a temporary map to get keys
 // 2. unmarshals given data to the input struct, to get field names and values with appropriate data types
-// 3. loops keys in the temporary map, loops tags of the input struct in a nested
+// 3. loops keys in the temporary map, loops tags of the input struct in a nested loop
 // 4. if the key matches the tag, set field name as the key of result map, set field value as the value of the result map
 // 5. if any key in the temporary map can not match any field tag of the struct, it returns error,
 //    so make sure that each key of the given data could match a field tag in the struct

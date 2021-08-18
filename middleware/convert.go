@@ -26,15 +26,8 @@ func ConvertArgsToNamedValues(args ...interface{}) []driver.NamedValue {
 
 // ConvertSliceToString converts args to string,
 // it's usually used to generate "in clause" of a select statement
-func ConvertSliceToString(args ...interface{}) (string, error) {
+func ConvertSliceToString(args []interface{}) (string, error) {
 	var result string
-
-	switch len(args) {
-	case 0:
-		return constant.EmptyString, errors.New("args should not be empty")
-	case 1:
-
-	}
 
 	if len(args) == constant.ZeroInt {
 		return constant.EmptyString, errors.New("args should not be empty")

@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/romberli/go-util/common"
 	"github.com/romberli/go-util/constant"
 	"github.com/romberli/go-util/middleware"
 	"github.com/romberli/log"
@@ -100,13 +101,15 @@ func TestMySQLConnection(t *testing.T) {
 	asst.Nil(err, "execute insert sql failed")
 
 	// select data
-	inClause, err = middleware.ConvertSliceToString(ts.Name)
-	timeStr := time.Now().Add(-time.Second * 10).Format(constant.DefaultTimeLayout)
+	interfaces, err := common.ConvertInterfaceToSliceInterface([]string{ts.Name, "bb"})
+	asst.Nil(err, "execute select sql failed")
+	inClause, err = middleware.ConvertSliceToString(interfaces...)
+	timeStr := time.Now().Add(-time.Hour).Format(constant.DefaultTimeLayout)
 	sql = `select id, name, col1, col2, last_update_time from t05 where name in (%s) and last_update_time >= ?`
 	sql = fmt.Sprintf(sql, inClause)
 	result, err = conn.Execute(sql, timeStr)
-	asst.Nil(err, "execute select failed")
-	asst.Equal(1, result.RowNumber(), "execute select failed")
+	asst.Nil(err, "execute select sql failed")
+	asst.Equal(1, result.RowNumber(), "execute select sql failed")
 
 	// check replication
 	slaveList, err = conn.GetReplicationSlaveList()

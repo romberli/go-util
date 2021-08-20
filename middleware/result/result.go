@@ -438,3 +438,21 @@ func (r *Rows) mapToStructByRowIndex(in interface{}, row int, tag string) error 
 
 	return nil
 }
+
+// MapToMapStringInterface maps rows to map[string]interface{}
+func (r *Rows) MapToMapStringInterface() (map[string]interface{}, error) {
+	dataMap := make(map[string]interface{}, r.RowNumber())
+
+	for i := constant.ZeroInt; i < r.RowNumber(); i++ {
+		for _, field := range r.FieldSlice {
+			value, err := r.GetValueByName(i, field)
+			if err != nil {
+				return nil, err
+			}
+
+			dataMap[field] = value
+		}
+	}
+
+	return dataMap, nil
+}

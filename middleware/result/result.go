@@ -441,7 +441,9 @@ func (r *Rows) mapToStructByRowIndex(in interface{}, row int, tag string) error 
 	return nil
 }
 
-// MapToMapStringInterface maps rows to map[string]interface{}
+// MapToMapStringInterface maps rows to map[string]interface{},
+// to use this function, filed number of rows must be equals to mapColumnNum,
+// otherwise, it will return error
 func (r *Rows) MapToMapStringInterface() (map[string]interface{}, error) {
 	if len(r.FieldSlice) != mapColumnNum {
 		return nil, errors.New(fmt.Sprintf("to use this function, number of field must be %d, %d is not valid", mapColumnNum, len(r.FieldSlice)))

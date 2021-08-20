@@ -10,6 +10,8 @@ import (
 	"github.com/romberli/go-util/constant"
 )
 
+const mapColumnNum = 2
+
 type Rows struct {
 	FieldSlice []string
 	FieldMap   map[string]int
@@ -441,6 +443,10 @@ func (r *Rows) mapToStructByRowIndex(in interface{}, row int, tag string) error 
 
 // MapToMapStringInterface maps rows to map[string]interface{}
 func (r *Rows) MapToMapStringInterface() (map[string]interface{}, error) {
+	if len(r.FieldSlice) != mapColumnNum {
+		return nil, errors.New(fmt.Sprintf("to use this function, number of field must be %d, %d is not valid", mapColumnNum, len(r.FieldSlice)))
+	}
+
 	dataMap := make(map[string]interface{}, r.RowNumber())
 
 	for i := constant.ZeroInt; i < r.RowNumber(); i++ {

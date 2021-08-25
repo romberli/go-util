@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 	"unsafe"
 
@@ -397,4 +398,15 @@ func ConvertToSlice(in interface{}, kind reflect.Kind) (interface{}, error) {
 	default:
 		return nil, errors.New(fmt.Sprintf("kind must be one of [reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Float32, reflect.Float64, reflect.String], %s is not valid", kind.String()))
 	}
+}
+
+// ConvertStringSliceToString converts string slice to string, it uses c as the separation character
+func ConvertStringSliceToString(s []string, c string) string {
+	var result string
+
+	for _, str := range s {
+		result = result + str + c
+	}
+
+	return strings.Trim(result, c)
 }

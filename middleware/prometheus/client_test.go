@@ -29,6 +29,11 @@ func initConn() *Conn {
 	return c
 }
 
+type PrometheusData struct {
+	Timestamp string `json:"timestamp"`
+	Value     string `json:"value"`
+}
+
 func TestConn_Execute(t *testing.T) {
 	asst := assert.New(t)
 
@@ -47,11 +52,18 @@ func TestConn_Execute(t *testing.T) {
 	// 	Step:  step,
 	// }
 
-	// query := "1"
-	query = `rate(mysql_global_status_queries)[1m]`
+	query = "1"
 	// query := `mysql_global_status_queries`
 	result, err = conn.Execute(query, start, end, step)
 	asst.Nil(err, "test Execute() failed")
+
+	datas := make([]*PrometheusData, result.RowNumber())
+	for i := range datas {
+		datas[i] = &PrometheusData{}
+	}
+	err = result.MapToStructSlice(datas, constant.DefaultJSONTag)
+	asst.Nil(err, "test Execute() failed")
+
 	s, err := result.GetString(constant.ZeroInt, constant.ZeroInt)
 	asst.Nil(err, "test Execute() failed")
 	ts, err := result.GetString(constant.ZeroInt, 1)

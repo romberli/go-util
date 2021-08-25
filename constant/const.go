@@ -34,6 +34,7 @@ const (
 	CommaString                         = ","
 	AsteriskString                      = "*"
 	DotString                           = "."
+	VerticalBarString                   = "|"
 	SemicolonString                     = ";"
 	LeftParenthesis                     = "("
 	RightParenthesis                    = ")"

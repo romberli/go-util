@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	defaultAddr = "192.168.137.11:80/prometheus"
+	defaultAddr = "192.168.10.219:80/prometheus"
 	defaultUser = "admin"
 	defaultPass = "admin"
 )
@@ -30,8 +30,8 @@ func initConn() *Conn {
 }
 
 type PrometheusData struct {
-	Timestamp string `json:"timestamp"`
-	Value     string `json:"value"`
+	Timestamp string  `json:"timestamp"`
+	Value     float64 `json:"value"`
 }
 
 func TestConn_Execute(t *testing.T) {
@@ -53,8 +53,26 @@ func TestConn_Execute(t *testing.T) {
 	// }
 
 	query = "1"
+	query = `
+		avg by (node_name, mountpoint) (1 - (max_over_time(node_filesystem_free_bytes{node_name=~"%s", mountpoint=~"(%s)", fstype!~"rootfs|selinuxfs|autofs|rpc_pipefs|tmpfs"}[20s]) or
+		max_over_time(node_filesystem_free_bytes{node_name=~"%s", mountpoint=~"(%s)", fstype!~"rootfs|selinuxfs|autofs|rpc_pipefs|tmpfs"}[5m])) /
+		(max_over_time(node_filesystem_size_bytes{node_name=~"%s", mountpoint=~"(%s)", fstype!~"rootfs|selinuxfs|autofs|rpc_pipefs|tmpfs"}[20s]) or
+		max_over_time(node_filesystem_size_bytes{node_name=~"%s", mountpoint=~"(%s)", fstype!~"rootfs|selinuxfs|autofs|rpc_pipefs|tmpfs"}[5m])))
+    `
+	query = `
+		avg by (node_name) (rate(node_disk_io_time_seconds_total{device=~"(%s)",node_name=~"%s"}[20s]) or
+		irate(node_disk_io_time_seconds_total{device=~"(%s)",node_name=~"%s"}[5m]) or
+		(max_over_time(rdsosmetrics_diskIO_util{device=~"(%s)",node_name=~"%s"}[20s]) or
+		max_over_time(rdsosmetrics_diskIO_util{device=~"(%s)",node_name=~"%s"}[5m]))/100)
+    `
+	serviceName := "192-168-10-219"
+	devs := "sda|sdb|sdc"
+	// mountpoints := "/|/boot"
 	// query := `mysql_global_status_queries`
+	query = fmt.Sprintf(query, devs, serviceName, devs, serviceName, devs, serviceName, devs, serviceName)
+	// query = fmt.Sprintf(query, serviceName, mountpoints, serviceName, mountpoints, serviceName, mountpoints, serviceName, mountpoints)
 	result, err = conn.Execute(query, start, end, step)
+	// result, err = conn.Execute(query, start, end, step)
 	asst.Nil(err, "test Execute() failed")
 
 	datas := make([]*PrometheusData, result.RowNumber())

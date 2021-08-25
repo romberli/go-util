@@ -2,6 +2,8 @@ package prometheus
 
 import (
 	"database/sql/driver"
+	"errors"
+	"fmt"
 
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
@@ -20,25 +22,67 @@ const (
 
 var _ middleware.Result = (*Result)(nil)
 
-type RawData map[string]interface{}
+type RawData struct {
+	Value    model.Value
+	Warnings apiv1.Warnings
+}
 
 // NewRawData returns a new RawData
-func NewRawData(value model.Value, warnings apiv1.Warnings) RawData {
-	return map[string]interface{}{valueColumn: value, warningsColumn: warnings}
+func NewRawData(value model.Value, warnings apiv1.Warnings) *RawData {
+	return &RawData{
+		Value:    value,
+		Warnings: warnings,
+	}
 }
 
 // GetValue returns value
-func (rd RawData) GetValue() model.Value {
-	return rd[valueColumn].(model.Value)
+func (rd *RawData) GetValue() model.Value {
+	return rd.Value
 }
 
 // GetWarnings returns warnings
-func (rd RawData) GetWarnings() apiv1.Warnings {
-	return rd[warningsColumn].(apiv1.Warnings)
+func (rd *RawData) GetWarnings() apiv1.Warnings {
+	return rd.Warnings
+}
+
+func (rd *RawData) GetMatrix() (model.Matrix, error) {
+	value, ok := rd.GetValue().(model.Matrix)
+	if !ok {
+		return nil, errors.New(fmt.Sprintf("type assertion failed, %T could not be converted to model.Matrix", rd.GetValue()))
+	}
+
+	return value, nil
+}
+
+func (rd *RawData) GetVector() (model.Vector, error) {
+	value, ok := rd.GetValue().(model.Vector)
+	if !ok {
+		return nil, errors.New(fmt.Sprintf("type assertion failed, %T could not be converted to model.Vector", rd.GetValue()))
+	}
+
+	return value, nil
+}
+
+func (rd *RawData) GetScalar() (*model.Scalar, error) {
+	value, ok := rd.GetValue().(*model.Scalar)
+	if !ok {
+		return nil, errors.New(fmt.Sprintf("type assertion failed, %T could not be converted to *model.Scalar", rd.GetValue()))
+	}
+
+	return value, nil
+}
+
+func (rd *RawData) GetString() (*model.String, error) {
+	value, ok := rd.GetValue().(*model.String)
+	if !ok {
+		return nil, errors.New(fmt.Sprintf("type assertion failed, %T could not be converted to *model.String", rd.GetValue()))
+	}
+
+	return value, nil
 }
 
 type Result struct {
-	Raw RawData
+	Raw *RawData
 	*result.Rows
 	result.Metadata
 	result.Map

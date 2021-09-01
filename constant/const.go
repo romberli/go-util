@@ -2,6 +2,7 @@ package constant
 
 import (
 	"os"
+	"time"
 )
 
 const (
@@ -53,4 +54,6 @@ const (
 	DefaultMySQLPort                    = 3306
 	DefaultRootUserName                 = "root"
 	DefaultRootUserPass                 = "root"
+	Day                                 = 24 * time.Hour
+	Week                                = 7 * Day
 )

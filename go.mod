@@ -2,10 +2,10 @@ module github.com/romberli/go-util
 
 go 1.16
 
-replace github.com/ClickHouse/clickhouse-go v1.4.3 => github.com/romberli/clickhouse-go v1.4.4-0.20210422094559-b05fc8c4dbe9
+replace github.com/ClickHouse/clickhouse-go v1.4.7 => github.com/romberli/clickhouse-go v1.4.4-0.20210902113008-bb38dc6f756d
 
 require (
-	github.com/ClickHouse/clickhouse-go v1.4.3
+	github.com/ClickHouse/clickhouse-go v1.4.7
 	github.com/Shopify/sarama v1.26.1
 	github.com/go-mysql-org/go-mysql v1.3.0
 	github.com/hashicorp/go-multierror v1.1.0

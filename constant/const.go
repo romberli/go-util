@@ -20,6 +20,8 @@ const (
 	RightBracketString     = "]"
 	SlashString            = "/"
 	BackSlashString        = "\\"
+	DashString             = "-"
+	UnderBarString         = "_"
 
 	GOOSLinux                           = "linux"
 	GOOSDarwin                          = "darwin"

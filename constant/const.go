@@ -13,6 +13,7 @@ const (
 	AsteriskString         = "*"
 	DotString              = "."
 	VerticalBarString      = "|"
+	ColonString            = ":"
 	SemicolonString        = ";"
 	LeftParenthesis        = "("
 	RightParenthesisString = ")"

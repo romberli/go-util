@@ -6,6 +6,21 @@ import (
 )
 
 const (
+	EmptyString            = ""
+	SpaceString            = " "
+	CRLFString             = "\n"
+	CommaString            = ","
+	AsteriskString         = "*"
+	DotString              = "."
+	VerticalBarString      = "|"
+	SemicolonString        = ";"
+	LeftParenthesis        = "("
+	RightParenthesisString = ")"
+	LeftBracketString      = "["
+	RightBracketString     = "]"
+	SlashString            = "/"
+	BackSlashString        = "\\"
+
 	GOOSLinux                           = "linux"
 	GOOSDarwin                          = "darwin"
 	GOOSWindows                         = "windows"
@@ -22,7 +37,6 @@ const (
 	MinInt                              = ^MaxInt
 	MinPort                             = 1
 	MaxPort                             = 65535
-	EmptyString                         = ""
 	RootDir                             = "/"
 	CurrentDir                          = "./"
 	DefaultRandomString                 = "sadfio3mj23gsk9lj8ou"
@@ -30,21 +44,12 @@ const (
 	DefaultRandomFloat      float64     = DefaultRandomInt
 	TrueString                          = "true"
 	FalseString                         = "false"
-	SpaceString                         = " "
-	CRLFString                          = "\n"
-	CommaString                         = ","
-	AsteriskString                      = "*"
-	DotString                           = "."
-	VerticalBarString                   = "|"
-	SemicolonString                     = ";"
-	LeftParenthesis                     = "("
-	RightParenthesis                    = ")"
-	LeftBracket                         = "["
-	RightBracket                        = "]"
 	DefaultRandomTimeString             = "9999-07-02 09:55:32.346082"
 	TimeLayoutSecond                    = "2006-01-02 15:04:05"
 	TimeLayoutMicrosecond               = "2006-01-02 15:04:05.999999"
 	DefaultTimeLayout                   = TimeLayoutMicrosecond
+	Day                                 = 24 * time.Hour
+	Week                                = 7 * Day
 	DefaultMarshalTag                   = DefaultJSONTag
 	DefaultJSONTag                      = "json"
 	DefaultMiddlewareTag                = "middleware"
@@ -54,6 +59,4 @@ const (
 	DefaultMySQLPort                    = 3306
 	DefaultRootUserName                 = "root"
 	DefaultRootUserPass                 = "root"
-	Day                                 = 24 * time.Hour
-	Week                                = 7 * Day
 )

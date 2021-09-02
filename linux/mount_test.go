@@ -8,31 +8,18 @@ import (
 )
 
 const (
-	defaultPath       = "/boot/grub"
-	defaultMountPoint = "/boot"
-
 	// mount point
 	data   = "/data"
 	mysql  = "/data/mysql"
 	binlog = "/data/mysql/binlog"
 	other  = "/other/dir"
 	// path
-	mysqlDataDir = "/data/mysql/data"
+	mysqlDataDir = "/data/mysql/data/"
 	someOtherDir = "/some/other/dir"
 )
 
-func TestAll(t *testing.T) {
-	TestFindMountPoint(t)
+func TestMountAll(t *testing.T) {
 	TestMatchMountPoint(t)
-}
-
-func TestFindMountPoint(t *testing.T) {
-	asst := assert.New(t)
-
-	mountPoint, err := FindMountPoint(defaultPath)
-	asst.Nil(err, "test FindMountPoint() failed")
-	asst.Equal(defaultMountPoint, mountPoint, "test FindMountPoint() failed")
-	t.Logf("path: %s, mount point: %s", defaultPath, mountPoint)
 }
 
 func TestMatchMountPoint(t *testing.T) {

@@ -89,8 +89,8 @@ func TestConn_Execute(t *testing.T) {
 	err = conn.Commit()
 	asst.Nil(err, "test Execute() failed")
 	// select data
-	sql = `select id, name, group, type, del_flag, create_time, last_update_time from t01 order by id asc limit ?, ?`
-	result, err := conn.Execute(sql, 1, 1)
+	sql = `select id, name, group, type, del_flag, create_time, last_update_time from t01 where last_update_time > ? order by id asc limit ?, ?`
+	result, err := conn.Execute(sql, time.Now().Add(-time.Hour), 1, 1)
 	asst.Nil(err, "test Execute() failed")
 	id, err := result.GetInt(0, 0)
 	asst.Nil(err, "test execute failed")

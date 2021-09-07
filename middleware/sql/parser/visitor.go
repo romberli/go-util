@@ -123,13 +123,12 @@ func (v *Visitor) Leave(in ast.Node) (out ast.Node, ok bool) {
 
 // visitTableName visits the given node which type is *ast.TableName
 func (v *Visitor) visitTableName(node *ast.TableName) {
-	v.result.AddTableName(node.Name.L)
-
-	// get db name
+	tableName := node.Name.L
 	dbName := node.Schema.L
-	if dbName != constant.EmptyString {
-		v.result.AddDBName(dbName)
-	}
+
+	v.result.AddTableDBListMap(tableName, dbName)
+	v.result.AddDBName(dbName)
+	v.result.AddTableName(tableName)
 }
 
 // visitCreateTableStmt visits the given node which type is *ast.CreateTableStmt

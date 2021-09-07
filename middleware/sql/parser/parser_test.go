@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -62,6 +63,13 @@ func TestParser_Parse(t *testing.T) {
 	 PRIMARY KEY (id),
 	 KEY idx_col1_col2_col3 (col1, col2, col3)
 	 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ;`
+	// sql = `
+	// 	select *
+	// 	from t01
+	// 			 inner join db1.t01 dt01 on t01.id = dt01.id
+	// 			 inner join t02 on t01.id = t02.id
+	// 			 inner join db2.t02 dt02 on dt01.id = dt02.id
+	// `
 	p := NewParserWithDefault()
 
 	result, err := p.Parse(sql)
@@ -69,7 +77,7 @@ func TestParser_Parse(t *testing.T) {
 	asst.Equal("t01", result.TableNames[0])
 
 	// print result
-	jsonBytes, err := result.Marshal()
+	jsonBytes, err := json.Marshal(result)
 	asst.Nil(err, "test Parse() failed")
 	t.Log(string(jsonBytes))
 }

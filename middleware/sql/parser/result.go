@@ -1,27 +1,28 @@
 package parser
 
 import (
-	"encoding/json"
-
 	"github.com/romberli/go-util/common"
 	"github.com/romberli/go-util/constant"
 )
 
 type Result struct {
-	SQLType        string            `json:"sql_type"`
-	DBNames        []string          `json:"db_names"`
-	TableNames     []string          `json:"table_names"`
-	TableComments  map[string]string `json:"table_comments"`
-	ColumnNames    []string          `json:"column_names"`
-	ColumnTypes    map[string]string `json:"column_types"`
-	ColumnComments map[string]string `json:"column_comments"`
+	SQLType        string              `json:"sql_type"`
+	TableDBListMap map[string][]string `json:"table_db_list_map"`
+	DBNames        []string            `json:"db_names"`
+	TableNames     []string            `json:"table_names"`
+	TableComments  map[string]string   `json:"table_comments"`
+	ColumnNames    []string            `json:"column_names"`
+	ColumnTypes    map[string]string   `json:"column_types"`
+	ColumnComments map[string]string   `json:"column_comments"`
 }
 
 // NewResult returns a new *Result
-func NewResult(sqlType string, dbNames []string, tableNames []string, tableComments map[string]string,
-	columnNames []string, columnTypes map[string]string, columnComments map[string]string) *Result {
+func NewResult(sqlType string, TableDBListMap map[string][]string, dbNames []string, tableNames []string,
+	tableComments map[string]string, columnNames []string, columnTypes map[string]string,
+	columnComments map[string]string) *Result {
 	return &Result{
 		SQLType:        sqlType,
+		TableDBListMap: TableDBListMap,
 		DBNames:        dbNames,
 		TableNames:     tableNames,
 		TableComments:  tableComments,
@@ -35,6 +36,7 @@ func NewResult(sqlType string, dbNames []string, tableNames []string, tableComme
 func NewEmptyResult() *Result {
 	return &Result{
 		SQLType:        constant.EmptyString,
+		TableDBListMap: make(map[string][]string),
 		DBNames:        []string{},
 		TableNames:     []string{},
 		TableComments:  make(map[string]string),
@@ -47,6 +49,11 @@ func NewEmptyResult() *Result {
 // GetSQLType returns the sql type
 func (r *Result) GetSQLType() string {
 	return r.SQLType
+}
+
+// GetTableDBListMap returns table db list map
+func (r *Result) GetTableDBListMap() map[string][]string {
+	return r.TableDBListMap
 }
 
 // GetDBNames returns the db names
@@ -84,6 +91,17 @@ func (r *Result) SetSQLType(sqlType string) {
 	r.SQLType = sqlType
 }
 
+// AddTableDBListMap adds db name to the result
+func (r *Result) AddTableDBListMap(tableName string, dbName string) {
+	dbList, ok := r.TableDBListMap[tableName]
+	if !ok {
+		r.TableDBListMap[tableName] = []string{dbName}
+	}
+	if ok && !common.StringInSlice(dbList, dbName) {
+		r.TableDBListMap[tableName] = append(dbList, dbName)
+	}
+}
+
 // AddDBName adds db name to the result
 func (r *Result) AddDBName(dbName string) {
 	if !common.StringInSlice(r.DBNames, dbName) {
@@ -118,9 +136,4 @@ func (r *Result) SetColumnType(columnName string, columnType string) {
 // SetColumnComment sets column comment of corresponding column
 func (r *Result) SetColumnComment(columnName string, columnComment string) {
 	r.ColumnComments[columnName] = columnComment
-}
-
-// Marshal marshals result to json bytes
-func (r *Result) Marshal() ([]byte, error) {
-	return json.Marshal(r)
 }

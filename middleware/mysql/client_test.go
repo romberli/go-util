@@ -37,7 +37,7 @@ func newTestStructWithDefault() *testStruct {
 var conn = initConn()
 
 func initConn() *Conn {
-	addr := "192.168.137.11:3306"
+	addr := "192.168.10.219:3306"
 	dbName := "test"
 	dbUser := "root"
 	dbPass := "root"
@@ -74,6 +74,7 @@ func dropTable() error {
 func TestMySQLConnection(t *testing.T) {
 	var (
 		err       error
+		sql       string
 		repRole   ReplicationRole
 		slaveList []string
 		result    *Result
@@ -96,7 +97,7 @@ func TestMySQLConnection(t *testing.T) {
 	// insert data
 	ts := newTestStruct("aa", 1, 3.14)
 	tsEmpty := newTestStructWithDefault()
-	sql := `insert into t05(name, col1, col2) values(?, ?, ?), (?, ?, ?);`
+	sql = `insert into t05(name, col1, col2) values(?, ?, ?), (?, ?, ?);`
 	result, err = conn.Execute(sql, ts.Name, ts.Col1, ts.Col2, tsEmpty.Name, tsEmpty.Col1, tsEmpty.Col2)
 	asst.Nil(err, "execute insert sql failed")
 

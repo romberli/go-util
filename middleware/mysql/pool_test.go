@@ -25,7 +25,7 @@ func TestPool(t *testing.T) {
 
 	log.SetLevel(zapcore.DebugLevel)
 
-	addr := "192.168.137.11:3306"
+	addr := "192.168.10.219:3306"
 	dbName := "test"
 	dbUser := "root"
 	dbPass := "root"

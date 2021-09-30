@@ -157,12 +157,19 @@ func (pc *PoolConn) IsValid() bool {
 
 // Prepare prepares a statement and returns a *Statement
 func (pc *PoolConn) Prepare(command string) (middleware.Statement, error) {
-	return pc.Conn.prepareContext(context.Background(), command)
+	return pc.prepareContext(context.Background(), command)
 }
 
-// PrepareContext prepares a statement with context and returns a *Statement
+// PrepareContext prepares a statement with context and returns a *Statement,
+// note that PrepareContext does not use context, it's only for implementing some interfaces
 func (pc *PoolConn) PrepareContext(ctx context.Context, command string) (middleware.Statement, error) {
-	return pc.Conn.prepareContext(ctx, command)
+	return pc.prepareContext(ctx, command)
+}
+
+// prepareContext prepares a statement with context and returns a *Statement,
+// note that prepareContext does not use context, it's only for implementing some interfaces
+func (pc *PoolConn) prepareContext(ctx context.Context, command string) (middleware.Statement, error) {
+	return pc.Conn.PrepareContext(ctx, command)
 }
 
 // Execute executes given sql and placeholders on the mysql server
@@ -171,11 +178,13 @@ func (pc *PoolConn) Execute(command string, args ...interface{}) (middleware.Res
 }
 
 // ExecuteContext executes given sql and placeholders on the mysql server
+// note that ExecuteContext does not use context, it's only for implementing some interfaces
 func (pc *PoolConn) ExecuteContext(ctx context.Context, command string, args ...interface{}) (middleware.Result, error) {
 	return pc.executeContext(ctx, command, args...)
 }
 
 // Execute executes given sql and placeholders on the mysql server
+// note that executeContext does not use context, it's only for implementing some interfaces
 func (pc *PoolConn) executeContext(ctx context.Context, command string, args ...interface{}) (middleware.Result, error) {
 	result, err := pc.Conn.ExecuteContext(ctx, command, args...)
 	if err != nil {

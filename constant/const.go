@@ -27,6 +27,12 @@ const (
 	MinusString            = "-"
 	MultiplicationString   = "*"
 	DivisionString         = "/"
+	EqualString            = "="
+	UnequalString          = "!="
+	LargerString           = ">"
+	LargerEqualString      = ">="
+	SmallerString          = "<"
+	SmallerEqualString     = "<="
 
 	GOOSLinux                           = "linux"
 	GOOSDarwin                          = "darwin"

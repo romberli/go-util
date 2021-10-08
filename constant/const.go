@@ -23,6 +23,10 @@ const (
 	BackSlashString        = "\\"
 	DashString             = "-"
 	UnderBarString         = "_"
+	PlusString             = "+"
+	MinusString            = "-"
+	MultiplicationString   = "*"
+	DivisionString         = "/"
 
 	GOOSLinux                           = "linux"
 	GOOSDarwin                          = "darwin"

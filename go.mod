@@ -10,7 +10,6 @@ require (
 	github.com/go-mysql-org/go-mysql v1.3.0
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/json-iterator/go v1.1.11
-	github.com/kr/text v0.2.0 // indirect
 	github.com/percona/go-mysql v0.0.0-20210427141028-73d29c6da78c
 	github.com/pingcap/parser v0.0.0-20211004012448-687005894c4e
 	github.com/pkg/errors v0.9.1
@@ -21,11 +20,8 @@ require (
 	github.com/romberli/log v1.0.20
 	github.com/shirou/gopsutil/v3 v3.20.11
 	github.com/siddontang/go v0.0.0-20180604090527-bdc77568d726
-	github.com/sirupsen/logrus v1.7.0 // indirect
 	github.com/stretchr/testify v1.7.0
 	go.etcd.io/etcd/client/v3 v3.5.1
 	go.uber.org/zap v1.19.1
 	golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0
-	google.golang.org/appengine v1.6.1 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

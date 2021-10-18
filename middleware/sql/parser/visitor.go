@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/pingcap/parser/ast"
-	driver "github.com/pingcap/tidb/types/parser_driver"
+	driver "github.com/pingcap/parser/test_driver"
 	"github.com/romberli/go-util/common"
 	"github.com/romberli/go-util/constant"
 )
@@ -192,7 +192,7 @@ func (v *Visitor) visitColumnDef(node *ast.ColumnDef) {
 
 	for _, columnOption := range node.Options {
 		if columnOption.Tp == ast.ColumnOptionComment {
-			columnComment = columnOption.Expr.(*driver.ValueExpr).Datum.GetString()
+			columnComment = columnOption.Expr.(*driver.ValueExpr).GetDatumString()
 		}
 	}
 

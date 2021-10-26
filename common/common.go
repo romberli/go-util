@@ -518,7 +518,14 @@ func CopyStructWithoutFields(in interface{}, fields ...string) (interface{}, err
 		fieldType := newType.Field(i)
 		fieldVal := newVal.Field(i)
 		// set value
-		fieldVal.Set(inVal.FieldByName(fieldType.Name))
+		newField := inVal.FieldByName(fieldType.Name)
+		if newField.Type().Kind() == reflect.Interface {
+			newField = reflect.New(newField.Elem().Type())
+			newField.Elem().Set(inVal.FieldByName(fieldType.Name).Elem())
+			newField = newField.Elem()
+		}
+
+		fieldVal.Set(newField)
 	}
 
 	return newInstance, nil

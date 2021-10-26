@@ -24,6 +24,10 @@ type trimStruct struct {
 	NSB  *nestStruct
 }
 
+func (ts *trimStruct) GetNSA() *nestStruct {
+	return ts.NSA
+}
+
 type expectStructA struct {
 	ID   int
 	Name string
@@ -34,6 +38,15 @@ type EnvInfo struct {
 	ID      int    `middleware:"id"`
 	EnvName string `middleware:"env_name"`
 	DelFlag string `middleware:"del_flag"`
+}
+
+type testStructA struct {
+	ID            int
+	TestInterface TestInterface
+}
+
+type TestInterface interface {
+	GetNSA() *nestStruct
 }
 
 func TestCommon(t *testing.T) {
@@ -266,6 +279,18 @@ func TestCommon(t *testing.T) {
 	jnts, err := json.Marshal(nts)
 	asst.Nil(err, "test CopyStructWithFields() failed")
 	asst.Equal(string(jets), string(jnts), "test CopyStructWithFields() failed")
+
+	ti := &testStructA{
+		ID:            1,
+		TestInterface: ts,
+	}
+
+	ns4, err := CopyStructWithFields(ti, "TestInterface")
+	asst.Nil(err, "test CopyStructWithFields() failed")
+	jsonBytes, err := json.Marshal(ns4)
+	t.Logf("copied field: %s", string(jsonBytes))
+	asst.Nil(err, "test CopyStructWithFields() failed")
+
 	t.Log("==========test CopyStructWithFields() completed==========")
 
 	t.Log("==========test MarshalStructWithFields() started==========")

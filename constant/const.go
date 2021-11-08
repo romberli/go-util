@@ -38,6 +38,8 @@ const (
 	SmallerString           = "<"
 	SmallerEqualString      = "<="
 
+	TransportProtocolTCP                = "tcp"
+	TransportProtocolUDP                = "udp"
 	GOOSLinux                           = "linux"
 	GOOSDarwin                          = "darwin"
 	GOOSWindows                         = "windows"

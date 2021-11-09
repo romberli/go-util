@@ -38,6 +38,9 @@ const (
 	SmallerString           = "<"
 	SmallerEqualString      = "<="
 
+	NullString                          = "null"
+	NoneString                          = "none"
+	NanString                           = "nan"
 	TransportProtocolTCP                = "tcp"
 	TransportProtocolUDP                = "udp"
 	GOOSLinux                           = "linux"

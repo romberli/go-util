@@ -170,7 +170,7 @@ func (p *Parser) MergeDDLStatements(sqls ...string) ([]string, error) {
 
 					sqlExp := createIndexExp.ReplaceAllString(sql, constant.EmptyString)
 					indexName := strings.TrimSpace(indexNameExp.FindString(sqlExp))
-					sqlExp = string([]byte(sqlExp)[strings.Index(sqlExp, constant.LeftParenthesis):])
+					sqlExp = string([]byte(sqlExp)[strings.Index(sqlExp, constant.LeftParenthesisString):])
 					// get alter table clause
 					alterTableClause = fmt.Sprintf("%s %s %s", addIndexKeyword, indexName, sqlExp)
 				default:

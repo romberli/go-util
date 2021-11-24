@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	// defaultAddr = "192.168.10.219:80/prometheus"
-	defaultAddr = "192.168.10.220:9090/prometheus"
+	defaultAddr = "192.168.10.219:80/prometheus"
+	// defaultAddr = "192.168.10.220:9090/prometheus"
 	defaultUser = "admin"
 	defaultPass = "admin"
 )
@@ -60,14 +60,17 @@ func TestConn_Execute(t *testing.T) {
 		avg by (instance) (max_over_time(mysql_global_status_threads_connected{instance=~"%s"}[20s]) or
 		max_over_time(mysql_global_status_threads_connected{instance=~"%s"}[5m]))
     `
+	query = `node_filesystem_files{node_name=~"%s",fstype!~"rootfs|selinuxfs|autofs|rpc_pipefs|tmpfs"}`
 	// serviceName := "192-168-10-219:3306"
-	serviceName := "192-168-10-220:3306"
+	// serviceName := "192-168-10-220:3306"
+	nodeName := "192-168-10-219"
 	// devs := "sda|sdb|sdc"
 	// mountpoints := "/|/boot"
 	// query := `mysql_global_status_queries`
 	// query = fmt.Sprintf(query, devs, serviceName, devs, serviceName, devs, serviceName, devs, serviceName)
 	// query = fmt.Sprintf(query, serviceName, mountpoints, serviceName, mountpoints, serviceName, mountpoints, serviceName, mountpoints)
-	query = fmt.Sprintf(query, serviceName, serviceName, serviceName, serviceName)
+	// query = fmt.Sprintf(query, serviceName, serviceName, serviceName, serviceName)
+	query = fmt.Sprintf(query, nodeName)
 	result, err = conn.Execute(query, start, end, step)
 	// result, err = conn.Execute(query, start, end, step)
 	asst.Nil(err, "test Execute() failed")

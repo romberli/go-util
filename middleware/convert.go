@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/romberli/go-util/constant"
@@ -35,21 +36,15 @@ func ConvertSliceToString(args ...interface{}) (string, error) {
 		return constant.EmptyString, errors.New("args should not be empty")
 	}
 
-	first := args[constant.ZeroInt]
-	result, err := ConvertToString(first)
-	if err != nil {
-		return constant.EmptyString, err
-	}
-
-	for i := 1; i < len(args); i++ {
-		argStr, err := ConvertToString(args[i])
+	for _, arg := range args {
+		argStr, err := ConvertToString(arg)
 		if err != nil {
 			return constant.EmptyString, err
 		}
-		result += fmt.Sprintf(", %s", argStr)
+		result += fmt.Sprintf("%s,", argStr)
 	}
 
-	return result, nil
+	return strings.Trim(result, constant.CommaString), nil
 }
 
 // ConvertToString converts an interface type argument to string,

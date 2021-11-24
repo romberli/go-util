@@ -41,7 +41,7 @@ func ConvertSliceToString(args ...interface{}) (string, error) {
 		if err != nil {
 			return constant.EmptyString, err
 		}
-		result += fmt.Sprintf("%s,", argStr)
+		result += argStr + constant.CommaString
 	}
 
 	return strings.Trim(result, constant.CommaString), nil

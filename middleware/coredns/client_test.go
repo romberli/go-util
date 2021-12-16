@@ -12,9 +12,9 @@ import (
 func TestEtcdConnection(t *testing.T) {
 	const (
 		DefaultPath         = "/coredns"
-		DefaultURLPrefix    = "test001.mysql.spdb.com"
-		DefaultMasterURL    = "master.test001.mysql.spdb.com"
-		DefaultSlaveURL     = "slave.test001.mysql.spdb.com"
+		DefaultURLPrefix    = "test001.mysql.com"
+		DefaultMasterURL    = "master.test001.mysql.com"
+		DefaultSlaveURL     = "slave.test001.mysql.com"
 		DefaultMasterHostIP = "192.168.137.11"
 		DefaultSlaveHostIP0 = "192.168.137.11"
 		DefaultSlaveHostIP1 = "192.168.137.11"

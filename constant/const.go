@@ -37,6 +37,8 @@ const (
 	LargerEqualString                   = ">="
 	SmallerString                       = "<"
 	SmallerEqualString                  = "<="
+	SingleQuoteString                   = "'"
+	DoubleQuoteString                   = "\""
 	FourSpaceString                     = "    "
 	TabString                           = "\t"
 	DefaultIndentString                 = FourSpaceString

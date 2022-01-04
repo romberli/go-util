@@ -12,7 +12,6 @@ import (
 
 const (
 	defaultAddr = "192.168.10.219:80/prometheus"
-	// defaultAddr = "192.168.10.220:9090/prometheus"
 	defaultUser = "admin"
 	defaultPass = "admin"
 )
@@ -53,12 +52,12 @@ func TestConn_Execute(t *testing.T) {
 	// 	Step:  step,
 	// }
 
-	query = "1"
+	// query = "1"
 	query = `
-		avg by (instance) (avg_over_time(mysql_global_status_threads_running{instance=~"%s"}[20s]) or
-		avg_over_time(mysql_global_status_threads_running{instance=~"%s"}[5m]))/
-		avg by (instance) (max_over_time(mysql_global_status_threads_connected{instance=~"%s"}[20s]) or
-		max_over_time(mysql_global_status_threads_connected{instance=~"%s"}[5m]))
+    	avg by (instance) (avg_over_time(mysql_global_status_threads_running{instance=~"%s"}[20s]) or
+    	avg_over_time(mysql_global_status_threads_running{instance=~"%s"}[5m]))/
+    	avg by (instance) (max_over_time(mysql_global_status_threads_connected{instance=~"%s"}[20s]) or
+    	max_over_time(mysql_global_status_threads_connected{instance=~"%s"}[5m]))
     `
 	query = `node_filesystem_files{node_name=~"%s",fstype!~"rootfs|selinuxfs|autofs|rpc_pipefs|tmpfs"}`
 	// serviceName := "192-168-10-219:3306"

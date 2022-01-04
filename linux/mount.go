@@ -3,7 +3,6 @@ package linux
 import (
 	"errors"
 	"fmt"
-	"path/filepath"
 
 	"github.com/romberli/go-util/common"
 	"github.com/romberli/go-util/constant"
@@ -25,5 +24,10 @@ func MatchMountPoint(path string, mountPoints []string) (string, error) {
 		}
 	}
 
-	return MatchMountPoint(filepath.Dir(path), mountPoints)
+	parentDir, err := common.GetParentDir(path)
+	if err != nil {
+		return constant.EmptyString, err
+	}
+
+	return MatchMountPoint(parentDir, mountPoints)
 }

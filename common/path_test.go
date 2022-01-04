@@ -9,7 +9,7 @@ import (
 const (
 	testUnixAbsPath     = "/data/mysql/data/"
 	testUnixRelPath     = "data/mysql/"
-	testWindowsAbsPathA = `C:\data\mysql\data\`
+	testWindowsAbsPathA = `C:\data\mysql\data`
 	testWindowsAbsPathB = `C:/data/mysql/data/`
 	testWindowsRelPath  = `data\mysql\data\`
 )
@@ -47,4 +47,20 @@ func TestIsAbsWindows(t *testing.T) {
 	asst.True(IsAbsWindows(testWindowsAbsPathA), "test IsAbsWindows() failed")
 	asst.True(IsAbsWindows(testWindowsAbsPathB), "test IsAbsWindows() failed")
 	asst.False(IsAbsWindows(testWindowsRelPath), "test IsAbsWindows() failed")
+}
+
+func TestGetParentDir(t *testing.T) {
+	asst := assert.New(t)
+
+	dir, err := GetParentDir(testUnixRelPath)
+	asst.NotNil(err, "test GetParentDir() failed")
+	dir, err = GetParentDir(testUnixAbsPath)
+	asst.Nil(err, "test GetParentDir() failed")
+	t.Log(dir)
+	dir, err = GetParentDir(testWindowsAbsPathA)
+	asst.Nil(err, "test GetParentDir() failed")
+	t.Log(dir)
+	dir, err = GetParentDir(testWindowsAbsPathB)
+	asst.Nil(err, "test GetParentDir() failed")
+	t.Log(dir)
 }

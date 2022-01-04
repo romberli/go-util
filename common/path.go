@@ -1,6 +1,8 @@
 package common
 
 import (
+	"errors"
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -46,4 +48,19 @@ func IsAbsWindows(path string) bool {
 	}
 
 	return false
+}
+
+// GetParentDir returns the parent directory of the given path, it will not change the separate character
+func GetParentDir(absPath string) (string, error) {
+	if !IsAbs(absPath) {
+		return constant.EmptyString, errors.New(fmt.Sprintf("path must be an absolute path, %s is not valid", absPath))
+	}
+
+	for i := len(absPath) - 1; i > constant.ZeroInt; i-- {
+		if absPath[i] == '/' || absPath[i] == '\\' {
+			return absPath[:i], nil
+		}
+	}
+
+	return constant.SlashString, nil
 }

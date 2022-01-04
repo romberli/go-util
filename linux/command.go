@@ -14,7 +14,7 @@ func ExecuteCommand(command string) (output string, err error) {
 func ExecuteCommandAndWait(command string) (output string, err error) {
 	var stdoutBuffer bytes.Buffer
 
-	cmd := exec.Command("/bin/sh", "-c", command)
+	cmd := exec.Command("sh", "-c", command)
 	cmd.Stdout = &stdoutBuffer
 	cmd.Stderr = &stdoutBuffer
 
@@ -24,10 +24,10 @@ func ExecuteCommandAndWait(command string) (output string, err error) {
 }
 
 // ExecuteCommandNoWait executes shell command and does not wait for it to complete
-func ExecuteCommandNoWait(command string) (output string, err error) {
+func c(command string) (output string, err error) {
 	var stdoutBuffer bytes.Buffer
 
-	cmd := exec.Command("/bin/sh", "-c", command)
+	cmd := exec.Command("sh", "-c", command)
 	cmd.Stdout = &stdoutBuffer
 	cmd.Stderr = &stdoutBuffer
 

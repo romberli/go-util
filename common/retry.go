@@ -1,9 +1,10 @@
 package common
 
 import (
-	"errors"
-	"fmt"
 	"time"
+
+	"github.com/pingcap/errors"
+	"github.com/romberli/go-util/constant"
 )
 
 const (
@@ -37,46 +38,47 @@ func Retry(doFunc func() error, attempts int64, delay, timeout time.Duration) er
 
 // RetryWithRetryOption retries the func until it returns no error or reaches attempts limit or
 // timed out, either one is earlier
-func RetryWithRetryOption(doFunc func() error, opts ...RetryOption) (err error) {
+func RetryWithRetryOption(doFunc func() error, opts ...RetryOption) error {
 	var (
+		err          error
 		retryOption  RetryOption
 		attemptCount int64
 	)
 
-	if len(opts) > 0 {
-		retryOption = opts[0]
+	if len(opts) > constant.ZeroInt {
+		retryOption = opts[constant.ZeroInt]
 	} else {
 		retryOption = NewRetryOption(DefaultAttempts, DefaultDelay, DefaultTimeout)
 	}
 
-	if retryOption.Timeout < 0 {
-		return errors.New(fmt.Sprintf("timeout must NOT be less than 0, %d is not valid.", retryOption.Timeout))
+	if retryOption.Timeout < constant.ZeroInt {
+		return errors.Errorf("timeout must NOT be less than 0, %d is not valid.", retryOption.Timeout)
 	}
-	if retryOption.Delay < 0 {
-		return errors.New(fmt.Sprintf("delay must NOT be less than 0, %d is not valid.", retryOption.Delay))
+	if retryOption.Delay < constant.ZeroInt {
+		return errors.Errorf("delay must NOT be less than 0, %d is not valid.", retryOption.Delay)
 	}
 
 	timeoutChan := time.After(retryOption.Timeout)
 
 	// call the function
-	for attemptCount = 0; attemptCount <= retryOption.Attempts; attemptCount++ {
-		err := doFunc()
+	for attemptCount = constant.ZeroInt; attemptCount <= retryOption.Attempts; attemptCount++ {
+		err = doFunc()
 		if err == nil {
-			return err
+			return nil
 		}
 		// if attempts or timeout equal to 0, then not to retry
-		if retryOption.Attempts == 0 || retryOption.Timeout == 0 {
-			return err
+		if retryOption.Attempts == constant.ZeroInt || retryOption.Timeout == constant.ZeroInt {
+			return errors.Trace(err)
 		}
 
 		// check for timeout
 		select {
 		case <-timeoutChan:
-			return err
+			return errors.Trace(err)
 		default:
 			time.Sleep(retryOption.Delay)
 		}
 	}
 
-	return err
+	return errors.Trace(err)
 }

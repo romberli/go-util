@@ -1,10 +1,10 @@
 package common
 
 import (
-	"errors"
-	"fmt"
 	"path/filepath"
 	"strings"
+
+	"github.com/pingcap/errors"
 
 	"github.com/romberli/go-util/constant"
 )
@@ -53,7 +53,7 @@ func IsAbsWindows(path string) bool {
 // GetParentDir returns the parent directory of the given path, it will not change the separate character
 func GetParentDir(absPath string) (string, error) {
 	if !IsAbs(absPath) {
-		return constant.EmptyString, errors.New(fmt.Sprintf("path must be an absolute path, %s is not valid", absPath))
+		return constant.EmptyString, errors.Errorf("path must be an absolute path, %s is not valid", absPath)
 	}
 
 	for i := len(absPath) - 1; i > constant.ZeroInt; i-- {

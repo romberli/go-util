@@ -11,6 +11,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/json-iterator/go v1.1.11
 	github.com/percona/go-mysql v0.0.0-20210427141028-73d29c6da78c
+	github.com/pingcap/errors v0.11.5-0.20211224045212-9687c2b0f87c
 	github.com/pingcap/parser v0.0.0-20211004012448-687005894c4e
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.12.0

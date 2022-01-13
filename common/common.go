@@ -1,12 +1,12 @@
 package common
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/pingcap/errors"
 	"github.com/romberli/dynamic-struct"
 
 	json "github.com/json-iterator/go"
@@ -101,7 +101,7 @@ func IsRandomValue(value interface{}) (bool, error) {
 				return true, nil
 			}
 		default:
-			return false, errors.New(fmt.Sprintf("unsupported data type: %T", value))
+			return false, errors.Errorf("unsupported data type: %T", value)
 		}
 	}
 
@@ -139,11 +139,11 @@ func StringKeyInMap(m map[string]string, str string) bool {
 
 // ElementInSlice checks if given element is in the slice
 func ElementInSlice(s interface{}, e interface{}) (bool, error) {
-	sType := reflect.TypeOf(s)
+	kind := reflect.TypeOf(s).Kind()
 	sValue := reflect.ValueOf(s)
 
-	if sType.Kind() != reflect.Slice {
-		return false, errors.New("first argument must be array or slice")
+	if kind != reflect.Slice {
+		return false, errors.Errorf("first argument must be array or slice, %s is not valid", kind.String())
 	}
 
 	for i := 0; i < sValue.Len(); i++ {
@@ -157,8 +157,9 @@ func ElementInSlice(s interface{}, e interface{}) (bool, error) {
 
 // KeyInMap checks if given key is in the map
 func KeyInMap(m interface{}, k interface{}) (bool, error) {
-	if reflect.TypeOf(m).Kind() != reflect.Map {
-		return false, errors.New("first argument must be map")
+	kind := reflect.TypeOf(m).Kind()
+	if kind != reflect.Map {
+		return false, errors.Errorf("first argument must be map, %s is not valid", kind.String())
 	}
 
 	iter := reflect.ValueOf(m).MapRange()
@@ -173,8 +174,9 @@ func KeyInMap(m interface{}, k interface{}) (bool, error) {
 
 // ValueInMap checks if given value is in the map
 func ValueInMap(m interface{}, v interface{}) (bool, error) {
-	if reflect.TypeOf(m).Kind() != reflect.Map {
-		return false, errors.New("first argument must be map")
+	kind := reflect.TypeOf(m).Kind()
+	if kind != reflect.Map {
+		return false, errors.Errorf("first argument must be map, %s is not valid", kind.String())
 	}
 
 	iter := reflect.ValueOf(m).MapRange()
@@ -189,10 +191,9 @@ func ValueInMap(m interface{}, v interface{}) (bool, error) {
 
 // TrimSpaceOfStructString trims spaces of each member variable of the struct
 func TrimSpaceOfStructString(in interface{}) error {
-	inType := reflect.TypeOf(in)
-
-	if inType.Kind() != reflect.Ptr {
-		return errors.New("first must be a pointer to struct")
+	kind := reflect.TypeOf(in).Kind()
+	if kind != reflect.Ptr {
+		return errors.Errorf("first must be a pointer to struct, %s is not valid", kind.String())
 	}
 
 	inVal := reflect.ValueOf(in).Elem()
@@ -215,12 +216,13 @@ func TrimSpaceOfStructString(in interface{}) error {
 // the fields must exist and be exported, otherwise, it will return an error,
 // the first argument must be a pointer to struct
 func GetValueOfStruct(in interface{}, field string) (interface{}, error) {
-	if reflect.TypeOf(in).Kind() != reflect.Ptr {
-		return nil, errors.New("first argument must be a pointer to struct")
+	kind := reflect.TypeOf(in).Kind()
+	if kind != reflect.Ptr {
+		return nil, errors.Errorf("first must be a pointer to struct, %s is not valid", kind.String())
 	}
 	v := reflect.ValueOf(in).Elem().FieldByName(field)
 	if !v.CanSet() {
-		return nil, errors.New(fmt.Sprintf("field %s can not be set, please check if this field is exported", field))
+		return nil, errors.Errorf("field %s can not be set, please check if this field is exported", field)
 	}
 
 	return v.Interface(), nil
@@ -231,13 +233,14 @@ func GetValueOfStruct(in interface{}, field string) (interface{}, error) {
 // the first argument must be a pointer to struct
 // if value is nil, the field value will be set to ZERO value of the type
 func SetValueOfStruct(in interface{}, field string, value interface{}) error {
-	if reflect.TypeOf(in).Kind() != reflect.Ptr {
-		return errors.New("first argument must be a pointer to struct")
+	kind := reflect.TypeOf(in).Kind()
+	if kind != reflect.Ptr {
+		return errors.Errorf("first must be a pointer to struct, %s is not valid", kind.String())
 	}
 
 	v := reflect.ValueOf(in).Elem().FieldByName(field)
 	if !v.CanSet() {
-		return errors.New(fmt.Sprintf("field %s can not be set, please check if this field is exported", field))
+		return errors.Errorf("field %s can not be set, please check if this field is exported", field)
 	}
 
 	vType := v.Type()
@@ -250,8 +253,8 @@ func SetValueOfStruct(in interface{}, field string, value interface{}) error {
 	}
 
 	if vType != valueType {
-		return errors.New(fmt.Sprintf("types of field %s(%s) and value(%s) mismatched",
-			field, v.Type().String(), valueType.String()))
+		return errors.Errorf("types of field %s(%s) and value(%s) mismatched",
+			field, v.Type().String(), valueType.String())
 	}
 
 	// set value
@@ -264,8 +267,9 @@ func SetValueOfStruct(in interface{}, field string, value interface{}) error {
 // the fields of map must exist and be exported, otherwise, it will return an error,
 // the first argument must be a pointer to struct
 func SetValuesWithMap(in interface{}, fields map[string]interface{}) error {
-	if reflect.TypeOf(in).Kind() != reflect.Ptr {
-		return errors.New("first argument must be a pointer to struct")
+	kind := reflect.TypeOf(in).Kind()
+	if kind != reflect.Ptr {
+		return errors.Errorf("first must be a pointer to struct, %s is not valid", kind.String())
 	}
 
 	for field, value := range fields {
@@ -283,8 +287,9 @@ func SetValuesWithMap(in interface{}, fields map[string]interface{}) error {
 // the fields of map must exist and be exported, otherwise, it will return an error,
 // the first argument must be a pointer to struct
 func SetValuesWithMapAndRandom(in interface{}, fields map[string]interface{}) error {
-	if reflect.TypeOf(in).Kind() != reflect.Ptr {
-		return errors.New("first argument must be a pointer to struct")
+	kind := reflect.TypeOf(in).Kind()
+	if kind != reflect.Ptr {
+		return errors.Errorf("first must be a pointer to struct, %s is not valid", kind.String())
 	}
 
 	inVal := reflect.ValueOf(in).Elem()
@@ -418,7 +423,7 @@ func SetValueOfStructByKind(in interface{}, field string, value interface{}, kin
 	case reflect.Slice:
 		fieldType, ok := reflect.ValueOf(in).Elem().Type().FieldByName(field)
 		if !ok {
-			return errors.New(fmt.Sprintf("field %s does not exist", field))
+			return errors.Errorf("field %s does not exist", field)
 		}
 
 		v, err := ConvertToSlice(value, fieldType.Type.Elem().Kind())
@@ -445,7 +450,7 @@ func SetValueOfStructByKind(in interface{}, field string, value interface{}, kin
 			return err
 		}
 	default:
-		return errors.New(fmt.Sprintf("got unsupported reflect.Kind of data type: %s", kind.String()))
+		return errors.Errorf("unsupported data type: %s", kind.String())
 	}
 
 	return nil
@@ -460,14 +465,15 @@ func SetValueOfStructByKind(in interface{}, field string, value interface{}, kin
 // 5. returning struct is totally a new data type, so you could not use any (*type) assertion
 // 6. if fields argument is empty, a new struct which contains the whole fields of input struct will be returned
 // 7. technically, for convenience purpose, this function creates a new struct as same as input struct,
-//    then removes fields that does not exist in the given fields
+//    then removes fields that do not exist in the given fields
 func CopyStructWithFields(in interface{}, fields ...string) (interface{}, error) {
 	if len(fields) == 0 {
 		return CopyStructWithoutFields(in)
 	}
 
-	if reflect.TypeOf(in).Kind() != reflect.Ptr {
-		return nil, errors.New("first argument must be a pointer to struct")
+	kind := reflect.TypeOf(in).Kind()
+	if kind != reflect.Ptr {
+		return nil, errors.Errorf("first must be a pointer to struct, %s is not valid", kind.String())
 	}
 
 	var removeFields []string
@@ -500,7 +506,7 @@ func CopyStructWithFields(in interface{}, fields ...string) (interface{}, error)
 func CopyStructWithoutFields(in interface{}, fields ...string) (interface{}, error) {
 	newStruct, err := dynamicstruct.MergeStructsWithSettableFields(in)
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	for _, field := range fields {
@@ -534,49 +540,46 @@ func CopyStructWithoutFields(in interface{}, fields ...string) (interface{}, err
 // MarshalStructWithFields marshals input struct using json.Marshal() with given fields,
 // first argument must be a pointer to struct, not the struct itself
 func MarshalStructWithFields(in interface{}, fields ...string) ([]byte, error) {
-	if reflect.TypeOf(in).Kind() != reflect.Ptr {
-		return nil, errors.New("first argument must be a pointer to struct")
-	}
-
-	if len(fields) == 0 {
-		return json.Marshal(in)
-	}
-
-	// generate a new struct with given fields
-	newInstance, err := CopyStructWithFields(in, fields...)
-	if err != nil {
-		return nil, err
-	}
-
-	return json.Marshal(newInstance)
+	return marshalStructWithFunc(in, CopyStructWithFields, fields...)
 }
 
 // MarshalStructWithoutFields marshals input struct using json.Marshal() without given fields,
 // first argument must be a pointer to struct, not the struct itself
 func MarshalStructWithoutFields(in interface{}, fields ...string) ([]byte, error) {
-	if reflect.TypeOf(in).Kind() != reflect.Ptr {
-		return nil, errors.New("first argument must be a pointer to struct")
+	return marshalStructWithFunc(in, CopyStructWithoutFields, fields...)
+}
+
+func marshalStructWithFunc(in interface{}, copyFunc func(interface{}, ...string) (interface{}, error), fields ...string) ([]byte, error) {
+	kind := reflect.TypeOf(in).Kind()
+	if kind != reflect.Ptr {
+		return nil, errors.Errorf("first must be a pointer to struct, %s is not valid", kind.String())
 	}
 
-	if len(fields) == 0 {
-		return json.Marshal(in)
+	if len(fields) == constant.ZeroInt {
+		bytes, err := json.Marshal(in)
+
+		return bytes, errors.Trace(err)
 	}
 
 	// generate a new struct with fields
-	newInstance, err := CopyStructWithoutFields(in, fields...)
+	newInstance, err := copyFunc(in, fields...)
 	if err != nil {
 		return nil, err
 	}
 
-	return json.Marshal(newInstance)
+	bytes, err := json.Marshal(newInstance)
+
+	return bytes, errors.Trace(err)
 }
 
 // MarshalStructWithTag marshals input struct using json.Marshal() with fields that contain given tag,
 // first argument must be a pointer to struct, not the struct itself
 func MarshalStructWithTag(in interface{}, tag string) ([]byte, error) {
-	if reflect.TypeOf(in).Kind() != reflect.Ptr {
-		return nil, errors.New("first argument must be a pointer to struct")
+	kind := reflect.TypeOf(in).Kind()
+	if kind != reflect.Ptr {
+		return nil, errors.Errorf("first must be a pointer to struct, %s is not valid", kind.String())
 	}
+
 	if tag == constant.EmptyString {
 		return nil, errors.New("tag should not be empty")
 	}
@@ -603,8 +606,9 @@ func MarshalStructWithTag(in interface{}, tag string) ([]byte, error) {
 // if any key in the given map could not match any tag in the struct,
 // it will return error, so make sure that each key the given map could match a field tag in the struct
 func NewMapWithStructTag(m map[string]interface{}, in interface{}, tag string) (map[string]interface{}, error) {
-	if reflect.TypeOf(in).Kind() != reflect.Ptr {
-		return nil, errors.New("second argument must be a pointer to struct")
+	kind := reflect.TypeOf(in).Kind()
+	if kind != reflect.Ptr {
+		return nil, errors.Errorf("second must be a pointer to struct, %s is not valid", kind.String())
 	}
 
 	result := make(map[string]interface{})
@@ -622,7 +626,7 @@ Loop:
 			}
 		}
 		// this means there is no relevant tag in the struct, should return error
-		return nil, errors.New(fmt.Sprintf("key %s could not match any tag in the struct", key))
+		return nil, errors.Errorf("key %s could not match any tag in the struct", key)
 	}
 
 	return result, nil
@@ -631,13 +635,14 @@ Loop:
 // UnmarshalToMapWithStructTag returns a map as the result, it works as following logic:
 // 1. unmarshals given data to a temporary map to get keys
 // 2. unmarshals given data to the input struct, to get field names and values with appropriate data types
-// 3. loops keys in the temporary map, loops tags of the input struct in a nested loop
+// 3. loop keys in the temporary map, loops tags of the input struct in a nested loop
 // 4. if the key matches the tag, set field name as the key of result map, set field value as the value of the result map
 // 5. if any key in the temporary map can not match any field tag of the struct, it returns error,
 //    so make sure that each key of the given data could match a field tag in the struct
 func UnmarshalToMapWithStructTag(data []byte, in interface{}, tag string) (map[string]interface{}, error) {
-	if reflect.TypeOf(in).Kind() != reflect.Ptr {
-		return nil, errors.New("second argument must be a pointer to struct")
+	kind := reflect.TypeOf(in).Kind()
+	if kind != reflect.Ptr {
+		return nil, errors.Errorf("second argument must be a pointer to struct, %s is not valid", kind.String())
 	}
 
 	// get new decoder to unmarshal with specified tag
@@ -650,13 +655,13 @@ func UnmarshalToMapWithStructTag(data []byte, in interface{}, tag string) (map[s
 	// unmarshal to struct to get appropriate data type
 	err := decoder.Unmarshal(data, &in)
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 	// unmarshal to temporary map to get key names
 	tmpMap := make(map[string]interface{})
 	err = decoder.Unmarshal(data, &tmpMap)
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	result := make(map[string]interface{})
@@ -673,7 +678,7 @@ Loop:
 			}
 		}
 		// this means there is no relevant tag in the struct, should return error
-		return nil, errors.New(fmt.Sprintf("key %s could not match any tag in the struct", key))
+		return nil, errors.Errorf("key %s could not match any tag in the struct", key)
 	}
 
 	return result, nil

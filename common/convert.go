@@ -8,7 +8,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/pkg/errors"
+	"github.com/pingcap/errors"
 	"github.com/siddontang/go/hack"
 
 	"github.com/romberli/go-util/constant"
@@ -46,9 +46,8 @@ func ConvertNumberToString(in interface{}) (string, error) {
 		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		return fmt.Sprintf("%v", in), nil
 	default:
-		return constant.EmptyString, errors.New(
-			fmt.Sprintf("convert %s to string is not supported. ONLY accept string, float, int, bool.",
-				inType.String()))
+		return constant.EmptyString, errors.Errorf("convert %s to string is not supported. ONLY accept string, float, int, bool.",
+			inType.String())
 	}
 }
 
@@ -59,7 +58,7 @@ func ConvertInterfaceToSliceInterface(in interface{}) ([]interface{}, error) {
 	inValue := reflect.ValueOf(in)
 
 	if inType.Kind() != reflect.Slice {
-		return nil, errors.New("argument must be array or slice")
+		return nil, errors.New("the argument must be array or slice")
 	}
 
 	inLength := inValue.Len()
@@ -108,10 +107,10 @@ func ConvertToBool(in interface{}) (bool, error) {
 		case 1:
 			return true, nil
 		default:
-			return false, errors.New(fmt.Sprintf("bool type value should be either 0 or 1, %d is not valid", v))
+			return false, errors.Errorf("bool type value should be either 0 or 1, %d is not valid", v)
 		}
 	default:
-		return false, errors.New(fmt.Sprintf("can not convert to a valid bool value, %v is not valid", in))
+		return false, errors.Errorf("can not convert to a valid bool value, %v is not valid", in)
 	}
 }
 
@@ -143,18 +142,12 @@ func ConvertToInt(in interface{}) (int, error) {
 		return int(v), nil
 	case string:
 		value, err := strconv.ParseInt(v, 10, 64)
-		if err != nil {
-			return constant.ZeroInt, err
-		}
 
-		return int(value), nil
+		return int(value), errors.Trace(err)
 	case []byte:
 		value, err := strconv.ParseInt(string(v), 10, 64)
-		if err != nil {
-			return constant.ZeroInt, err
-		}
 
-		return int(value), nil
+		return int(value), errors.Trace(err)
 	case nil:
 		return constant.ZeroInt, nil
 	default:
@@ -198,9 +191,19 @@ func ConvertToFloat(in interface{}) (float64, error) {
 	case float64:
 		return v, nil
 	case string:
-		return strconv.ParseFloat(v, 64)
+		value, err := strconv.ParseFloat(v, 64)
+		if err != nil {
+			return constant.ZeroInt, errors.Trace(err)
+		}
+
+		return value, nil
 	case []byte:
-		return strconv.ParseFloat(string(v), 64)
+		value, err := strconv.ParseFloat(string(v), 64)
+		if err != nil {
+			return constant.ZeroInt, errors.Trace(err)
+		}
+
+		return value, nil
 	case nil:
 		return constant.ZeroInt, nil
 	default:
@@ -233,7 +236,7 @@ func ConvertToString(in interface{}) (string, error) {
 func ConvertToSlice(in interface{}, kind reflect.Kind) (interface{}, error) {
 	inKind := reflect.TypeOf(in).Kind()
 	if inKind != reflect.Slice {
-		return nil, errors.New(fmt.Sprintf("value must be a slice, not %s", inKind.String()))
+		return nil, errors.Errorf("value must be a slice, not %s", inKind.String())
 	}
 
 	inVal := reflect.ValueOf(in)
@@ -396,7 +399,7 @@ func ConvertToSlice(in interface{}, kind reflect.Kind) (interface{}, error) {
 
 		return result, nil
 	default:
-		return nil, errors.New(fmt.Sprintf("kind must be one of [reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Float32, reflect.Float64, reflect.String], %s is not valid", kind.String()))
+		return nil, errors.Errorf("kind must be one of [reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Float32, reflect.Float64, reflect.String], %s is not valid", kind.String())
 	}
 }
 

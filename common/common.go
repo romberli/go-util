@@ -23,7 +23,7 @@ func SetRandomValueToNil(values ...interface{}) error {
 
 		isRandom, err := IsRandomValue(value)
 		if err != nil {
-			return nil
+			return err
 		}
 
 		if isRandom {

@@ -3,26 +3,36 @@ package config
 import (
 	"fmt"
 
+	"github.com/pingcap/errors"
 	"github.com/romberli/go-util/constant"
 )
+
+const defaultCallerSkip = 1
 
 type ErrMessage struct {
 	Header  string
 	ErrCode int
 	Raw     string
+	errors.StackTrace
 }
 
-// NewErrMessage is an exported alias of newErrMessage() function
+// NewErrMessage returns a *ErrMessage without stack trace
 func NewErrMessage(header string, errCode int, raw string) *ErrMessage {
-	return newErrMessage(header, errCode, raw)
+	return newErrMessage(header, errCode, raw, nil)
+}
+
+// NewErrMessageWithStack returns a *ErrMessage with stack trace
+func NewErrMessageWithStack(header string, errCode int, raw string) *ErrMessage {
+	return newErrMessage(header, errCode, raw, errors.NewStack(defaultCallerSkip).StackTrace())
 }
 
 // NewErrMessage returns a new *ErrMessage
-func newErrMessage(header string, errCode int, raw string) *ErrMessage {
+func newErrMessage(header string, errCode int, raw string, stackTrace errors.StackTrace) *ErrMessage {
 	return &ErrMessage{
-		Header:  header,
-		ErrCode: errCode,
-		Raw:     raw,
+		Header:     header,
+		ErrCode:    errCode,
+		Raw:        raw,
+		StackTrace: stackTrace,
 	}
 }
 
@@ -51,10 +61,10 @@ func (e *ErrMessage) Renew(ins ...interface{}) *ErrMessage {
 
 // Clone returns a new *ErrMessage with same member variables
 func (e *ErrMessage) Clone() *ErrMessage {
-	return newErrMessage(e.Header, e.ErrCode, e.Raw)
+	return newErrMessage(e.Header, e.ErrCode, e.Raw, e.StackTrace)
 }
 
-// Specify specifies place holders with given data
+// Specify specifies placeholders with given data
 func (e *ErrMessage) Specify(ins ...interface{}) {
 	e.Raw = fmt.Sprintf(e.Raw, ins...)
 }

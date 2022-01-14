@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/pingcap/errors"
+	"github.com/romberli/log"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -46,7 +48,7 @@ func TestError(t *testing.T) {
 	raw = "something goes wrong, line: %d"
 	line = 100
 
-	errMessage = newErrMessage(header, errCode, raw)
+	errMessage = newErrMessage(header, errCode, raw, nil)
 
 	t.Log("==========test Code() started.==========")
 	expectCode := fmt.Sprintf("%s-%d", header, errCode)
@@ -81,4 +83,31 @@ func TestError(t *testing.T) {
 		asst.Fail("test ErrorOrNil() failed.")
 	}
 	t.Log("==========test ErrorOrNil() completed.==========")
+}
+
+func funcA() error {
+	return errors.New("function error")
+}
+
+func funcB() error {
+	err := funcA()
+	// raw := fmt.Sprintf("function error. err:\n%+v", err)
+	// return NewErrMessage("FUNCB", 100001, raw)
+
+	raw := err.Error()
+	return NewErrMessageWithStack("FUNCB", 100001, raw)
+}
+
+func funcC() error {
+	return funcB()
+}
+
+func TestError_Log(t *testing.T) {
+	log.SetDisableEscape(true)
+	log.SetDisableDoubleQuotes(true)
+
+	err := funcC()
+	log.Errorf("got error: %+v", err)
+	// log.Errorf("got error: %s", err.Error())
+	// log.Error("got error", zap.Error(err))
 }

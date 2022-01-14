@@ -2,11 +2,11 @@ package config
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
 
+	"github.com/pingcap/errors"
 	"github.com/romberli/go-util/common"
 	"github.com/romberli/go-util/constant"
 )
@@ -28,15 +28,13 @@ func WriteToBuffer(in interface{}, buffer *bytes.Buffer, tagType ...string) (err
 		line       string
 	)
 
-	// check if v is a struct
-	inType := reflect.TypeOf(in)
-	inVal := reflect.ValueOf(in)
-	if inType.Kind() == reflect.Ptr {
-		inVal = inVal.Elem()
-		inType = inVal.Type()
-	} else {
-		return errors.New("can NOT parse non-pointer struct")
+	kind := reflect.TypeOf(in).Kind()
+	if kind != reflect.Ptr {
+		return errors.Errorf("second argument must be a pointer to struct, %s is not valid", kind.String())
 	}
+
+	inVal := reflect.ValueOf(in).Elem()
+	inType := inVal.Type()
 
 	// check if tagType is valid
 	optsLen := len(tagType)
@@ -44,14 +42,13 @@ func WriteToBuffer(in interface{}, buffer *bytes.Buffer, tagType ...string) (err
 	case 0:
 		tagTypeStr = constant.EmptyString
 	case 1:
-		tagTypeStr = tagType[0]
+		tagTypeStr = tagType[constant.ZeroInt]
 	default:
-		return errors.New(fmt.Sprintf(
-			"tagType should be either empty or only 1 value. actual tagType length: %d", len(tagType)))
+		return errors.Errorf("tagType should be either empty or only have 1 value. actual tagType length: %d", len(tagType))
 	}
 
 	// loop each member of the struct to get a big string
-	for i := 0; i < inVal.NumField(); i++ {
+	for i := constant.ZeroInt; i < inVal.NumField(); i++ {
 		field := inVal.Field(i)
 		fieldType := reflect.TypeOf(field)
 
@@ -85,7 +82,7 @@ func WriteToBuffer(in interface{}, buffer *bytes.Buffer, tagType ...string) (err
 			line += constant.CRLFString
 			_, err = buffer.WriteString(line)
 			if err != nil {
-				return err
+				return errors.Trace(err)
 			}
 		}
 	}

@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"syscall"
 
+	"github.com/pingcap/errors"
 	"github.com/romberli/go-util/constant"
 )
 
@@ -15,7 +16,7 @@ import (
 func FindMountPoint(path string) (string, error) {
 	pathStat, err := os.Stat(path)
 	if err != nil {
-		return constant.EmptyString, err
+		return constant.EmptyString, errors.Trace(err)
 	}
 
 	pathStat.Sys()
@@ -26,7 +27,7 @@ func FindMountPoint(path string) (string, error) {
 
 		parentStat, err := os.Stat(parent)
 		if err != nil {
-			return constant.EmptyString, err
+			return constant.EmptyString, errors.Trace(err)
 		}
 
 		parentDev := parentStat.Sys().(*syscall.Stat_t).Dev

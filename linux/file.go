@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"github.com/pkg/errors"
+	"github.com/pingcap/errors"
 
 	"github.com/romberli/go-util/constant"
 )
@@ -23,13 +23,13 @@ const (
 func SyscallMode(fileMode os.FileMode) (fileModeSys uint32) {
 	fileModeSys |= uint32(fileMode.Perm())
 
-	if fileMode&os.ModeSetuid != 0 {
+	if fileMode&os.ModeSetuid != constant.ZeroInt {
 		fileModeSys |= syscall.S_ISUID
 	}
-	if fileMode&os.ModeSetgid != 0 {
+	if fileMode&os.ModeSetgid != constant.ZeroInt {
 		fileModeSys |= syscall.S_ISGID
 	}
-	if fileMode&os.ModeSticky != 0 {
+	if fileMode&os.ModeSticky != constant.ZeroInt {
 		fileModeSys |= syscall.S_ISVTX
 	}
 
@@ -47,14 +47,14 @@ func PathExists(path string) (bool, error) {
 		return false, nil
 	}
 
-	return false, err
+	return false, errors.Trace(err)
 }
 
 // IsDir returns if given path is a directory or not
 func IsDir(path string) (isDir bool, err error) {
 	fileInfo, err := os.Stat(path)
 	if err != nil {
-		return false, err
+		return false, errors.Trace(err)
 	}
 
 	return fileInfo.IsDir(), nil
@@ -72,13 +72,13 @@ func Readdir(dirName string) (fileInfoList []os.FileInfo, err error) {
 
 	file, err := os.Open(dirName)
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 	defer func() { _ = file.Close() }()
 
 	fileInfoList, err = file.Readdir(constant.ZeroInt)
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	return fileInfoList, nil
@@ -90,7 +90,7 @@ func IsEmptyDir(dirName string) (isEmpty bool, err error) {
 	if err != nil {
 		return false, err
 	}
-	if len(fileInfoList) == 0 {
+	if len(fileInfoList) == constant.ZeroInt {
 		isEmpty = true
 	}
 
@@ -99,12 +99,23 @@ func IsEmptyDir(dirName string) (isEmpty bool, err error) {
 
 // GetPathDirMapLocal reads all subdirectories and files of given directory and calculate the relative path of rootPath,
 // then map the absolute path of subdirectory names and file names as keys, relative paths as values to fileDirMap
-func GetPathDirMapLocal(pathDirMap map[string]string, dirName, rootPath string) (err error) {
+func GetPathDirMapLocal(dirName, rootPath string) (map[string]string, error) {
+	pathDirMap := make(map[string]string)
+
+	err := getPathDirMapLocal(pathDirMap, dirName, rootPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return pathDirMap, nil
+}
+
+func getPathDirMapLocal(pathDirMap map[string]string, dirName, rootPath string) error {
 	pathInfoList, err := Readdir(dirName)
 	if err != nil {
 		return err
 	}
-	if len(pathInfoList) == 0 {
+	if len(pathInfoList) == constant.ZeroInt {
 		// it's an empty directory
 		pathDirMap[dirName] = constant.EmptyString
 	}
@@ -114,14 +125,14 @@ func GetPathDirMapLocal(pathDirMap map[string]string, dirName, rootPath string) 
 		pathNameAbs := filepath.Join(dirName, pathName)
 
 		if pathInfo.IsDir() {
-			err = GetPathDirMapLocal(pathDirMap, pathNameAbs, rootPath)
+			err = getPathDirMapLocal(pathDirMap, pathNameAbs, rootPath)
 			if err != nil {
 				return err
 			}
 		} else {
 			pathRel, err := filepath.Rel(rootPath, pathNameAbs)
 			if err != nil {
-				return err
+				return errors.Trace(err)
 			}
 
 			pathDirMap[pathNameAbs] = pathRel
@@ -142,7 +153,7 @@ func GetFileNameDest(fileNameSource, dirDest string) string {
 func TailN(fileName string, n int) (lines []string, err error) {
 	file, err := os.Open(fileName)
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 	defer func() { _ = file.Close() }()
 
@@ -150,7 +161,7 @@ func TailN(fileName string, n int) (lines []string, err error) {
 
 	stat, err := os.Stat(fileName)
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	start := int(stat.Size()) - n*estimateLineSize
@@ -160,7 +171,7 @@ func TailN(fileName string, n int) (lines []string, err error) {
 
 	_, err = file.Seek(int64(start), MinStartPosition /*means relative to the origin of the file*/)
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	scanner := bufio.NewScanner(file)

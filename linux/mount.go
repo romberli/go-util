@@ -1,8 +1,9 @@
 package linux
 
 import (
-	"errors"
 	"fmt"
+
+	"github.com/pingcap/errors"
 
 	"github.com/romberli/go-util/common"
 	"github.com/romberli/go-util/constant"

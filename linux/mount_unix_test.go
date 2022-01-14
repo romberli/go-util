@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	defaultPath       = "/boot/grub"
-	defaultMountPoint = "/boot"
+	defaultPath       = "/dev/tty"
+	defaultMountPoint = "/dev"
 )
 
 func TestMountUnixAll(t *testing.T) {

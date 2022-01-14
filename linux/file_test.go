@@ -85,8 +85,7 @@ func TestFile(t *testing.T) {
 
 	// test GetPathDirMapLocal()
 	t.Log("==========test GetPathDirMapLocal() started.==========")
-	pathDirMap = make(map[string]string)
-	err = GetPathDirMapLocal(pathDirMap, dirName, dirName)
+	pathDirMap, err = GetPathDirMapLocal(dirName, dirName)
 	asst.Nil(err, "test GetPathDirMapLocal() failed")
 	asst.Equal(len(pathDirMap), expectedElementNum, "test GetPathDirMapLocal() failed")
 	t.Log("==========test GetPathDirMapLocal() completed.==========\n")

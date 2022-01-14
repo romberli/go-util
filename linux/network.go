@@ -3,16 +3,15 @@ package linux
 import (
 	"net"
 
-	"github.com/pkg/errors"
+	"github.com/pingcap/errors"
+	"github.com/romberli/go-util/constant"
 )
 
-// GetDefaultIP get a default non local ip, err is not nil, ip return 127.0.0.1
-func GetDefaultIP() (ip string, err error) {
-	ip = "127.0.0.1"
-
+// GetDefaultIP gets the default non-local ip, if there are more than one ips, it will return the first one
+func GetDefaultIP() (string, error) {
 	interfaces, err := net.Interfaces()
 	if err != nil {
-		return
+		return constant.EmptyString, errors.Trace(err)
 	}
 
 	for _, i := range interfaces {
@@ -22,13 +21,14 @@ func GetDefaultIP() (ip string, err error) {
 		}
 
 		for _, addr := range addrs {
-			if ipStr := getAddrDefaultIP(addr); len(ipStr) > 0 {
+			ipStr := getAddrDefaultIP(addr)
+			if len(ipStr) > constant.ZeroInt {
 				return ipStr, nil
 			}
 		}
 	}
 
-	return "", errors.New("no ip found.")
+	return constant.EmptyString, errors.New("no ip found")
 }
 
 // getAddrDefaultIP returns default IP of host
@@ -41,15 +41,15 @@ func getAddrDefaultIP(addr net.Addr) string {
 	case *net.IPAddr:
 		ip = v.IP
 	default:
-		return ""
+		return constant.EmptyString
 	}
 	if ip.IsUnspecified() || ip.IsLoopback() {
-		return ""
+		return constant.EmptyString
 	}
 
 	ip = ip.To4()
 	if ip == nil {
-		return ""
+		return constant.EmptyString
 	}
 
 	return ip.String()

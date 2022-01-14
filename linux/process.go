@@ -1,7 +1,6 @@
 package linux
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -10,9 +9,10 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/romberli/log"
+	"github.com/pingcap/errors"
 
 	"github.com/romberli/go-util/constant"
+	"github.com/romberli/log"
 
 	"github.com/shirou/gopsutil/v3/process"
 )
@@ -25,7 +25,7 @@ func IsRunningWithPid(pid int) (bool, error) {
 			return false, nil
 		}
 
-		return false, err
+		return false, errors.Trace(err)
 	}
 
 	return true, nil
@@ -33,7 +33,7 @@ func IsRunningWithPid(pid int) (bool, error) {
 
 // SavePid saves pid to pid file with given file mode
 func SavePid(pid int, pidFile string, fileMode os.FileMode) error {
-	return ioutil.WriteFile(pidFile, []byte(fmt.Sprintf("%d", pid)), fileMode)
+	return errors.Trace(ioutil.WriteFile(pidFile, []byte(fmt.Sprintf("%d", pid)), fileMode))
 }
 
 // IsRunningWithPidFile returns if process of which pid was saved in given pid file is running
@@ -50,11 +50,11 @@ func IsRunningWithPidFile(pidFile string) (bool, error) {
 	// read pid from pid file
 	pidBytes, err := ioutil.ReadFile(pidFile)
 	if err != nil {
-		return false, err
+		return false, errors.Trace(err)
 	}
 	pid, err := strconv.Atoi(string(pidBytes))
 	if err != nil {
-		return false, err
+		return false, errors.Trace(err)
 	}
 
 	return IsRunningWithPid(pid)
@@ -70,12 +70,12 @@ func GetPidFromPidFile(pidFile string) (int, error) {
 	)
 	pidBytes, err = ioutil.ReadFile(pidFile)
 	if err != nil {
-		return constant.ZeroInt, err
+		return constant.ZeroInt, errors.Trace(err)
 	}
 	pidStr = strings.TrimSpace(string(pidBytes))
 	pid, err = strconv.Atoi(pidStr)
 	if err != nil {
-		return constant.ZeroInt, err
+		return constant.ZeroInt, errors.Trace(err)
 	}
 
 	return pid, nil
@@ -95,7 +95,7 @@ func RemovePidFile(pidFile string) error {
 		return errors.New(fmt.Sprintf("pid file does not exists, please have a check. pid file: %s", pidFile))
 	}
 
-	return os.Remove(pidFile)
+	return errors.Trace(os.Remove(pidFile))
 }
 
 // SendSignal sends signal to given pid,
@@ -103,12 +103,12 @@ func RemovePidFile(pidFile string) error {
 func SendSignal(pid int, sig syscall.Signal, opts ...string) (err error) {
 	p, err := os.FindProcess(pid)
 	if err != nil {
-		return err
+		return errors.Trace(err)
 	}
 
 	err = p.Signal(sig)
 	if err != nil {
-		return err
+		return errors.Trace(err)
 	}
 
 	// remove pid file
@@ -142,18 +142,18 @@ func HandleSignalsWithPidFile(pidFile string) {
 		sig := <-signals
 		switch sig {
 		case syscall.SIGINT, syscall.SIGHUP, syscall.SIGKILL, syscall.SIGTERM:
-			log.Info(fmt.Sprintf("got operating system signal %d, this process will exit soon.", sig))
+			log.Infof("got operating system signal %d, this process will exit soon.", sig)
 
 			err := os.Remove(pidFile)
 			if err != nil {
-				log.Error(fmt.Sprintf("got wrong when removing pid file. pid file: %s", pidFile))
+				log.Errorf("got wrong when removing pid file. pid file: %s. error:\n%+v", pidFile, err)
 				os.Exit(constant.DefaultAbnormalExitCode)
 			}
 
 			os.Exit(constant.DefaultNormalExitCode)
 		default:
-			log.Error(fmt.Sprintf("got wrong signal %d, only accept %d, %d, %d, %d",
-				sig, syscall.SIGINT, syscall.SIGHUP, syscall.SIGKILL, syscall.SIGTERM))
+			log.Errorf("got wrong signal %d, only accept %d, %d, %d, %d",
+				sig, syscall.SIGINT, syscall.SIGHUP, syscall.SIGKILL, syscall.SIGTERM)
 		}
 	}
 }

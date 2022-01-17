@@ -1,8 +1,9 @@
 package result
 
 import (
-	"errors"
 	"fmt"
+
+	"github.com/pingcap/errors"
 )
 
 type Map interface {

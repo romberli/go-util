@@ -2,7 +2,6 @@ package result
 
 import (
 	"database/sql/driver"
-	"fmt"
 	"reflect"
 
 	"github.com/pingcap/errors"
@@ -218,7 +217,7 @@ func (r *Rows) GetSlice(row, column int) ([]interface{}, error) {
 
 	valueKind := reflect.TypeOf(value).Kind()
 	if valueKind != reflect.Slice {
-		return nil, errors.New(fmt.Sprintf("value must be a slice, not %s", valueKind.String()))
+		return nil, errors.Errorf("value must be a slice, not %s", valueKind.String())
 	}
 
 	valueOf := reflect.ValueOf(value)
@@ -361,7 +360,7 @@ func (r *Rows) MapToStructSlice(in interface{}, tag string) error {
 	rowNum := r.RowNumber()
 	length := inVal.Len()
 	if rowNum != length {
-		return errors.New(fmt.Sprintf("number of rows(%d) is not equal to length of the slice(%d)", rowNum, length))
+		return errors.Errorf("number of rows(%d) is not equal to length of the slice(%d)", rowNum, length)
 	}
 
 	for i := 0; i < length; i++ {
@@ -434,7 +433,7 @@ func (r *Rows) mapToStructByRowIndex(in interface{}, row int, tag string) error 
 				return err
 			}
 		default:
-			return errors.New(fmt.Sprintf("got unsupported reflect.Kind of data type: %s", fieldKind.String()))
+			return errors.Errorf("got unsupported reflect.Kind of data type: %s", fieldKind.String())
 		}
 	}
 
@@ -446,7 +445,7 @@ func (r *Rows) mapToStructByRowIndex(in interface{}, row int, tag string) error 
 // otherwise, it will return error
 func (r *Rows) MapToMapStringInterface() (map[string]interface{}, error) {
 	if len(r.FieldSlice) != mapColumnNum {
-		return nil, errors.New(fmt.Sprintf("to use this function, number of field must be %d, %d is not valid", mapColumnNum, len(r.FieldSlice)))
+		return nil, errors.Errorf("to use this function, number of field must be %d, %d is not valid", mapColumnNum, len(r.FieldSlice))
 	}
 
 	dataMap := make(map[string]interface{}, r.RowNumber())

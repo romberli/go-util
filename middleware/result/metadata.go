@@ -1,9 +1,7 @@
 package result
 
 import (
-	"errors"
-	"fmt"
-
+	"github.com/pingcap/errors"
 	"github.com/romberli/go-util/constant"
 )
 
@@ -29,11 +27,11 @@ func NewEmptyMetadata(middlewareType string) *EmptyMetadata {
 // LastInsertID always returns error, because middleware does not support Metadata,
 // this function is only for implementing the middleware.Result interface
 func (em *EmptyMetadata) LastInsertID() (int, error) {
-	return constant.ZeroInt, errors.New(fmt.Sprintf("LastInsertID() for %s is not supported, never call this function", em.MiddlewareType))
+	return constant.ZeroInt, errors.Errorf("LastInsertID() for %s is not supported, never call this function", em.MiddlewareType)
 }
 
 // RowsAffected always returns error, because middleware does not support Metadata,
 // this function is only for implementing the middleware.Result interface
 func (em *EmptyMetadata) RowsAffected() (int, error) {
-	return constant.ZeroInt, errors.New(fmt.Sprintf("RowsAffected() for %s is not supported, never call this function", em.MiddlewareType))
+	return constant.ZeroInt, errors.Errorf("RowsAffected() for %s is not supported, never call this function", em.MiddlewareType)
 }

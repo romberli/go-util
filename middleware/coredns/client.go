@@ -209,9 +209,9 @@ func (conn *Conn) PutARecordAndKeepAlive(ctx context.Context, url, ip string, tt
 		return err
 	}
 
-	leaseID, err := conn.EtcdConn.GetLeaseIDByKey(key)
-	if err != nil {
-		return err
+	leaseID := conn.EtcdConn.GetLeaseIDByKey(key)
+	if leaseID == clientv3.NoLease {
+		return nil
 	}
 
 	_, err = conn.EtcdConn.KeepAlive(ctx, leaseID)

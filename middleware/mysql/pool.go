@@ -184,13 +184,7 @@ func (pc *PoolConn) ExecuteContext(ctx context.Context, command string, args ...
 // Execute executes given sql and placeholders on the mysql server
 // note that executeContext does not use context, it's only for implementing some interfaces
 func (pc *PoolConn) executeContext(ctx context.Context, command string, args ...interface{}) (middleware.Result, error) {
-	result, err := pc.Conn.ExecuteContext(ctx, command, args...)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, err
-
+	return pc.Conn.ExecuteContext(ctx, command, args...)
 }
 
 type Pool struct {

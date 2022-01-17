@@ -2,9 +2,8 @@ package prometheus
 
 import (
 	"database/sql/driver"
-	"errors"
-	"fmt"
 
+	"github.com/pingcap/errors"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 	"github.com/romberli/go-util/constant"
@@ -48,7 +47,7 @@ func (rd *RawData) GetWarnings() apiv1.Warnings {
 func (rd *RawData) GetMatrix() (model.Matrix, error) {
 	value, ok := rd.GetValue().(model.Matrix)
 	if !ok {
-		return nil, errors.New(fmt.Sprintf("type assertion failed, %T could not be converted to model.Matrix", rd.GetValue()))
+		return nil, errors.Errorf("type assertion failed, %T could not be converted to model.Matrix", rd.GetValue())
 	}
 
 	return value, nil
@@ -57,7 +56,7 @@ func (rd *RawData) GetMatrix() (model.Matrix, error) {
 func (rd *RawData) GetVector() (model.Vector, error) {
 	value, ok := rd.GetValue().(model.Vector)
 	if !ok {
-		return nil, errors.New(fmt.Sprintf("type assertion failed, %T could not be converted to model.Vector", rd.GetValue()))
+		return nil, errors.Errorf("type assertion failed, %T could not be converted to model.Vector", rd.GetValue())
 	}
 
 	return value, nil
@@ -66,7 +65,7 @@ func (rd *RawData) GetVector() (model.Vector, error) {
 func (rd *RawData) GetScalar() (*model.Scalar, error) {
 	value, ok := rd.GetValue().(*model.Scalar)
 	if !ok {
-		return nil, errors.New(fmt.Sprintf("type assertion failed, %T could not be converted to *model.Scalar", rd.GetValue()))
+		return nil, errors.Errorf("type assertion failed, %T could not be converted to *model.Scalar", rd.GetValue())
 	}
 
 	return value, nil
@@ -75,7 +74,7 @@ func (rd *RawData) GetScalar() (*model.Scalar, error) {
 func (rd *RawData) GetString() (*model.String, error) {
 	value, ok := rd.GetValue().(*model.String)
 	if !ok {
-		return nil, errors.New(fmt.Sprintf("type assertion failed, %T could not be converted to *model.String", rd.GetValue()))
+		return nil, errors.Errorf("type assertion failed, %T could not be converted to *model.String", rd.GetValue())
 	}
 
 	return value, nil

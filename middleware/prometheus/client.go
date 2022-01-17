@@ -2,13 +2,12 @@ package prometheus
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"net"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/pingcap/errors"
 	client "github.com/prometheus/client_golang/api"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/config"
@@ -100,7 +99,7 @@ func NewConn(addr string, rt http.RoundTripper) (*Conn, error) {
 func NewConnWithConfig(config Config) (*Conn, error) {
 	cli, err := client.NewClient(config.Config)
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	return &Conn{apiv1.NewAPI(cli)}, nil
@@ -160,8 +159,7 @@ func (conn *Conn) executeContext(ctx context.Context, command string, args ...in
 		start, startOK := args[0].(time.Time)
 		end, endOK := args[1].(time.Time)
 		if !(startOK && endOK) {
-			return nil, errors.New(
-				"args length is 2, both of them should be time.Time, represent start time, end time")
+			return nil, errors.New("args length is 2, both of them should be time.Time, represent start time, end time")
 		}
 
 		arg = NewTimeRange(start, end, DefaultStep)
@@ -170,33 +168,32 @@ func (conn *Conn) executeContext(ctx context.Context, command string, args ...in
 		end, endOK := args[1].(time.Time)
 		step, stepOK := args[2].(time.Duration)
 		if !(startOK && endOK && stepOK) {
-			return nil, errors.New(
-				"args length is 3, should be in order of time.Time, time.Time and time.Duration, represent start time, end time and step")
+			return nil, errors.New("args length is 3, should be in order of time.Time, time.Time and time.Duration, represent start time, end time and step")
 		}
 
 		arg = NewTimeRange(start, end, step)
 	default:
-		return nil, errors.New(fmt.Sprintf("args length shoud be less or equal to 3, %d is not valid", len(args)))
+		return nil, errors.Errorf("args length should be less or equal to 3, %d is not valid", len(args))
 	}
 
 	switch in := arg.(type) {
 	case time.Time:
 		value, warnings, err = conn.Query(ctx, command, in)
 		if err != nil {
-			return nil, err
+			return nil, errors.Trace(err)
 		}
 	case TimeRange:
 		value, warnings, err = conn.QueryRange(ctx, command, in.GetRange())
 		if err != nil {
-			return nil, err
+			return nil, errors.Trace(err)
 		}
 	case apiv1.Range:
 		value, warnings, err = conn.QueryRange(ctx, command, in)
 		if err != nil {
-			return nil, err
+			return nil, errors.Trace(err)
 		}
 	default:
-		return nil, errors.New(fmt.Sprintf("unsupported argument data type: %T", arg))
+		return nil, errors.Errorf("unsupported argument data type: %T", arg)
 	}
 
 	return NewResult(value, warnings), nil

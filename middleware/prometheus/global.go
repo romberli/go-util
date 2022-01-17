@@ -2,9 +2,9 @@ package prometheus
 
 import (
 	"context"
-	"errors"
 	"net/http"
 
+	"github.com/pingcap/errors"
 	"github.com/romberli/go-util/middleware"
 )
 

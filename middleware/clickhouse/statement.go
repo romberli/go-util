@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/ClickHouse/clickhouse-go"
+	"github.com/pingcap/errors"
 	"github.com/romberli/go-util/middleware"
 	"github.com/romberli/go-util/middleware/sql/statement"
 )
@@ -36,7 +37,7 @@ func (stmt *Statement) executeContext(ctx context.Context, args ...interface{}) 
 		// this is a select sql
 		rows, err := stmt.QueryContext(ctx, middleware.ConvertArgsToNamedValues(args...))
 		if err != nil {
-			return nil, err
+			return nil, errors.Trace(err)
 		}
 		defer func() { _ = rows.Close() }()
 
@@ -45,7 +46,7 @@ func (stmt *Statement) executeContext(ctx context.Context, args ...interface{}) 
 	// this is not a select sql
 	_, err := stmt.ExecContext(ctx, middleware.ConvertArgsToNamedValues(args...))
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	return NewEmptyResult(), nil

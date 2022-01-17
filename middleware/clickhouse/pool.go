@@ -2,12 +2,12 @@ package clickhouse
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sync"
 	"time"
 
 	"github.com/hashicorp/go-multierror"
+	"github.com/pingcap/errors"
 	"github.com/romberli/log"
 
 	"github.com/romberli/go-util/constant"
@@ -68,7 +68,7 @@ func NewPoolConfigWithConfig(config Config, maxConnections, initConnections, max
 func (cfg *PoolConfig) Validate() (bool, error) {
 	// validate MaxConnections
 	if cfg.MaxConnections <= constant.ZeroInt {
-		return false, errors.New("maximum connection argument should larger than 0")
+		return false, errors.New("maximum connection argument should be larger than 0")
 	}
 	// validate InitConnections
 	if cfg.InitConnections < constant.ZeroInt {
@@ -147,7 +147,7 @@ func (pc *PoolConn) Close() error {
 // there is no need to disconnect manually, consider to use Close() instead.
 func (pc *PoolConn) Disconnect() error {
 	pc.Pool = nil
-	return pc.Conn.Close()
+	return errors.Trace(pc.Conn.Close())
 }
 
 // IsValid validates if connection is valid
@@ -288,7 +288,7 @@ func (p *Pool) supply(num int) error {
 		}
 	}
 
-	return merr.ErrorOrNil()
+	return errors.Trace(merr.ErrorOrNil())
 }
 
 // Close releases each connection in the pool
@@ -333,9 +333,7 @@ func (p *Pool) get() (*PoolConn, error) {
 	}
 
 	if p.usedConnections >= p.MaxConnections {
-		return nil, errors.New(
-			fmt.Sprintf("used connection(%d) had reached maximum connection(%d)",
-				p.usedConnections, p.MaxConnections))
+		return nil, errors.Errorf("used connection(%d) had reached maximum connection(%d)", p.usedConnections, p.MaxConnections)
 	}
 
 	freeChanLen := len(p.freeConnChan)
@@ -350,9 +348,7 @@ func (p *Pool) get() (*PoolConn, error) {
 
 		err := pc.Disconnect()
 		if err != nil {
-			return nil, fmt.Errorf(
-				"disconnecting invalid connection failed when getting connection from the pool.%w",
-				err)
+			return nil, fmt.Errorf("disconnecting invalid connection failed when getting connection from the pool. error:\n%+v", err)
 		}
 	}
 
@@ -393,16 +389,16 @@ func (p *Pool) maintainFreeChan() {
 			p.keepAliveTime = now.Add(time.Duration(p.KeepAliveInterval) * time.Second)
 			err = p.keepAlive(DefaultKeepAliveChunkSize)
 			if err != nil {
-				log.Debugf("got error when keeping alive connections of the pool. total: %d, failed: %d. nested error: %s",
-					DefaultKeepAliveChunkSize, err.(*multierror.Error).Len(), err.Error())
+				log.Debugf("got error when keeping alive connections of the pool. total: %d, failed: %d. nested error:\n%+v",
+					DefaultKeepAliveChunkSize, err.(*multierror.Error).Len(), err)
 			}
 		}
 		// supply enough connections
 		num = p.InitConnections - p.usedConnections - len(p.freeConnChan)
 		err = p.supply(num)
 		if err != nil {
-			log.Debugf("got error when supplying connections to the pool. total: %d, failed: %d. nested error: %s",
-				num, err.(*multierror.Error).Len(), err.Error())
+			log.Debugf("got error when supplying connections to the pool. total: %d, failed: %d. nested error:\n%+v",
+				num, err.(*multierror.Error).Len(), err)
 		}
 		// release excessive connections
 		if now.After(p.expireTime) {
@@ -410,8 +406,8 @@ func (p *Pool) maintainFreeChan() {
 			num = len(p.freeConnChan) + p.usedConnections - p.MaxIdleConnections
 			err = p.release(num)
 			if err != nil {
-				log.Debugf("got error when releasing connections of the pool. total: %d, failed: %d. nested error: %s",
-					num, err.(*multierror.Error).Len(), err.Error())
+				log.Debugf("got error when releasing connections of the pool. total: %d, failed: %d. nested error:\n%+v",
+					num, err.(*multierror.Error).Len(), err)
 			}
 		}
 
@@ -445,7 +441,7 @@ func (p *Pool) keepAlive(num int) error {
 		}
 	}
 
-	return merr.ErrorOrNil()
+	return errors.Trace(merr.ErrorOrNil())
 }
 
 // Release is an exported alias of release() function
@@ -483,5 +479,5 @@ func (p *Pool) release(num int) error {
 		}
 	}
 
-	return merr.ErrorOrNil()
+	return errors.Trace(merr.ErrorOrNil())
 }

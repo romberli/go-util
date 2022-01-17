@@ -12,7 +12,8 @@ var _globalPool *Pool
 // InitGlobalPool returns a new *Pool and replaces it as global pool
 func InitGlobalPool(addr, dbName, dbUser, dbPass string, debug bool, readTimeout, writeTimeout int,
 	maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval int, altHosts ...string) error {
-	cfg := NewPoolConfig(addr, dbName, dbUser, dbPass, debug, readTimeout, writeTimeout, maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval, altHosts...)
+	cfg := NewPoolConfig(addr, dbName, dbUser, dbPass, debug, readTimeout, writeTimeout, maxConnections, initConnections,
+		maxIdleConnections, maxIdleTime, keepAliveInterval, altHosts...)
 
 	return InitGlobalPoolWithPoolConfig(cfg)
 }
@@ -74,7 +75,7 @@ func Close() error {
 	return err
 }
 
-// Get get gets a connection from pool and validate it,
+// Get gets a connection from pool and validate it,
 // if there is no valid connection in the pool, it will create a new connection
 func Get() (*PoolConn, error) {
 	conn, err := _globalPool.Get()

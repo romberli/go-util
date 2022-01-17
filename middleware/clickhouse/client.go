@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/pingcap/errors"
+
 	"github.com/ClickHouse/clickhouse-go"
 	"github.com/romberli/go-util/common"
 	"github.com/romberli/go-util/constant"
@@ -14,6 +16,8 @@ const (
 	DefaultDatabase     = "default"
 	DefaultReadTimeout  = 10
 	DefaultWriteTimeout = 10
+
+	DefaultCheckInstanceStatusSQL = "select 1 as ok;"
 )
 
 type Config struct {
@@ -127,7 +131,7 @@ func NewConnWithConfig(config Config) (*Conn, error) {
 	// connect to Clickhouse
 	client, err := clickhouse.OpenDirect(config.GetConnectionString())
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	return &Conn{
@@ -163,7 +167,7 @@ func (conn *Conn) PrepareContext(ctx context.Context, command string) (*Statemen
 func (conn *Conn) prepareContext(ctx context.Context, command string) (*Statement, error) {
 	stmt, err := conn.Clickhouse.PrepareContext(ctx, command)
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	return NewStatement(stmt), nil
@@ -197,13 +201,12 @@ func (conn *Conn) executeContext(ctx context.Context, command string, args ...in
 
 // CheckInstanceStatus returns if instance is ok
 func (conn *Conn) CheckInstanceStatus() bool {
-	sql := "select 1 as ok;"
-	result, err := conn.Execute(sql)
+	result, err := conn.Execute(DefaultCheckInstanceStatusSQL)
 	if err != nil {
 		return false
 	}
 
-	ok, err := result.GetIntByName(constant.ZeroInt, "ok")
+	ok, err := result.GetInt(constant.ZeroInt, constant.ZeroInt)
 	if err != nil {
 		return false
 	}
@@ -215,15 +218,15 @@ func (conn *Conn) CheckInstanceStatus() bool {
 func (conn *Conn) Begin() error {
 	_, err := conn.Clickhouse.Begin()
 
-	return err
+	return errors.Trace(err)
 }
 
 // Commit commits the transaction
 func (conn *Conn) Commit() error {
-	return conn.Clickhouse.Commit()
+	return errors.Trace(conn.Clickhouse.Commit())
 }
 
 // Rollback rollbacks the transaction
 func (conn *Conn) Rollback() error {
-	return conn.Clickhouse.Rollback()
+	return errors.Trace(conn.Clickhouse.Rollback())
 }

@@ -3,10 +3,13 @@ package coredns
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/pingcap/errors"
+	"github.com/romberli/go-util/constant"
+	"github.com/romberli/log"
 
 	clientv3 "go.etcd.io/etcd/client/v3"
 
@@ -21,10 +24,6 @@ const (
 	MaximumTTLTime     = 10
 )
 
-var ErrInvalidTTL = errors.New(
-	fmt.Sprintf("TTL must be larger then %d and smaller than %d.", MinimumTTLTime, MaximumTTLTime))
-var ErrLockFailed = errors.New(fmt.Sprintf("lock mutex failed, please try again later."))
-
 // ARecordValue saves the unmarshalled json data which presents A record value
 type ARecordValue struct {
 	Host string `json:"host"`
@@ -36,7 +35,7 @@ func NewARecordValue(value []byte) (*ARecordValue, error) {
 	a := &ARecordValue{}
 	err := json.Unmarshal(value, a)
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	return a, nil
@@ -63,28 +62,27 @@ func NewCoreDNSConn(endpoints []string, path string) (*Conn, error) {
 	}, nil
 }
 
-// Close close the connection with etcd
+// Close closes the connection with etcd
 func (conn *Conn) Close() error {
 	return conn.EtcdConn.Close()
 }
 
 // GetEtcdKeyNameFromURL transfers url string to backward and add coredns path as the prefix
 func (conn *Conn) GetEtcdKeyNameFromURL(url string) (string, error) {
-	result := ""
+	var result string
 
-	strList := strings.Split(url, ".")
+	strList := strings.Split(url, constant.DotString)
 	for _, str := range strList {
 		str = strings.TrimSpace(str)
-		if str == "." || str == "" {
-			return "", errors.New(
-				fmt.Sprintf("some part of url is empty or contains invaid characters [%s]", str))
+		if str == constant.DotString || str == constant.EmptyString {
+			return constant.EmptyString, errors.Errorf("some part of url is empty or contains invalid characters [%s]", str)
 		}
 
-		result = str + "/" + result
+		result = str + constant.SlashString + result
 	}
 
-	result = conn.Path + "/" + result
-	result = strings.TrimSuffix(result, "/")
+	result = conn.Path + constant.SlashString + result
+	result = strings.TrimSuffix(result, constant.SlashString)
 
 	return result, nil
 }
@@ -96,7 +94,7 @@ func (conn *Conn) GetEtcdValue(ip string, ttl int64) (string, error) {
 	}
 
 	if ttl > MaximumTTLTime || ttl < MinimumTTLTime {
-		return "", ErrInvalidTTL
+		return constant.EmptyString, errors.Errorf("TTL must be larger then %d and smaller than %d.", MinimumTTLTime, MaximumTTLTime)
 	}
 
 	return fmt.Sprintf(`{"host": "%s", "ttl": %d}`, ip, ttl), nil
@@ -113,7 +111,7 @@ func (conn *Conn) Resolve(ctx context.Context, url string) ([]string, error) {
 
 	getResp, err := conn.EtcdConn.Get(ctx, key, clientv3.WithPrefix())
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	for _, kv := range getResp.Kvs {
@@ -140,7 +138,7 @@ func (conn *Conn) ResolveWithTTL(ctx context.Context, url string) ([]map[string]
 
 	getResp, err := conn.EtcdConn.Get(ctx, key, clientv3.WithPrefix())
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	for _, kv := range getResp.Kvs {
@@ -183,6 +181,9 @@ func (conn *Conn) PutARecord(ctx context.Context, url, ip string, ttl int64) err
 	if ok {
 		defer func() {
 			_, err = conn.EtcdConn.UnlockEtcdMutex(ctx, mutexKey)
+			if err != nil {
+				log.Errorf("unlock etcd mutex failed. error:%n%+v", err)
+			}
 		}()
 
 		_, _, err = conn.EtcdConn.PutWithTTL(ctx, key, value, ttl)
@@ -190,13 +191,13 @@ func (conn *Conn) PutARecord(ctx context.Context, url, ip string, ttl int64) err
 		return err
 	}
 
-	return ErrLockFailed
+	return errors.New("lock mutex failed, please try again later.")
 }
 
 // PutARecordAndKeepAlive works like PutARecord, used to add or modify the A record of coredns,
 // it will lock mutex before really putting key into etcd,
 // if lock mutex failed, it will return an error,
-// it also keep alive the key in etcd,
+// it also keeps alive the key in etcd,
 func (conn *Conn) PutARecordAndKeepAlive(ctx context.Context, url, ip string, ttl int64) error {
 	err := conn.PutARecord(ctx, url, ip, ttl)
 	if err != nil {
@@ -238,6 +239,9 @@ func (conn *Conn) DeleteARecord(ctx context.Context, url string) error {
 	if ok {
 		defer func() {
 			_, err = conn.EtcdConn.UnlockEtcdMutex(ctx, mutexKey)
+			if err != nil {
+				log.Errorf("unlock etcd mutex failed. error:%n%+v", err)
+			}
 		}()
 
 		_, err = conn.EtcdConn.Delete(ctx, key)
@@ -245,5 +249,5 @@ func (conn *Conn) DeleteARecord(ctx context.Context, url string) error {
 		return err
 	}
 
-	return ErrLockFailed
+	return errors.New("lock mutex failed, please try again later.")
 }

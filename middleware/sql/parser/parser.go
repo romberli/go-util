@@ -1,13 +1,13 @@
 package parser
 
 import (
-	"errors"
 	"fmt"
 	"regexp"
 	"strings"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/percona/go-mysql/query"
+	"github.com/pingcap/errors"
 	"github.com/pingcap/parser"
 	"github.com/pingcap/parser/ast"
 	"github.com/romberli/go-util/constant"
@@ -93,7 +93,7 @@ func (p *Parser) GetStatementNodes(sql string) ([]ast.StmtNode, error) {
 			merr = multierror.Append(merr, warns...)
 		}
 
-		return nil, merr.ErrorOrNil()
+		return nil, errors.Trace(merr.ErrorOrNil())
 	}
 
 	return stmtNodes, nil
@@ -174,8 +174,7 @@ func (p *Parser) MergeDDLStatements(sqls ...string) ([]string, error) {
 					// get alter table clause
 					alterTableClause = fmt.Sprintf("%s %s %s", addIndexKeyword, indexName, sqlExp)
 				default:
-					return nil, errors.New(fmt.Sprintf(
-						"sql statement must be either alter table statement or create index statement, this is not valid. sql:%s\n", sql))
+					return nil, errors.Errorf("sql statement must be either alter table statement or create index statement, this is not valid. sql:%s\n", sql)
 				}
 
 				if alterTableClause != constant.EmptyString && tableName != constant.EmptyString {

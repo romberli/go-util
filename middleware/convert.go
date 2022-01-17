@@ -2,12 +2,12 @@ package middleware
 
 import (
 	"database/sql/driver"
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/pingcap/errors"
 	"github.com/romberli/go-util/constant"
 	"github.com/siddontang/go/hack"
 )
@@ -65,6 +65,6 @@ func ConvertToString(arg interface{}) (string, error) {
 	case time.Time:
 		return fmt.Sprintf("'%s'", v.Format(constant.DefaultTimeLayout)), nil
 	default:
-		return constant.EmptyString, errors.New(fmt.Sprintf("unsupported data type: %T", v))
+		return constant.EmptyString, errors.Errorf("unsupported data type: %T", v)
 	}
 }

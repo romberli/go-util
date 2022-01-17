@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/Shopify/sarama"
+	"github.com/pingcap/errors"
+	"github.com/romberli/go-util/constant"
 	"github.com/romberli/log"
 )
 
@@ -22,7 +24,7 @@ func (h DefaultConsumerGroupHandler) ConsumeClaim(sess sarama.ConsumerGroupSessi
 
 		log.Infof("topic: %s, partition: %d, offset: %d, key: %s, value: %s, headers: %v",
 			message.Topic, message.Partition, message.Offset, string(message.Key), string(message.Value), headers)
-		sess.MarkMessage(message, "")
+		sess.MarkMessage(message, constant.EmptyString)
 	}
 
 	return nil
@@ -43,19 +45,19 @@ func NewConsumerGroup(kafkaVersion string, brokerList []string, groupName string
 	config.Consumer.Offsets.Initial = initOffset
 	config.Version, err = sarama.ParseKafkaVersion(kafkaVersion)
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	// Start with a client
 	client, err := sarama.NewClient(brokerList, config)
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	// Start a new consumer group
 	group, err := sarama.NewConsumerGroupFromClient(groupName, client)
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	return &ConsumerGroup{
@@ -70,7 +72,7 @@ func NewConsumerGroup(kafkaVersion string, brokerList []string, groupName string
 
 func (cg *ConsumerGroup) Close() error {
 	if cg.Group != nil {
-		return cg.Group.Close()
+		return errors.Trace(cg.Group.Close())
 	}
 
 	return nil
@@ -80,7 +82,7 @@ func (cg *ConsumerGroup) Consume(ctx context.Context, topicName string, handler 
 	defer func() {
 		err = cg.Close()
 		if err != nil {
-			log.Errorf("close consumer failed. topic: %s, message: %s", topicName, err.Error())
+			log.Errorf("close consumer failed. topic: %s, error:\n%+v", topicName, err)
 		}
 	}()
 
@@ -91,8 +93,8 @@ func (cg *ConsumerGroup) Consume(ctx context.Context, topicName string, handler 
 		}
 
 		for err = range cg.Group.Errors() {
-			log.Errorf("got error when consuming topic. group: %s, topic: %s, message: %s",
-				cg.GroupName, topicName, err.Error())
+			log.Errorf("got error when consuming topic. group: %s, topic: %s, error:\n%+v",
+				cg.GroupName, topicName, errors.Trace(err))
 		}
 	}()
 
@@ -102,7 +104,7 @@ func (cg *ConsumerGroup) Consume(ctx context.Context, topicName string, handler 
 	for {
 		err = cg.Group.Consume(ctx, topics, handler)
 		if err != nil {
-			return err
+			return errors.Trace(err)
 		}
 	}
 }

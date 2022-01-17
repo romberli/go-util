@@ -1,12 +1,12 @@
 package kafka
 
 import (
-	"errors"
-	"fmt"
 	"reflect"
 	"time"
 
 	"github.com/Shopify/sarama"
+	"github.com/pingcap/errors"
+	"github.com/romberli/go-util/constant"
 	"github.com/romberli/log"
 )
 
@@ -18,7 +18,8 @@ type AsyncProducer struct {
 	Producer     sarama.AsyncProducer
 }
 
-func NewAsyncProducer(kafkaVersion string, brokerList []string) (p *AsyncProducer, err error) {
+func NewAsyncProducer(kafkaVersion string, brokerList []string) (*AsyncProducer, error) {
+	var err error
 	// Init config, specify appropriate version
 	config := sarama.NewConfig()
 	config.Producer.RequiredAcks = sarama.WaitForAll
@@ -28,19 +29,19 @@ func NewAsyncProducer(kafkaVersion string, brokerList []string) (p *AsyncProduce
 
 	config.Version, err = sarama.ParseKafkaVersion(kafkaVersion)
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	// Start with a client
 	client, err := sarama.NewClient(brokerList, config)
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	// Start a new consumer group
 	producer, err := sarama.NewAsyncProducerFromClient(client)
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	return &AsyncProducer{
@@ -54,7 +55,7 @@ func NewAsyncProducer(kafkaVersion string, brokerList []string) (p *AsyncProduce
 
 func (p *AsyncProducer) Close() error {
 	if p.Producer != nil {
-		return p.Producer.Close()
+		return errors.Trace(p.Producer.Close())
 	}
 
 	return nil
@@ -78,10 +79,8 @@ func (p *AsyncProducer) BuildProducerMessage(topicName string, key string, messa
 	}
 }
 
-func (p *AsyncProducer) Produce(topicName string, message interface{}) (err error) {
-	var (
-		producerMessage *sarama.ProducerMessage
-	)
+func (p *AsyncProducer) Produce(topicName string, message interface{}) error {
+	var producerMessage *sarama.ProducerMessage
 
 	// Track error
 	go func() {
@@ -98,7 +97,7 @@ func (p *AsyncProducer) Produce(topicName string, message interface{}) (err erro
 				}
 			case fail := <-p.Producer.Errors():
 				if fail != nil {
-					log.Errorf("err: ", fail.Err)
+					log.Errorf("err:\n%+v", errors.Trace(fail.Err))
 				}
 			}
 		}
@@ -106,13 +105,12 @@ func (p *AsyncProducer) Produce(topicName string, message interface{}) (err erro
 
 	switch message.(type) {
 	case string:
-		producerMessage = p.BuildProducerMessage(topicName, "", message.(string), nil)
+		producerMessage = p.BuildProducerMessage(topicName, constant.EmptyString, message.(string), nil)
 	case *sarama.ProducerMessage:
 		producerMessage = message.(*sarama.ProducerMessage)
 	default:
-		return errors.New(
-			fmt.Sprintf("message must be either string type or *sarama.ProducerMessage type, but got %s",
-				reflect.TypeOf(message).Name()))
+		return errors.Errorf("message must be either string type or *sarama.ProducerMessage type, but got %s",
+			reflect.TypeOf(message).Name())
 	}
 
 	// Produce message to kafka

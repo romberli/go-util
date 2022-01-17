@@ -1,11 +1,11 @@
 package mysql
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 
+	"github.com/pingcap/errors"
 	"github.com/romberli/go-util/constant"
 )
 
@@ -42,12 +42,7 @@ func NewVersion(major, minor, release int) Version {
 
 // Parse parses given version string and returns a new instance of Version
 func Parse(v string) (Version, error) {
-	return parse(v)
-}
-
-// parse parses given version string and returns a new instance of version
-func parse(v string) (*version, error) {
-	vSlice := strings.Split(v, "-")
+	vSlice := strings.Split(v, constant.DashString)
 	versionSlice := strings.Split(vSlice[constant.ZeroInt], defaultSeparator)
 	if len(versionSlice) > mysqlVersionSliceLen {
 		return nil, errors.New(fmt.Sprintf("%s is not a valid mysql version string.", v))
@@ -58,7 +53,7 @@ func parse(v string) (*version, error) {
 	for i, vStr := range versionSlice {
 		vInt, err := strconv.Atoi(vStr)
 		if err != nil {
-			return nil, err
+			return nil, errors.Trace(err)
 		}
 
 		switch i {

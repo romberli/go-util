@@ -13,13 +13,14 @@ import (
 type ReplicationRole string
 
 const (
-	DefaultCharSet       = "utf8mb4"
-	HostString           = "host"
-	PortString           = "port"
-	SelectVersionSQL     = "select @@version"
-	ShowSlaveStatusSQL   = "show slave status"
-	ShowReplicaStatusSQL = "show replica status"
-	ShowSlaveHostsSQL    = "show slave hosts"
+	DefaultCharSet                = "utf8mb4"
+	HostString                    = "host"
+	PortString                    = "port"
+	DefaultCheckInstanceStatusSQL = "select 1 as ok;"
+	SelectVersionSQL              = "select @@version"
+	ShowSlaveStatusSQL            = "show slave status"
+	ShowReplicaStatusSQL          = "show replica status"
+	ShowSlaveHostsSQL             = "show slave hosts"
 
 	// ReplicationSource represents mysql master, it's an alternative name
 	ReplicationSource ReplicationRole = "source"
@@ -141,13 +142,12 @@ func (conn *Conn) GetVersion() (Version, error) {
 
 // CheckInstanceStatus checks mysql instance status
 func (conn *Conn) CheckInstanceStatus() bool {
-	sql := "select 1 as ok;"
-	result, err := conn.Execute(sql)
+	result, err := conn.Execute(DefaultCheckInstanceStatusSQL)
 	if err != nil {
 		return false
 	}
 
-	ok, err := result.GetIntByName(constant.ZeroInt, "ok")
+	ok, err := result.GetInt(constant.ZeroInt, constant.ZeroInt)
 	if err != nil {
 		return false
 	}

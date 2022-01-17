@@ -1,8 +1,7 @@
 package mysql
 
 import (
-	"errors"
-
+	"github.com/pingcap/errors"
 	"github.com/romberli/go-util/middleware"
 )
 
@@ -73,7 +72,7 @@ func Close() error {
 	return err
 }
 
-// Get get gets a connection from pool and validate it,
+// Get gets a connection from pool and validate it,
 // if there is no valid connection in the pool, it will create a new connection
 func Get() (*PoolConn, error) {
 	conn, err := _globalPool.Get()

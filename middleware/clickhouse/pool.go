@@ -2,7 +2,6 @@ package clickhouse
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"time"
 
@@ -348,7 +347,7 @@ func (p *Pool) get() (*PoolConn, error) {
 
 		err := pc.Disconnect()
 		if err != nil {
-			return nil, fmt.Errorf("disconnecting invalid connection failed when getting connection from the pool. error:\n%+v", err)
+			return nil, errors.Errorf("disconnecting invalid connection failed when getting connection from the pool. error:\n%+v", err)
 		}
 	}
 

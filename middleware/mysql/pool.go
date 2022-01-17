@@ -2,16 +2,14 @@ package mysql
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"sync"
 	"time"
 
 	"github.com/hashicorp/go-multierror"
-	"github.com/romberli/log"
-
+	"github.com/pingcap/errors"
 	"github.com/romberli/go-util/constant"
 	"github.com/romberli/go-util/middleware"
+	"github.com/romberli/log"
 )
 
 const (
@@ -67,26 +65,26 @@ func NewPoolConfigWithConfig(config Config, maxConnections, initConnections, max
 // Validate validates pool config
 func (cfg *PoolConfig) Validate() (bool, error) {
 	// validate MaxConnections
-	if cfg.MaxConnections <= 0 {
+	if cfg.MaxConnections <= constant.ZeroInt {
 		return false, errors.New("maximum connection argument should larger than 0")
 	}
 	// validate InitConnections
-	if cfg.InitConnections < 0 {
+	if cfg.InitConnections < constant.ZeroInt {
 		return false, errors.New("init connection argument should not be smaller than 0")
 	}
 	// validate MaxIdleConnections
-	if cfg.MaxIdleConnections < 0 {
+	if cfg.MaxIdleConnections < constant.ZeroInt {
 		return false, errors.New("maximum idle connection argument should not be smaller than 0")
 	}
 	if cfg.MaxIdleConnections > cfg.MaxConnections {
 		return false, errors.New("maximum idle connection argument should not be larger than maximum connection argument")
 	}
 	// validate MaxIdleTime
-	if cfg.MaxIdleTime <= 0 {
+	if cfg.MaxIdleTime <= constant.ZeroInt {
 		return false, errors.New("maximum idle time argument should be larger than 0")
 	}
 	// validate KeepAliveInterval
-	if cfg.KeepAliveInterval <= 0 {
+	if cfg.KeepAliveInterval <= constant.ZeroInt {
 		return false, errors.New("keep alive interval argument should be larger than 0")
 	}
 
@@ -296,7 +294,7 @@ func (p *Pool) supply(num int) error {
 		}
 	}
 
-	return merr.ErrorOrNil()
+	return errors.Trace(merr.ErrorOrNil())
 }
 
 // Close releases each connection in the pool
@@ -341,9 +339,7 @@ func (p *Pool) get() (*PoolConn, error) {
 	}
 
 	if p.usedConnections >= p.MaxConnections {
-		return nil, errors.New(
-			fmt.Sprintf("used connection(%d) had reached maximum connection(%d)",
-				p.usedConnections, p.MaxConnections))
+		return nil, errors.Errorf("used connection(%d) had reached maximum connection(%d)", p.usedConnections, p.MaxConnections)
 	}
 
 	freeChanLen := len(p.freeConnChan)
@@ -358,9 +354,7 @@ func (p *Pool) get() (*PoolConn, error) {
 
 		err := pc.Disconnect()
 		if err != nil {
-			return nil, fmt.Errorf(
-				"disconnecting invalid connection failed when getting connection from the pool.%w",
-				err)
+			return nil, errors.Errorf("disconnecting invalid connection failed when getting connection from the pool. error:\n%+v", err)
 		}
 	}
 
@@ -371,6 +365,7 @@ func (p *Pool) get() (*PoolConn, error) {
 	}
 
 	p.usedConnections++
+
 	return pc, nil
 }
 
@@ -384,11 +379,6 @@ func (p *Pool) Transaction() (middleware.Transaction, error) {
 // for saving disk purpose, if there are errors when maintaining free channel,
 // it will log with debug level
 func (p *Pool) maintainFreeChan() {
-	var (
-		err error
-		num int
-	)
-
 	for {
 		if p.isClosed {
 			return
@@ -399,18 +389,18 @@ func (p *Pool) maintainFreeChan() {
 		// keep alive connections
 		if now.After(p.keepAliveTime) {
 			p.keepAliveTime = now.Add(time.Duration(p.KeepAliveInterval) * time.Second)
-			err = p.keepAlive(DefaultKeepAliveChunkSize)
+			err := p.keepAlive(DefaultKeepAliveChunkSize)
 			if err != nil {
-				log.Debugf("got error when keeping alive connections of the pool. total: %d, failed: %d. nested error: %s",
-					DefaultKeepAliveChunkSize, err.(*multierror.Error).Len(), err.Error())
+				log.Debugf("got error when keeping alive connections of the pool. total: %d, failed: %d. nested error:\n%+v",
+					DefaultKeepAliveChunkSize, err.(*multierror.Error).Len(), err)
 			}
 		}
 		// supply enough connections
-		num = p.InitConnections - p.usedConnections - len(p.freeConnChan)
-		err = p.supply(num)
+		num := p.InitConnections - p.usedConnections - len(p.freeConnChan)
+		err := p.supply(num)
 		if err != nil {
-			log.Debugf("got error when supplying connections to the pool. total: %d, failed: %d. nested error: %s",
-				num, err.(*multierror.Error).Len(), err.Error())
+			log.Debugf("got error when supplying connections to the pool. total: %d, failed: %d. nested error:\n%+v",
+				num, err.(*multierror.Error).Len(), err)
 		}
 		// release excessive connections
 		if now.After(p.expireTime) {
@@ -418,8 +408,8 @@ func (p *Pool) maintainFreeChan() {
 			num = len(p.freeConnChan) + p.usedConnections - p.MaxIdleConnections
 			err = p.release(num)
 			if err != nil {
-				log.Debugf("got error when releasing connections of the pool. total: %d, failed: %d. nested error: %s",
-					num, err.(*multierror.Error).Len(), err.Error())
+				log.Debugf("got error when releasing connections of the pool. total: %d, failed: %d. nested error:\n%+v",
+					num, err.(*multierror.Error).Len(), err)
 			}
 		}
 
@@ -453,7 +443,7 @@ func (p *Pool) keepAlive(num int) error {
 		}
 	}
 
-	return merr.ErrorOrNil()
+	return errors.Trace(merr.ErrorOrNil())
 }
 
 // Release is an exported alias of release() function
@@ -491,5 +481,5 @@ func (p *Pool) release(num int) error {
 		}
 	}
 
-	return merr.ErrorOrNil()
+	return errors.Trace(merr.ErrorOrNil())
 }

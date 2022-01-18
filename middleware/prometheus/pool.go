@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/pingcap/errors"
+	"github.com/romberli/go-multierror"
 	"github.com/romberli/go-util/constant"
 	"github.com/romberli/go-util/middleware"
 	"github.com/romberli/log"

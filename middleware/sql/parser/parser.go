@@ -5,7 +5,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/hashicorp/go-multierror"
 	"github.com/percona/go-mysql/query"
 	"github.com/pingcap/errors"
 	"github.com/pingcap/parser"

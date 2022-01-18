@@ -7,6 +7,16 @@ import (
 	"github.com/pingcap/errors"
 	"github.com/romberli/log"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/romberli/go-multierror"
+)
+
+const (
+	testHeader   = "testEM"
+	testErrCode1 = 100001
+	testErrCode2 = 100002
+	testRaw1     = "error message 1. id: %d"
+	testRaw2     = "error message 2. id: %d"
 )
 
 func ReturnNotNil1() error {
@@ -48,7 +58,7 @@ func TestError(t *testing.T) {
 	raw = "something goes wrong, line: %d"
 	line = 100
 
-	errMessage = newErrMessage(header, errCode, raw, nil)
+	errMessage = NewErrMessage(header, errCode, raw, nil)
 
 	t.Log("==========test Code() started.==========")
 	expectCode := fmt.Sprintf("%s-%d", header, errCode)
@@ -56,12 +66,12 @@ func TestError(t *testing.T) {
 	t.Log("==========test Code() completed.==========")
 
 	t.Log("==========test Error() started.==========")
-	expectString = fmt.Sprintf("%s-%d: %s", header, errCode, raw)
+	expectString = fmt.Sprintf("%s-%d: %s\n", header, errCode, raw)
 	asst.Equal(expectString, errMessage.Error(), "test Error() failed.")
 	t.Log("==========test Error() completed.==========")
 
 	t.Log("==========test Renew() started.==========")
-	expectString = fmt.Sprintf("%s-%d: %s", header, errCode, fmt.Sprintf(raw, line))
+	expectString = fmt.Sprintf("%s-%d: %s\n", header, errCode, fmt.Sprintf(raw, line))
 	asst.Equal(expectString, errMessage.Renew(line).Error(), "test Renew() failed.")
 	t.Log("==========test Renew() completed.==========")
 
@@ -91,11 +101,13 @@ func funcA() error {
 
 func funcB() error {
 	err := funcA()
-	// raw := fmt.Sprintf("function error. err:\n%+v", err)
-	// return NewErrMessage("FUNCB", 100001, raw)
+	// raw := "function error"
+	// return NewErrMessage("FUNCB", 100001, raw, err)
+	en := errors.New("function b error")
+	merr := &multierror.Error{}
+	merr = multierror.Append(merr, errors.Trace(err), en)
 
-	raw := err.Error()
-	return NewErrMessageWithStack("FUNCB", 100001, raw)
+	return errors.Trace(merr)
 }
 
 func funcC() error {
@@ -110,4 +122,14 @@ func TestError_Log(t *testing.T) {
 	log.Errorf("got error: %+v", err)
 	// log.Errorf("got error: %s", err.Error())
 	// log.Error("got error", zap.Error(err))
+}
+
+func TestNestedError(t *testing.T) {
+	log.SetDisableEscape(true)
+	log.SetDisableDoubleQuotes(true)
+
+	err := funcC()
+	em1 := NewErrMessage(testHeader, testErrCode1, testRaw1, err).Renew(1)
+	em2 := NewErrMessage(testHeader, testErrCode2, testRaw2, em1).Renew(2)
+	log.Errorf("got error: %+v", em2)
 }

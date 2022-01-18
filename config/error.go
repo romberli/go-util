@@ -2,8 +2,10 @@ package config
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/pingcap/errors"
+	"github.com/romberli/go-multierror"
 	"github.com/romberli/go-util/constant"
 )
 
@@ -13,27 +15,39 @@ type ErrMessage struct {
 	Header  string
 	ErrCode int
 	Raw     string
-	errors.StackTrace
+	Err     error
+	Stack   errors.StackTrace
 }
 
 // NewErrMessage returns a *ErrMessage without stack trace
-func NewErrMessage(header string, errCode int, raw string) *ErrMessage {
-	return newErrMessage(header, errCode, raw, nil)
-}
+func NewErrMessage(header string, errCode int, raw string, err error) *ErrMessage {
+	if err != nil && errors.HasStack(err) {
+		return newErrMessage(header, errCode, raw, err, errors.GetStackTracer(err).StackTrace())
+	}
 
-// NewErrMessageWithStack returns a *ErrMessage with stack trace
-func NewErrMessageWithStack(header string, errCode int, raw string) *ErrMessage {
-	return newErrMessage(header, errCode, raw, errors.NewStack(defaultCallerSkip).StackTrace())
+	return newErrMessage(header, errCode, raw, err, errors.NewStack(defaultCallerSkip).StackTrace())
 }
 
 // NewErrMessage returns a new *ErrMessage
-func newErrMessage(header string, errCode int, raw string, stackTrace errors.StackTrace) *ErrMessage {
+func newErrMessage(header string, errCode int, raw string, err error, stack errors.StackTrace) *ErrMessage {
 	return &ErrMessage{
-		Header:     header,
-		ErrCode:    errCode,
-		Raw:        raw,
-		StackTrace: stackTrace,
+		Header:  header,
+		ErrCode: errCode,
+		Raw:     raw,
+		Err:     err,
+		Stack:   stack,
 	}
+}
+
+func (e *ErrMessage) StackTrace() errors.StackTrace {
+	merr, ok := e.Err.(*multierror.Error)
+	if ok {
+		if merr != nil && merr.Len() > constant.ZeroInt {
+			return errors.GetStackTracer(merr.WrappedErrors()[constant.ZeroInt]).StackTrace()
+		}
+	}
+
+	return e.Stack
 }
 
 // Code returns combined Header and ErrCode string
@@ -43,12 +57,67 @@ func (e *ErrMessage) Code() string {
 
 // Error is an implementation fo Error interface
 func (e *ErrMessage) Error() string {
-	return fmt.Sprintf("%s: %s", e.Code(), e.Raw)
+	message := fmt.Sprintf("%s: %s\n", e.Code(), e.Raw)
+
+	if e.Err != nil {
+		message += e.Err.Error()
+	}
+
+	return message
 }
 
 // String is an alias of Error()
 func (e *ErrMessage) String() string {
 	return e.Error()
+}
+
+// Format implements fmt.Formatter interface
+func (e *ErrMessage) Format(s fmt.State, verb rune) {
+	var (
+		IsMulti bool
+		merr    *multierror.Error
+	)
+
+	message := fmt.Sprintf("%s: %s\n", e.Code(), e.Raw)
+	if e.Err != nil {
+		message += e.Err.Error()
+	}
+
+	switch verb {
+	case 'v':
+		if s.Flag('+') {
+			_, _ = io.WriteString(s, fmt.Sprintf("%s: %s\n", e.Code(), e.Raw))
+
+			if e.Err != nil {
+				merr, IsMulti = e.Err.(*multierror.Error)
+				if IsMulti {
+					merr.Format(s, verb)
+					return
+				}
+
+				em, IsEM := e.Err.(*ErrMessage)
+				if IsEM {
+					em.Format(s, verb)
+					return
+				}
+
+				_, _ = io.WriteString(s, fmt.Sprintf("%s\n", e.Err.Error()))
+				if errors.HasStack(e.Err) {
+					errors.GetStackTracer(e.Err).StackTrace().Format(s, verb)
+				}
+
+				return
+			}
+
+			e.Stack.Format(s, verb)
+			return
+		}
+		fallthrough
+	case 's':
+		_, _ = io.WriteString(s, message)
+	case 'q':
+		_, _ = fmt.Fprintf(s, "%q", message)
+	}
 }
 
 // Renew returns a new *ErrMessage and specify with given input
@@ -61,7 +130,7 @@ func (e *ErrMessage) Renew(ins ...interface{}) *ErrMessage {
 
 // Clone returns a new *ErrMessage with same member variables
 func (e *ErrMessage) Clone() *ErrMessage {
-	return newErrMessage(e.Header, e.ErrCode, e.Raw, e.StackTrace)
+	return newErrMessage(e.Header, e.ErrCode, e.Raw, e.Err, e.Stack)
 }
 
 // Specify specifies placeholders with given data

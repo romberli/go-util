@@ -6,7 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hashicorp/go-multierror"
 	"github.com/pingcap/errors"
 	"github.com/romberli/go-util/constant"
 	"github.com/romberli/go-util/middleware"

@@ -141,6 +141,19 @@ func (e *ErrMessage) Clone() *ErrMessage {
 	return newErrMessage(e.Header, e.ErrCode, e.Raw, e.Err, e.Stack)
 }
 
+// RenewWithError returns a new *ErrMessage with given error and specify with given input
+func (e *ErrMessage) RenewWithError(err error, ins ...interface{}) *ErrMessage {
+	c := e.CloneWithError(err)
+	c.Specify(ins...)
+
+	return c
+}
+
+// CloneWithError returns a new *ErrMessage with same member variables except Err
+func (e *ErrMessage) CloneWithError(err error) *ErrMessage {
+	return newErrMessage(e.Header, e.ErrCode, e.Raw, err, e.Stack)
+}
+
 // Specify specifies placeholders with given data
 func (e *ErrMessage) Specify(ins ...interface{}) {
 	e.Raw = fmt.Sprintf(e.Raw, ins...)

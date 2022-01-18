@@ -17,7 +17,7 @@ require (
 	github.com/prometheus/common v0.26.0
 	github.com/romberli/dynamic-struct v1.2.1
 	github.com/romberli/go-multierror v1.1.2-0.20220118054508-60f25a547317
-	github.com/romberli/log v1.0.20
+	github.com/romberli/log v1.0.21-0.20220118103033-fc370f89c0ea
 	github.com/shirou/gopsutil/v3 v3.20.11
 	github.com/siddontang/go v0.0.0-20180604090527-bdc77568d726
 	github.com/stretchr/testify v1.7.0

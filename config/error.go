@@ -81,11 +81,6 @@ func (e *ErrMessage) String() string {
 
 // Format implements fmt.Formatter interface
 func (e *ErrMessage) Format(s fmt.State, verb rune) {
-	var (
-		IsMulti bool
-		merr    *multierror.Error
-	)
-
 	message := fmt.Sprintf("%s: %s\n", e.Code(), e.Raw)
 	if e.Err != nil {
 		message += e.Err.Error()
@@ -97,9 +92,9 @@ func (e *ErrMessage) Format(s fmt.State, verb rune) {
 			_, _ = io.WriteString(s, fmt.Sprintf("%s: %s\n", e.Code(), e.Raw))
 
 			if e.Err != nil {
-				merr, IsMulti = e.Err.(*multierror.Error)
+				merr, IsMulti := e.Err.(errors.ErrorGroup)
 				if IsMulti {
-					merr.Format(s, verb)
+					_, _ = io.WriteString(s, fmt.Sprintf("%+v", merr))
 					return
 				}
 

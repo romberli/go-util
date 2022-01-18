@@ -19,8 +19,16 @@ type ErrMessage struct {
 	Stack   errors.StackTrace
 }
 
-// NewErrMessage returns a *ErrMessage without stack trace
-func NewErrMessage(header string, errCode int, raw string, err error) *ErrMessage {
+// NewErrMessage returns a *ErrMessage without stack trace,
+// note that if errs contains more than one error, only the first one will be used,
+// if you want to use more than one error, please use github.com/romberli/go-multierror to wrap those errors to one
+func NewErrMessage(header string, errCode int, raw string, errs ...error) *ErrMessage {
+	var err error
+
+	if len(errs) > constant.ZeroInt {
+		err = errs[constant.ZeroInt]
+	}
+
 	if err != nil && errors.HasStack(err) {
 		return newErrMessage(header, errCode, raw, err, errors.GetStackTracer(err).StackTrace())
 	}

@@ -65,7 +65,7 @@ func (e *ErrMessage) Code() string {
 
 // Error is an implementation fo Error interface
 func (e *ErrMessage) Error() string {
-	message := fmt.Sprintf("%s: %s\n", e.Code(), e.Raw)
+	message := fmt.Sprintf("%s: %s", e.Code(), e.Raw)
 
 	if e.Err != nil {
 		message += e.Err.Error()

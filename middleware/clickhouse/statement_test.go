@@ -22,18 +22,18 @@ func TestStatement_Execute(t *testing.T) {
 	err := createTable()
 	asst.Nil(err, "test Execute() failed")
 	// insert data
-	err = conn.Begin()
+	err = testConn.Begin()
 	asst.Nil(err, "test ExecuteContext() failed")
 	sql := `insert into t01(id, name, group, type, del_flag, create_time, last_update_time) values(?, ?, ?, ?, ?, ?, ?);`
-	stmt, err := conn.Prepare(sql)
+	stmt, err := testConn.Prepare(sql)
 	asst.Nil(err, "test Execute() failed")
 	_, err = stmt.Execute(1, constant.DefaultRandomString, clickhouse.Array([]string{"group1", "group2", "group3"}), "a", 0, constant.DefaultRandomTime, time.Now())
 	asst.Nil(err, "test Execute() failed")
-	err = conn.Commit()
+	err = testConn.Commit()
 	asst.Nil(err, "test Execute() failed")
 	// select data
 	sql = `select id, name, group, type, del_flag, create_time, last_update_time from t01 where id = ?;`
-	stmt, err = conn.Prepare(sql)
+	stmt, err = testConn.Prepare(sql)
 	asst.Nil(err, "test Execute() failed")
 	result, err := stmt.Execute(1)
 	asst.Nil(err, "test Execute() failed")
@@ -51,18 +51,18 @@ func TestStatement_ExecuteContext(t *testing.T) {
 	err := createTable()
 	asst.Nil(err, "test ExecuteContext() failed")
 	// insert data
-	err = conn.Begin()
+	err = testConn.Begin()
 	asst.Nil(err, "test ExecuteContext() failed")
 	sql := `insert into t01(id, name, group, type, del_flag, create_time, last_update_time) values(?, ?, ?, ?, ?, ?, ?);`
-	stmt, err := conn.PrepareContext(ctx, sql)
+	stmt, err := testConn.PrepareContext(ctx, sql)
 	asst.Nil(err, "test ExecuteContext() failed")
 	_, err = stmt.ExecuteContext(ctx, 1, constant.DefaultRandomString, clickhouse.Array([]string{"group1", "group2", "group3"}), "a", 0, constant.DefaultRandomTime, time.Now())
 	asst.Nil(err, "test ExecuteContext() failed")
-	err = conn.Commit()
+	err = testConn.Commit()
 	asst.Nil(err, "test ExecuteContext() failed")
 	// select data
 	sql = `select id, name, group, type, del_flag, create_time, last_update_time from t01 where id = ?;`
-	stmt, err = conn.PrepareContext(ctx, sql)
+	stmt, err = testConn.PrepareContext(ctx, sql)
 	asst.Nil(err, "test ExecuteContext() failed")
 	result, err := stmt.ExecuteContext(ctx, 1)
 	asst.Nil(err, "test ExecuteContext() failed")

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/pingcap/errors"
 
@@ -18,6 +19,7 @@ const (
 	DefaultWriteTimeout = 10
 
 	DefaultCheckInstanceStatusSQL = "select 1 as ok;"
+	DefaultGetTimeZoneSQL         = "select timezone();"
 )
 
 type Config struct {
@@ -212,6 +214,25 @@ func (conn *Conn) CheckInstanceStatus() bool {
 	}
 
 	return ok == 1
+}
+
+func (conn *Conn) GetTimeZone() (*time.Location, error) {
+	result, err := conn.Execute(DefaultGetTimeZoneSQL)
+	if err != nil {
+		return nil, err
+	}
+
+	tz, err := result.GetString(constant.ZeroInt, constant.ZeroInt)
+	if err != nil {
+		return nil, err
+	}
+
+	t, err := time.LoadLocation(tz)
+	if err != nil {
+		return nil, err
+	}
+
+	return t, nil
 }
 
 // Begin begins a new transaction

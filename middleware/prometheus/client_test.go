@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	defaultAddr = "192.168.10.219:80/prometheus"
+	defaultAddr = "192.168.137.11:80/prometheus"
 	defaultUser = "admin"
 	defaultPass = "admin"
 )
@@ -62,7 +62,7 @@ func TestConn_Execute(t *testing.T) {
 	query = `node_filesystem_files{node_name=~"%s",fstype!~"rootfs|selinuxfs|autofs|rpc_pipefs|tmpfs"}`
 	// serviceName := "192-168-10-219:3306"
 	// serviceName := "192-168-10-220:3306"
-	nodeName := "192-168-10-219"
+	nodeName := "192-168-137-11"
 	// devs := "sda|sdb|sdc"
 	// mountpoints := "/|/boot"
 	// query := `mysql_global_status_queries`

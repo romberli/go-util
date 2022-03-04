@@ -68,7 +68,7 @@ func (e *ErrMessage) Error() string {
 	message := fmt.Sprintf("%s: %s", e.Code(), e.Raw)
 
 	if e.Err != nil {
-		message += fmt.Sprintf(" error: %s", e.Err.Error())
+		message += fmt.Sprintf(". error: %s", e.Err.Error())
 	}
 
 	return message

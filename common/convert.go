@@ -107,7 +107,7 @@ func ConvertToBool(in interface{}) (bool, error) {
 		case 1:
 			return true, nil
 		default:
-			return false, errors.Errorf("bool type value should be either 0 or 1, %d is not valid", v)
+			return false, errors.Errorf("bool value of integer type should be either 0 or 1, %d is not valid", v)
 		}
 	case string:
 		v := strings.ToLower(in.(string))
@@ -118,7 +118,7 @@ func ConvertToBool(in interface{}) (bool, error) {
 		case constant.FalseString:
 			return false, nil
 		default:
-			return false, errors.Errorf("bool type value should be either true or false, %s is not valid", in.(string))
+			return false, errors.Errorf("bool value of string type should be either true or false, %s is not valid", in.(string))
 		}
 	default:
 		return false, errors.Errorf("can not convert to a valid bool value, %v is not valid", in)

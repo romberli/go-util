@@ -9,8 +9,12 @@ type Slice interface {
 	GetSliceByName(row int, name string) ([]interface{}, error)
 	GetUintSlice(row, column int) ([]uint, error)
 	GetUintSliceByName(row int, name string) ([]uint, error)
+	GetUint64Slice(row, column int) ([]uint64, error)
+	GetUint64SliceByName(row int, name string) ([]uint64, error)
 	GetIntSlice(row, column int) ([]int, error)
 	GetIntSliceByName(row int, name string) ([]int, error)
+	GetInt64Slice(row, column int) ([]int64, error)
+	GetInt64SliceByName(row int, name string) ([]int64, error)
 	GetFloatSlice(row, column int) ([]float64, error)
 	GetFloatSliceByName(row int, name string) ([]float64, error)
 	GetStringSlice(row, column int) ([]string, error)
@@ -52,6 +56,18 @@ func (esr *EmptySlice) GetUintSliceByName(row int, name string) ([]uint, error) 
 	return nil, errors.Errorf("GetUintSliceByName() for %s is not supported, never call this function", esr.MiddlewareType)
 }
 
+// GetUintSlice always returns error, because middleware does not support slice type
+// this function is only for implementing the middleware.Result interface
+func (esr *EmptySlice) GetUint64Slice(row, column int) ([]uint64, error) {
+	return nil, errors.Errorf("GetUintSlice() for %s is not supported, never call this function", esr.MiddlewareType)
+}
+
+// GetUint64SliceByName always returns error, because middleware does not support slice type
+// this function is only for implementing the middleware.Result interface
+func (esr *EmptySlice) GetUint64SliceByName(row int, name string) ([]uint64, error) {
+	return nil, errors.Errorf("GetUintSliceByName() for %s is not supported, never call this function", esr.MiddlewareType)
+}
+
 // GetIntSlice always returns error, because middleware does not support slice type
 // this function is only for implementing the middleware.Result interface
 func (esr *EmptySlice) GetIntSlice(row, column int) ([]int, error) {
@@ -61,6 +77,18 @@ func (esr *EmptySlice) GetIntSlice(row, column int) ([]int, error) {
 // GetIntSliceByName always returns error, because middleware does not support slice type
 // this function is only for implementing the middleware.Result interface
 func (esr *EmptySlice) GetIntSliceByName(row int, name string) ([]int, error) {
+	return nil, errors.Errorf("GetIntSliceByName() for %s is not supported, never call this function", esr.MiddlewareType)
+}
+
+// GetInt64Slice always returns error, because middleware does not support slice type
+// this function is only for implementing the middleware.Result interface
+func (esr *EmptySlice) GetInt64Slice(row, column int) ([]int64, error) {
+	return nil, errors.Errorf("GetIntSlice() for %s is not supported, never call this function", esr.MiddlewareType)
+}
+
+// GetInt64SliceByName always returns error, because middleware does not support slice type
+// this function is only for implementing the middleware.Result interface
+func (esr *EmptySlice) GetInt64SliceByName(row int, name string) ([]int64, error) {
 	return nil, errors.Errorf("GetIntSliceByName() for %s is not supported, never call this function", esr.MiddlewareType)
 }
 

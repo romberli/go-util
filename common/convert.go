@@ -96,7 +96,7 @@ func ConvertToBool(in interface{}) (bool, error) {
 	case bool:
 		return in.(bool), nil
 	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
-		v, err := ConvertToInt(in)
+		v, err := ConvertToInt64(in)
 		if err != nil {
 			return false, err
 		}
@@ -109,56 +109,85 @@ func ConvertToBool(in interface{}) (bool, error) {
 		default:
 			return false, errors.Errorf("bool type value should be either 0 or 1, %d is not valid", v)
 		}
+	case string:
+		v := strings.ToLower(in.(string))
+
+		switch v {
+		case constant.TrueString:
+			return true, nil
+		case constant.FalseString:
+			return false, nil
+		default:
+			return false, errors.Errorf("bool type value should be either true or false, %s is not valid", in.(string))
+		}
 	default:
 		return false, errors.Errorf("can not convert to a valid bool value, %v is not valid", in)
 	}
 }
 
-func ConvertToInt(in interface{}) (int, error) {
+func ConvertToInt64(in interface{}) (int64, error) {
 	switch v := in.(type) {
 	case int:
-		return v, nil
+		return int64(v), nil
 	case int8:
-		return int(v), nil
+		return int64(v), nil
 	case int16:
-		return int(v), nil
+		return int64(v), nil
 	case int32:
-		return int(v), nil
+		return int64(v), nil
 	case int64:
-		return int(v), nil
+		return v, nil
 	case uint:
-		return int(v), nil
+		return int64(v), nil
 	case uint8:
-		return int(v), nil
+		return int64(v), nil
 	case uint16:
-		return int(v), nil
+		return int64(v), nil
 	case uint32:
-		return int(v), nil
+		return int64(v), nil
 	case uint64:
-		return int(v), nil
+		return int64(v), nil
 	case float32:
-		return int(v), nil
+		return int64(v), nil
 	case float64:
-		return int(v), nil
+		return int64(v), nil
 	case string:
 		value, err := strconv.ParseInt(v, 10, 64)
 
-		return int(value), errors.Trace(err)
+		return int64(value), errors.Trace(err)
 	case []byte:
 		value, err := strconv.ParseInt(string(v), 10, 64)
 
-		return int(value), errors.Trace(err)
+		return int64(value), errors.Trace(err)
 	case nil:
-		return constant.ZeroInt, nil
+		return int64(constant.ZeroInt), nil
 	default:
-		return constant.ZeroInt, errors.Errorf("unsupported data type: %T", v)
+		return int64(constant.ZeroInt), errors.Errorf("unsupported data type: %T", v)
 	}
 }
 
-func ConvertToUint(in interface{}) (uint, error) {
-	value, err := ConvertToInt(in)
+func ConvertToUint64(in interface{}) (uint64, error) {
+	value, err := ConvertToInt64(in)
 	if err != nil {
 		return constant.ZeroInt, err
+	}
+
+	return uint64(value), nil
+}
+
+func ConvertToInt(in interface{}) (int, error) {
+	value, err := ConvertToInt64(in)
+	if err != nil {
+		return constant.ZeroInt, err
+	}
+
+	return int(value), nil
+}
+
+func ConvertToUint(in interface{}) (uint, error) {
+	value, err := ConvertToInt64(in)
+	if err != nil {
+		return uint(constant.ZeroInt), err
 	}
 
 	return uint(value), nil
@@ -258,7 +287,7 @@ func ConvertToSlice(in interface{}, kind reflect.Kind) (interface{}, error) {
 		result := make([]uint8, inVal.Len())
 		for i := 0; i < inVal.Len(); i++ {
 			element := inVal.Index(i).Interface()
-			value, err := ConvertToUint(element)
+			value, err := ConvertToUint64(element)
 			if err != nil {
 				return nil, err
 			}
@@ -270,7 +299,7 @@ func ConvertToSlice(in interface{}, kind reflect.Kind) (interface{}, error) {
 		result := make([]uint16, inVal.Len())
 		for i := 0; i < inVal.Len(); i++ {
 			element := inVal.Index(i).Interface()
-			value, err := ConvertToUint(element)
+			value, err := ConvertToUint64(element)
 			if err != nil {
 				return nil, err
 			}
@@ -282,7 +311,7 @@ func ConvertToSlice(in interface{}, kind reflect.Kind) (interface{}, error) {
 		result := make([]uint32, inVal.Len())
 		for i := 0; i < inVal.Len(); i++ {
 			element := inVal.Index(i).Interface()
-			value, err := ConvertToUint(element)
+			value, err := ConvertToUint64(element)
 			if err != nil {
 				return nil, err
 			}
@@ -294,11 +323,11 @@ func ConvertToSlice(in interface{}, kind reflect.Kind) (interface{}, error) {
 		result := make([]uint64, inVal.Len())
 		for i := 0; i < inVal.Len(); i++ {
 			element := inVal.Index(i).Interface()
-			value, err := ConvertToUint(element)
+			value, err := ConvertToUint64(element)
 			if err != nil {
 				return nil, err
 			}
-			result[i] = uint64(value)
+			result[i] = value
 		}
 
 		return result, nil
@@ -318,7 +347,7 @@ func ConvertToSlice(in interface{}, kind reflect.Kind) (interface{}, error) {
 		result := make([]int8, inVal.Len())
 		for i := 0; i < inVal.Len(); i++ {
 			element := inVal.Index(i).Interface()
-			value, err := ConvertToInt(element)
+			value, err := ConvertToInt64(element)
 			if err != nil {
 				return nil, err
 			}
@@ -330,7 +359,7 @@ func ConvertToSlice(in interface{}, kind reflect.Kind) (interface{}, error) {
 		result := make([]int16, inVal.Len())
 		for i := 0; i < inVal.Len(); i++ {
 			element := inVal.Index(i).Interface()
-			value, err := ConvertToInt(element)
+			value, err := ConvertToInt64(element)
 			if err != nil {
 				return nil, err
 			}
@@ -342,7 +371,7 @@ func ConvertToSlice(in interface{}, kind reflect.Kind) (interface{}, error) {
 		result := make([]int32, inVal.Len())
 		for i := 0; i < inVal.Len(); i++ {
 			element := inVal.Index(i).Interface()
-			value, err := ConvertToInt(element)
+			value, err := ConvertToInt64(element)
 			if err != nil {
 				return nil, err
 			}
@@ -354,11 +383,11 @@ func ConvertToSlice(in interface{}, kind reflect.Kind) (interface{}, error) {
 		result := make([]int64, inVal.Len())
 		for i := 0; i < inVal.Len(); i++ {
 			element := inVal.Index(i).Interface()
-			value, err := ConvertToInt(element)
+			value, err := ConvertToInt64(element)
 			if err != nil {
 				return nil, err
 			}
-			result[i] = int64(value)
+			result[i] = value
 		}
 
 		return result, nil

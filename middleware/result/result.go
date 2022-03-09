@@ -148,6 +148,26 @@ func (r *Rows) GetUintByName(row int, name string) (uint, error) {
 	return r.GetUint(row, column)
 }
 
+// GetUint64 returns uint64 type value of given row and column number
+func (r *Rows) GetUint64(row, column int) (uint64, error) {
+	value, err := r.GetValue(row, column)
+	if err != nil {
+		return constant.ZeroInt, err
+	}
+
+	return common.ConvertToUint64(value)
+}
+
+// GetUint64ByName returns uint64 type value of given row number and column name
+func (r *Rows) GetUint64ByName(row int, name string) (uint64, error) {
+	column, err := r.NameIndex(name)
+	if err != nil {
+		return constant.ZeroInt, err
+	}
+
+	return r.GetUint64(row, column)
+}
+
 // GetInt returns int type value of given row and column number
 func (r *Rows) GetInt(row, column int) (int, error) {
 	value, err := r.GetValue(row, column)
@@ -166,6 +186,26 @@ func (r *Rows) GetIntByName(row int, name string) (int, error) {
 	}
 
 	return r.GetInt(row, column)
+}
+
+// GetInt64 returns int64 type value of given row and column number
+func (r *Rows) GetInt64(row, column int) (int64, error) {
+	value, err := r.GetValue(row, column)
+	if err != nil {
+		return constant.ZeroInt, err
+	}
+
+	return common.ConvertToInt64(value)
+}
+
+// GetInt64ByName returns int64 type value of given row number and column name
+func (r *Rows) GetInt64ByName(row int, name string) (int64, error) {
+	column, err := r.NameIndex(name)
+	if err != nil {
+		return constant.ZeroInt, err
+	}
+
+	return r.GetInt64(row, column)
 }
 
 // GetFloat returns float64 type value of given row and column number
@@ -255,7 +295,7 @@ func (r *Rows) GetUintSlice(row, column int) ([]uint, error) {
 	return res.([]uint), nil
 }
 
-// GetUintSliceByName returns []uint64 type value of given row number and column name
+// GetUintSliceByName returns []uint type value of given row number and column name
 func (r *Rows) GetUintSliceByName(row int, name string) ([]uint, error) {
 	column, err := r.NameIndex(name)
 	if err != nil {
@@ -265,7 +305,32 @@ func (r *Rows) GetUintSliceByName(row int, name string) ([]uint, error) {
 	return r.GetUintSlice(row, column)
 }
 
-// GetIntSlice returns []uint64 type value of given row and column number
+// GetUint64Slice returns []uint64 type value of given row and column number
+func (r *Rows) GetUint64Slice(row, column int) ([]uint64, error) {
+	value, err := r.GetValue(row, column)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := common.ConvertToSlice(value, reflect.Uint64)
+	if err != nil {
+		return nil, err
+	}
+
+	return res.([]uint64), nil
+}
+
+// GetUint64SliceByName returns []uint64 type value of given row number and column name
+func (r *Rows) GetUint64SliceByName(row int, name string) ([]uint64, error) {
+	column, err := r.NameIndex(name)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.GetUint64Slice(row, column)
+}
+
+// GetIntSlice returns []int type value of given row and column number
 func (r *Rows) GetIntSlice(row, column int) ([]int, error) {
 	value, err := r.GetValue(row, column)
 	if err != nil {
@@ -280,7 +345,7 @@ func (r *Rows) GetIntSlice(row, column int) ([]int, error) {
 	return res.([]int), nil
 }
 
-// GetIntSliceByName returns []int64 type value of given row number and column name
+// GetIntSliceByName returns []int type value of given row number and column name
 func (r *Rows) GetIntSliceByName(row int, name string) ([]int, error) {
 	column, err := r.NameIndex(name)
 	if err != nil {
@@ -288,6 +353,31 @@ func (r *Rows) GetIntSliceByName(row int, name string) ([]int, error) {
 	}
 
 	return r.GetIntSlice(row, column)
+}
+
+// GetInt64Slice returns []int64 type value of given row and column number
+func (r *Rows) GetInt64Slice(row, column int) ([]int64, error) {
+	value, err := r.GetValue(row, column)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := common.ConvertToSlice(value, reflect.Int64)
+	if err != nil {
+		return nil, err
+	}
+
+	return res.([]int64), nil
+}
+
+// GetInt64SliceByName returns []int64 type value of given row number and column name
+func (r *Rows) GetInt64SliceByName(row int, name string) ([]int64, error) {
+	column, err := r.NameIndex(name)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.GetInt64Slice(row, column)
 }
 
 // GetFloatSlice returns []float64 type value of given row and column number

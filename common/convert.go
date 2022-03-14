@@ -96,7 +96,7 @@ func ConvertToBool(in interface{}) (bool, error) {
 	case bool:
 		return in.(bool), nil
 	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
-		v, err := ConvertToInt64(in)
+		v, err := ConvertToInt(in)
 		if err != nil {
 			return false, err
 		}

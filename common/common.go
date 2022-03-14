@@ -365,7 +365,7 @@ func SetValueOfStructByKind(in interface{}, field string, value interface{}, kin
 		}
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		v, err := ConvertToInt64(value)
+		v, err := ConvertToInt(value)
 		if err != nil {
 			return err
 		}

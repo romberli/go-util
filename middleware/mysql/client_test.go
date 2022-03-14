@@ -119,7 +119,7 @@ func TestMySQLConnection(t *testing.T) {
 
 	result, err = conn.GetReplicationSlavesStatus()
 	asst.Nil(err, "get replication slave status failed")
-	if result.RowNumber() > 0 {
+	if result.RowNumber() > constant.ZeroInt {
 		t.Logf("show slave status: %v", result.Values)
 	} else {
 		t.Logf("this is not a slave node.")

@@ -109,8 +109,11 @@ func ConvertToBool(in interface{}) (bool, error) {
 		default:
 			return false, errors.Errorf("bool value of integer type should be either 0 or 1, %d is not valid", v)
 		}
-	case string:
-		v := strings.ToLower(in.(string))
+	case []byte, string:
+		v, err := ConvertToString(in)
+		if err != nil {
+			return false, err
+		}
 
 		switch v {
 		case constant.TrueString:

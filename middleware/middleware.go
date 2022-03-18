@@ -10,6 +10,7 @@ type Result interface {
 	result.Raw
 	result.Metadata
 	result.Value
+	result.Bool
 	result.Number
 	result.String
 	result.Slice

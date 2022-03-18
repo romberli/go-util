@@ -128,6 +128,26 @@ func (r *Rows) IsNullByName(row int, name string) (bool, error) {
 	return r.IsNull(row, column)
 }
 
+// GetBool returns bool type value of given row and column number
+func (r *Rows) GetBool(row, column int) (bool, error) {
+	value, err := r.GetValue(row, column)
+	if err != nil {
+		return false, err
+	}
+
+	return common.ConvertToBool(value)
+}
+
+// GetBoolByName returns bool type value of given row number and column name
+func (r *Rows) GetBoolByName(row int, name string) (bool, error) {
+	column, err := r.NameIndex(name)
+	if err != nil {
+		return false, err
+	}
+
+	return r.GetBool(row, column)
+}
+
 // GetUint returns uint type value of given row and column number
 func (r *Rows) GetUint(row, column int) (uint, error) {
 	value, err := r.GetValue(row, column)

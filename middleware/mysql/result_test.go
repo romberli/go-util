@@ -21,6 +21,10 @@ type EnvInfo struct {
 	LastUpdateTime time.Time `middleware:"last_update_time"`
 }
 
+type TestStruct struct {
+	OK bool `middleware:"ok"`
+}
+
 func TestResult(t *testing.T) {
 	var (
 		err    error
@@ -58,5 +62,18 @@ func TestResult(t *testing.T) {
 	asst.NotNil(err, "get map value failed")
 	asst.Nil(value, "get map value failed")
 	err = result.MapToStructSlice(envInfoList, constant.DefaultMiddlewareTag)
+	asst.Nil(err, "map to struct failed")
+
+	sql = `select 'true' as ok;`
+	result, err = conn.Execute(sql)
+	asst.Nil(err, "execute sql failed")
+	testStructList := make([]*TestStruct, result.RowNumber())
+	for i := range testStructList {
+		testStructList[i] = &TestStruct{}
+	}
+	valueB, err := result.GetBool(constant.ZeroInt, constant.ZeroInt)
+	asst.Nil(err, "execute sql failed")
+	asst.True(valueB, "execute sql failed")
+	err = result.MapToStructSlice(testStructList, constant.DefaultMiddlewareTag)
 	asst.Nil(err, "map to struct failed")
 }

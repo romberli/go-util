@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/go-mysql-org/go-mysql/client"
-
+	"github.com/pingcap/errors"
 	"github.com/romberli/go-util/common"
 	"github.com/romberli/go-util/constant"
 )
@@ -94,7 +94,7 @@ func (conn *Conn) PrepareContext(ctx context.Context, command string) (*Statemen
 func (conn *Conn) prepareContext(ctx context.Context, command string) (*Statement, error) {
 	stmt, err := conn.Conn.Prepare(command)
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	return NewStatement(stmt), nil
@@ -119,7 +119,7 @@ func (conn *Conn) executeContext(ctx context.Context, command string, args ...in
 
 	result, err := conn.Conn.Execute(command, args...)
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	return NewResult(result), nil

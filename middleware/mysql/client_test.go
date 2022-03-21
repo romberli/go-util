@@ -34,10 +34,14 @@ func newTestStructWithDefault() *testStruct {
 	}
 }
 
-var conn = initConn()
+var conn *Conn
+
+func init() {
+	conn = initConn()
+}
 
 func initConn() *Conn {
-	addr := "192.168.10.219:3306"
+	addr := "192.168.137.11:3306"
 	dbName := "test"
 	dbUser := "root"
 	dbPass := "root"

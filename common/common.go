@@ -146,7 +146,7 @@ func ElementInSlice(s interface{}, e interface{}) (bool, error) {
 		return false, errors.Errorf("first argument must be array or slice, %s is not valid", kind.String())
 	}
 
-	for i := 0; i < sValue.Len(); i++ {
+	for i := constant.ZeroInt; i < sValue.Len(); i++ {
 		if reflect.DeepEqual(e, sValue.Index(i).Interface()) {
 			return true, nil
 		}
@@ -198,7 +198,7 @@ func TrimSpaceOfStructString(in interface{}) error {
 
 	inVal := reflect.ValueOf(in).Elem()
 
-	for i := 0; i < inVal.NumField(); i++ {
+	for i := constant.ZeroInt; i < inVal.NumField(); i++ {
 		f := inVal.Field(i)
 		switch f.Kind() {
 		case reflect.String:
@@ -239,8 +239,11 @@ func SetValueOfStruct(in interface{}, field string, value interface{}) error {
 	}
 
 	v := reflect.ValueOf(in).Elem().FieldByName(field)
+	if !v.IsValid() {
+		return errors.Errorf("field does not exist. field: %s", field)
+	}
 	if !v.CanSet() {
-		return errors.Errorf("field %s can not be set, please check if this field is exported", field)
+		return errors.Errorf("field can not be set, please check if this field is exported. filed: %s", field)
 	}
 
 	vType := v.Type()
@@ -253,7 +256,7 @@ func SetValueOfStruct(in interface{}, field string, value interface{}) error {
 	}
 
 	if vType != valueType {
-		return errors.Errorf("types of field %s(%s) and value(%s) mismatched",
+		return errors.Errorf("types of field and value mismatched. field: %s, field type: %s, value type: %s",
 			field, v.Type().String(), valueType.String())
 	}
 
@@ -282,6 +285,79 @@ func SetValuesWithMap(in interface{}, fields map[string]interface{}) error {
 	return nil
 }
 
+// SetValueOfStructWithTag sets value of specified field of input struct,
+// field in this function represents the tag of the struct field,
+// the concerning struct field must exist and be exported, otherwise, it will return an error,
+// the first argument must be a pointer to struct
+// if value is nil, the field value will be set to ZERO value of the type
+func SetValueOfStructWithTag(in interface{}, field string, value interface{}, tag string) error {
+	kind := reflect.TypeOf(in).Kind()
+	if kind != reflect.Ptr {
+		return errors.Errorf("first must be a pointer to struct, %s is not valid", kind.String())
+	}
+
+	if tag == constant.EmptyString {
+		return errors.New("tag should not be empty")
+	}
+
+	inVal := reflect.ValueOf(in).Elem()
+
+	for i := constant.ZeroInt; i < inVal.NumField(); i++ {
+		fieldType := inVal.Type().Field(i)
+		fieldTag := fieldType.Tag.Get(tag)
+		if fieldTag == field {
+			v := inVal.FieldByName(fieldType.Name)
+			if !v.IsValid() {
+				return errors.Errorf("field does not exist. field: %s", field)
+			}
+			if !v.CanSet() {
+				return errors.Errorf("field can not be set, please check if this field is exported. filed: %s", field)
+			}
+
+			vType := v.Type()
+			valueType := reflect.TypeOf(value)
+
+			if valueType == nil {
+				// set zero value
+				v.Set(reflect.Zero(vType))
+				return nil
+			}
+
+			if vType != valueType {
+				return errors.Errorf("types of field and value mismatched. field: %s, field type: %s, value type: %s",
+					field, v.Type().String(), valueType.String())
+			}
+
+			// set value
+			v.Set(reflect.ValueOf(value))
+
+			return nil
+		}
+	}
+
+	return errors.Errorf("field does not exist in the struct with given tag. field: %s, tag: %s", field, tag)
+}
+
+// SetValuesWithMap sets values of input struct with given map,
+// the fields of map represents the tag of the struct field,
+// the concerning struct field must exist and be exported, otherwise, it will return an error,
+// the first argument must be a pointer to struct
+func SetValuesWithMapAndTag(in interface{}, fields map[string]interface{}, tag string) error {
+	kind := reflect.TypeOf(in).Kind()
+	if kind != reflect.Ptr {
+		return errors.Errorf("first must be a pointer to struct, %s is not valid", kind.String())
+	}
+
+	for field, value := range fields {
+		err := SetValueOfStructWithTag(in, field, value, tag)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // SetValuesWithMapAndRandom sets values of input struct with given map,
 // if fields in struct does not exist in given map, some of them--depends on the data type--will be set with default value,
 // the fields of map must exist and be exported, otherwise, it will return an error,
@@ -294,7 +370,7 @@ func SetValuesWithMapAndRandom(in interface{}, fields map[string]interface{}) er
 
 	inVal := reflect.ValueOf(in).Elem()
 	inType := inVal.Type()
-	for i := 0; i < inVal.NumField(); i++ {
+	for i := constant.ZeroInt; i < inVal.NumField(); i++ {
 		fieldName := inType.Field(i).Name
 		fieldValue, exists := fields[fieldName]
 		if !exists {
@@ -467,7 +543,7 @@ func SetValueOfStructByKind(in interface{}, field string, value interface{}, kin
 // 7. technically, for convenience purpose, this function creates a new struct as same as input struct,
 //    then removes fields that do not exist in the given fields
 func CopyStructWithFields(in interface{}, fields ...string) (interface{}, error) {
-	if len(fields) == 0 {
+	if len(fields) == constant.ZeroInt {
 		return CopyStructWithoutFields(in)
 	}
 
@@ -481,7 +557,7 @@ func CopyStructWithFields(in interface{}, fields ...string) (interface{}, error)
 	inVal := reflect.ValueOf(in).Elem()
 	inType := inVal.Type()
 
-	for i := 0; i < inVal.NumField(); i++ {
+	for i := constant.ZeroInt; i < inVal.NumField(); i++ {
 		fieldName := inType.Field(i).Name
 		ok, err := ElementInSlice(fields, fieldName)
 		if err != nil {
@@ -520,7 +596,7 @@ func CopyStructWithoutFields(in interface{}, fields ...string) (interface{}, err
 
 	inVal := reflect.ValueOf(in).Elem()
 
-	for i := 0; i < newVal.NumField(); i++ {
+	for i := constant.ZeroInt; i < newVal.NumField(); i++ {
 		fieldType := newType.Field(i)
 		fieldVal := newVal.Field(i)
 		// set value
@@ -588,7 +664,7 @@ func MarshalStructWithTag(in interface{}, tag string) ([]byte, error) {
 
 	var fields []string
 
-	for i := 0; i < inVal.NumField(); i++ {
+	for i := constant.ZeroInt; i < inVal.NumField(); i++ {
 		fieldType := inVal.Type().Field(i)
 		fieldTag := fieldType.Tag.Get(tag)
 		if fieldTag != constant.EmptyString {
@@ -614,7 +690,7 @@ func NewMapWithStructTag(m map[string]interface{}, in interface{}, tag string) (
 
 Loop:
 	for key := range m {
-		for i := 0; i < inVal.NumField(); i++ {
+		for i := constant.ZeroInt; i < inVal.NumField(); i++ {
 			fieldType := inVal.Type().Field(i)
 			fieldTag := fieldType.Tag.Get(tag)
 
@@ -661,7 +737,7 @@ func UnmarshalToMapWithStructTag(data []byte, in interface{}, tag string) (map[s
 	inVal := reflect.ValueOf(in).Elem()
 Loop:
 	for key := range tmpMap {
-		for i := 0; i < inVal.NumField(); i++ {
+		for i := constant.ZeroInt; i < inVal.NumField(); i++ {
 			fieldType := inVal.Type().Field(i)
 			fieldTag := fieldType.Tag.Get(tag)
 			if key == fieldTag {

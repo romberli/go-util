@@ -285,12 +285,12 @@ func SetValuesWithMap(in interface{}, fields map[string]interface{}) error {
 	return nil
 }
 
-// SetValueOfStructWithTag sets value of specified field of input struct,
+// SetValueOfStructByTag sets value of specified field of input struct,
 // field in this function represents the tag of the struct field,
 // the concerning struct field must exist and be exported, otherwise, it will return an error,
 // the first argument must be a pointer to struct
 // if value is nil, the field value will be set to ZERO value of the type
-func SetValueOfStructWithTag(in interface{}, field string, value interface{}, tag string) error {
+func SetValueOfStructByTag(in interface{}, field string, value interface{}, tag string) error {
 	kind := reflect.TypeOf(in).Kind()
 	if kind != reflect.Ptr {
 		return errors.Errorf("first must be a pointer to struct, %s is not valid", kind.String())
@@ -338,18 +338,18 @@ func SetValueOfStructWithTag(in interface{}, field string, value interface{}, ta
 	return errors.Errorf("field does not exist in the struct with given tag. field: %s, tag: %s", field, tag)
 }
 
-// SetValuesWithMap sets values of input struct with given map,
+// SetValuesWithMapByTag sets values of input struct with given map,
 // the fields of map represents the tag of the struct field,
 // the concerning struct field must exist and be exported, otherwise, it will return an error,
 // the first argument must be a pointer to struct
-func SetValuesWithMapAndTag(in interface{}, fields map[string]interface{}, tag string) error {
+func SetValuesWithMapByTag(in interface{}, fields map[string]interface{}, tag string) error {
 	kind := reflect.TypeOf(in).Kind()
 	if kind != reflect.Ptr {
 		return errors.Errorf("first must be a pointer to struct, %s is not valid", kind.String())
 	}
 
 	for field, value := range fields {
-		err := SetValueOfStructWithTag(in, field, value, tag)
+		err := SetValueOfStructByTag(in, field, value, tag)
 		if err != nil {
 			return err
 		}
@@ -419,6 +419,76 @@ func SetValuesWithMapAndRandom(in interface{}, fields map[string]interface{}) er
 		}
 
 		err := SetValueOfStruct(in, fieldName, fieldValue)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// SetValuesWithMapAndRandomByTag sets values of input struct with given map,
+// field in this function represents the tag of the struct field,
+// if fields in struct does not exist in given map, some of them--depends on the data type--will be set with default value,
+// the fields of map must exist and be exported, otherwise, it will return an error,
+// the first argument must be a pointer to struct
+func SetValuesWithMapAndRandomByTag(in interface{}, fields map[string]interface{}, tag string) error {
+	kind := reflect.TypeOf(in).Kind()
+	if kind != reflect.Ptr {
+		return errors.Errorf("first must be a pointer to struct, %s is not valid", kind.String())
+	}
+
+	inVal := reflect.ValueOf(in).Elem()
+	inType := inVal.Type()
+	for i := constant.ZeroInt; i < inVal.NumField(); i++ {
+		fieldName := inType.Field(i).Name
+		fieldValue, exists := fields[fieldName]
+		if !exists {
+			// set default value
+			switch fieldValue.(type) {
+			case int:
+				if fieldValue.(int) == constant.DefaultRandomInt {
+					fieldValue = constant.DefaultRandomInt
+				}
+			case int32:
+				if int(fieldValue.(int32)) == constant.DefaultRandomInt {
+					fieldValue = constant.DefaultRandomInt
+				}
+			case int64:
+				if int(fieldValue.(int64)) == constant.DefaultRandomInt {
+					fieldValue = constant.DefaultRandomInt
+				}
+			case uint:
+				if int(fieldValue.(uint)) == constant.DefaultRandomInt {
+					fieldValue = constant.DefaultRandomInt
+				}
+			case uint32:
+				if int(fieldValue.(uint32)) == constant.DefaultRandomInt {
+					fieldValue = constant.DefaultRandomInt
+				}
+			case uint64:
+				if int(fieldValue.(uint64)) == constant.DefaultRandomInt {
+					fieldValue = constant.DefaultRandomInt
+				}
+			case float64:
+				if fieldValue.(float64) == constant.DefaultRandomFloat {
+					fieldValue = constant.DefaultRandomFloat
+				}
+			case string:
+				if fieldValue.(string) == constant.DefaultRandomString {
+					fieldValue = constant.DefaultRandomString
+				}
+			case time.Time:
+				if fieldValue.(time.Time).Format(constant.DefaultTimeLayout) == constant.DefaultRandomTimeString {
+					fieldValue = constant.DefaultRandomTime
+				}
+			default:
+				// TODO: for now, do nothing here
+				continue
+			}
+		}
+
+		err := SetValueOfStructByTag(in, fieldName, fieldValue, tag)
 		if err != nil {
 			return err
 		}

@@ -374,44 +374,17 @@ func SetValuesWithMapAndRandom(in interface{}, fields map[string]interface{}) er
 		fieldName := inType.Field(i).Name
 		fieldValue, exists := fields[fieldName]
 		if !exists {
+			fieldValue = inVal.Field(i).Interface()
 			// set default value
 			switch fieldValue.(type) {
-			case int:
-				if fieldValue.(int) == constant.DefaultRandomInt {
-					fieldValue = constant.DefaultRandomInt
-				}
-			case int32:
-				if int(fieldValue.(int32)) == constant.DefaultRandomInt {
-					fieldValue = constant.DefaultRandomInt
-				}
-			case int64:
-				if int(fieldValue.(int64)) == constant.DefaultRandomInt {
-					fieldValue = constant.DefaultRandomInt
-				}
-			case uint:
-				if int(fieldValue.(uint)) == constant.DefaultRandomInt {
-					fieldValue = constant.DefaultRandomInt
-				}
-			case uint32:
-				if int(fieldValue.(uint32)) == constant.DefaultRandomInt {
-					fieldValue = constant.DefaultRandomInt
-				}
-			case uint64:
-				if int(fieldValue.(uint64)) == constant.DefaultRandomInt {
-					fieldValue = constant.DefaultRandomInt
-				}
-			case float64:
-				if fieldValue.(float64) == constant.DefaultRandomFloat {
-					fieldValue = constant.DefaultRandomFloat
-				}
+			case int, int32, int64, uint, uint32, uint64:
+				fieldValue = constant.DefaultRandomInt
+			case float32, float64:
+				fieldValue = constant.DefaultRandomFloat
 			case string:
-				if fieldValue.(string) == constant.DefaultRandomString {
-					fieldValue = constant.DefaultRandomString
-				}
+				fieldValue = constant.DefaultRandomString
 			case time.Time:
-				if fieldValue.(time.Time).Format(constant.DefaultTimeLayout) == constant.DefaultRandomTimeString {
-					fieldValue = constant.DefaultRandomTime
-				}
+				fieldValue = constant.DefaultRandomTime
 			default:
 				// TODO: for now, do nothing here
 				continue
@@ -442,53 +415,27 @@ func SetValuesWithMapAndRandomByTag(in interface{}, fields map[string]interface{
 	inType := inVal.Type()
 	for i := constant.ZeroInt; i < inVal.NumField(); i++ {
 		fieldName := inType.Field(i).Name
-		fieldValue, exists := fields[fieldName]
+		fieldTag := inType.Field(i).Tag.Get(tag)
+		fieldValue, exists := fields[fieldTag]
 		if !exists {
+			fieldValue = inVal.Field(i).Interface()
 			// set default value
 			switch fieldValue.(type) {
-			case int:
-				if fieldValue.(int) == constant.DefaultRandomInt {
-					fieldValue = constant.DefaultRandomInt
-				}
-			case int32:
-				if int(fieldValue.(int32)) == constant.DefaultRandomInt {
-					fieldValue = constant.DefaultRandomInt
-				}
-			case int64:
-				if int(fieldValue.(int64)) == constant.DefaultRandomInt {
-					fieldValue = constant.DefaultRandomInt
-				}
-			case uint:
-				if int(fieldValue.(uint)) == constant.DefaultRandomInt {
-					fieldValue = constant.DefaultRandomInt
-				}
-			case uint32:
-				if int(fieldValue.(uint32)) == constant.DefaultRandomInt {
-					fieldValue = constant.DefaultRandomInt
-				}
-			case uint64:
-				if int(fieldValue.(uint64)) == constant.DefaultRandomInt {
-					fieldValue = constant.DefaultRandomInt
-				}
-			case float64:
-				if fieldValue.(float64) == constant.DefaultRandomFloat {
-					fieldValue = constant.DefaultRandomFloat
-				}
+			case int, int32, int64, uint, uint32, uint64:
+				fieldValue = constant.DefaultRandomInt
+			case float32, float64:
+				fieldValue = constant.DefaultRandomFloat
 			case string:
-				if fieldValue.(string) == constant.DefaultRandomString {
-					fieldValue = constant.DefaultRandomString
-				}
+				fieldValue = constant.DefaultRandomString
 			case time.Time:
-				if fieldValue.(time.Time).Format(constant.DefaultTimeLayout) == constant.DefaultRandomTimeString {
-					fieldValue = constant.DefaultRandomTime
-				}
+				fieldValue = constant.DefaultRandomTime
 			default:
 				// TODO: for now, do nothing here
 				continue
 			}
 		}
 
-		err := SetValueOfStructByTag(in, fieldName, fieldValue, tag)
+		err := SetValueOfStruct(in, fieldName, fieldValue)
 		if err != nil {
 			return err
 		}

@@ -355,3 +355,22 @@ func TestCommon(t *testing.T) {
 	asst.True(reflect.DeepEqual(result, expectMap), "test UnmarshalToMapWithStructTagFromString() failed")
 	t.Log("==========test UnmarshalToMapWithStructTagFromString() completed==========")
 }
+
+func TestSetValuesWithMapAndRandom(t *testing.T) {
+	asst := assert.New(t)
+
+	ei := &EnvInfo{}
+	fields := map[string]interface{}{"EnvName": "test"}
+
+	err := SetValuesWithMapAndRandom(ei, fields)
+	asst.Nil(err, "test SetValuesWithMapAndRandom() failed")
+}
+
+func TestSetValuesWithMapAndRandomByTag(t *testing.T) {
+	asst := assert.New(t)
+
+	ei := &EnvInfo{}
+	fields := map[string]interface{}{"env_name": "test"}
+	err := SetValuesWithMapAndRandomByTag(ei, fields, "middleware")
+	asst.Nil(err, "test SetValuesWithMapAndRandomByTag() failed")
+}

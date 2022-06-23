@@ -15,6 +15,7 @@ require (
 	github.com/pkg/sftp v1.12.0
 	github.com/prometheus/client_golang v1.11.0
 	github.com/prometheus/common v0.26.0
+	github.com/rabbitmq/amqp091-go v1.3.4
 	github.com/romberli/dynamic-struct v1.2.1
 	github.com/romberli/go-multierror v1.1.2-0.20220118054508-60f25a547317
 	github.com/romberli/log v1.0.21-0.20220118103033-fc370f89c0ea

@@ -86,4 +86,7 @@ const (
 	DefaultMySQLPort                = 3306
 	DefaultRootUserName             = "root"
 	DefaultRootUserPass             = "root"
+
+	DefaultTextContentType = "text/plain"
+	DefaultJSONContentType = "application/json"
 )

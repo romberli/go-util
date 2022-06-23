@@ -3,6 +3,7 @@ package rabbitmq
 import (
 	"github.com/pingcap/errors"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/romberli/go-util/constant"
 )
 
 type Consumer struct {
@@ -74,6 +75,26 @@ func (c *Consumer) Disconnect() error {
 	return c.Conn.Close()
 }
 
+// ExchangeDeclare declares an exchange
+func (c *Consumer) ExchangeDeclare(name, kind string) error {
+	return errors.Trace(c.GetChannel().ExchangeDeclare(name, kind, true, false, false, false, nil))
+}
+
+// QueueDeclare declares a queue
+func (c *Consumer) QueueDeclare(name string) (amqp.Queue, error) {
+	queue, err := c.GetChannel().QueueDeclare(name, true, false, false, false, nil)
+	if err != nil {
+		return amqp.Queue{}, errors.Trace(err)
+	}
+
+	return queue, nil
+}
+
+// QueueBind binds a queue to an exchange
+func (c *Consumer) QueueBind(queue, exchange, key string) error {
+	return errors.Trace(c.GetChannel().QueueBind(queue, key, exchange, false, nil))
+}
+
 // Consume consumes messages from the queue
 func (c *Consumer) Consume(queue, consumer string, exclusive bool) (<-chan amqp.Delivery, error) {
 	deliveryChan, err := c.GetChannel().Consume(queue, consumer, false, exclusive, false, false, nil)
@@ -86,8 +107,8 @@ func (c *Consumer) Consume(queue, consumer string, exclusive bool) (<-chan amqp.
 
 // Qos controls how many messages or how many bytes the server will try to keep on
 // the network for consumers before receiving delivery acks.
-func (c *Consumer) Qos(prefetchCount, prefetchSize int, global bool) error {
-	return errors.Trace(c.GetChannel().Qos(prefetchCount, prefetchSize, global))
+func (c *Consumer) Qos(prefetchCount int, global bool) error {
+	return errors.Trace(c.GetChannel().Qos(prefetchCount, constant.ZeroInt, global))
 }
 
 // Ack acknowledges a delivery

@@ -10,16 +10,21 @@ const (
 	testPass  = "guest"
 	testVhost = "/test_vhost"
 
-	testExchangeName = "test_exchange"
-	testExchangeType = "topic"
-	testQueueName    = "test_queue"
-	testKey          = "test_key"
-	testMessage      = `{"dbs": {"id": 1, "db_name": "test_db", "cluster_id": 1}}`
-	testExpiration   = 1000 * 60 * 60 * 5 // 5 minutes
+	testExchangeName    = "test_exchange"
+	testExchangeType    = "topic"
+	testQueueName       = "test_queue"
+	testKey             = "test_key"
+	testMessage         = `{"dbs": {"id": 1, "db_name": "test_db", "cluster_id": 1}}`
+	testMessageTemplate = `{"dbs": {"id": %d, "db_name": "test_db", "cluster_id": 1}}`
+	testExpiration      = 1000 * 60 * 60 * 5 // 5 minutes
+	testPublishCount    = 5
 
-	testConsumerName = "test_consumer"
-	testExclusive    = true
-	testMultiple     = true
+	testConsumerName  = "test_consumer"
+	testPrefetchCount = 3
+	testGlobal        = true
+	testExclusive     = true
+	testMultiple      = true
+	testRequeue       = true
 )
 
 var testConn *Conn

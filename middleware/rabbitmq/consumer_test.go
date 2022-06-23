@@ -27,17 +27,42 @@ func testCreateConsumer(conn *Conn) *Consumer {
 }
 
 func TestConsumer_All(t *testing.T) {
+	TestConsumer_ExchangeDeclare(t)
+	TestConsumer_QueueDeclare(t)
+	TestConsumer_QueueBind(t)
+	TestConsumer_Qos(t)
+	TestConsumer_Ack(t)
+	TestConsumer_Nack(t)
 	TestConsumer_Consume(t)
 }
 
-func TestConsumer_Consume(t *testing.T) {
+func TestConsumer_ExchangeDeclare(t *testing.T) {
 	asst := assert.New(t)
 
-	deliveryChan, err := testConsumer.Consume(testQueueName, testConsumerName, testExclusive)
-	asst.Nil(err, common.CombineMessageWithError("test Consume() failed", err))
-	for d := range deliveryChan {
-		log.Infof(" [x] %s", d.Body)
-	}
+	err := testConsumer.ExchangeDeclare(testExchangeName, testExchangeType)
+	asst.Nil(err, common.CombineMessageWithError("test ExchangeDeclare() failed", err))
+}
+
+func TestConsumer_QueueDeclare(t *testing.T) {
+	asst := assert.New(t)
+
+	queue, err := testConsumer.QueueDeclare(testQueueName)
+	asst.Nil(err, common.CombineMessageWithError("test QueueDeclare() failed", err))
+	asst.Equal(testQueueName, queue.Name, "test QueueDeclare() failed")
+}
+
+func TestConsumer_QueueBind(t *testing.T) {
+	asst := assert.New(t)
+
+	err := testConsumer.QueueBind(testQueueName, testExchangeName, testKey)
+	asst.Nil(err, common.CombineMessageWithError("test QueueBind() failed", err))
+}
+
+func TestConsumer_Qos(t *testing.T) {
+	asst := assert.New(t)
+
+	err := testConsumer.Qos(testPrefetchCount, testGlobal)
+	asst.Nil(err, common.CombineMessageWithError("test Qos() failed", err))
 }
 
 func TestConsumer_Ack(t *testing.T) {
@@ -45,9 +70,50 @@ func TestConsumer_Ack(t *testing.T) {
 
 	deliveryChan, err := testConsumer.Consume(testQueueName, testConsumerName, testExclusive)
 	asst.Nil(err, common.CombineMessageWithError("test Ack() failed", err))
-	for d := range deliveryChan {
-		log.Infof(" [x] %s", d.Body)
-		err = testConsumer.Ack(d.DeliveryTag, testMultiple)
-		asst.Nil(err, common.CombineMessageWithError("test Ack() failed", err))
+	for {
+		select {
+		case d := <-deliveryChan:
+			log.Infof("%s", d.Body)
+			err = testConsumer.Ack(d.DeliveryTag, testMultiple)
+			asst.Nil(err, common.CombineMessageWithError("test Ack() failed", err))
+		default:
+			log.Infof("no message to consume, will exit now")
+			return
+		}
+	}
+}
+
+func TestConsumer_Nack(t *testing.T) {
+	asst := assert.New(t)
+
+	deliveryChan, err := testConsumer.Consume(testQueueName, testConsumerName, testExclusive)
+	asst.Nil(err, common.CombineMessageWithError("test Nack() failed", err))
+	for {
+		select {
+		case d := <-deliveryChan:
+			log.Infof("%s", d.Body)
+			err = testConsumer.Nack(d.DeliveryTag, testMultiple, testRequeue)
+			asst.Nil(err, common.CombineMessageWithError("test Nack() failed", err))
+		default:
+			log.Infof("no message to consume, will exit now")
+			return
+		}
+	}
+}
+
+func TestConsumer_Consume(t *testing.T) {
+	asst := assert.New(t)
+
+	deliveryChan, err := testConsumer.Consume(testQueueName, testConsumerName, testExclusive)
+	asst.Nil(err, common.CombineMessageWithError("test Consume() failed", err))
+
+	for {
+		select {
+		case d := <-deliveryChan:
+			log.Infof("%s", d.Body)
+		default:
+			log.Infof("no message to consume, will exit now")
+			return
+		}
 	}
 }

@@ -1,6 +1,7 @@
 package rabbitmq
 
 import (
+	"fmt"
 	"strconv"
 	"testing"
 
@@ -77,6 +78,9 @@ func TestProducer_BuildMessageWithExpiration(t *testing.T) {
 func TestProducer_Publish(t *testing.T) {
 	asst := assert.New(t)
 
-	err := testProducer.Publish(testExchangeName, testKey, testProducer.BuildMessageWithExpiration(testMessage, constant.DefaultJSONContentType, testExpiration))
-	asst.Nil(err, common.CombineMessageWithError("test Publish() failed", err))
+	for i := constant.ZeroInt; i < testPublishCount; i++ {
+		message := fmt.Sprintf(testMessageTemplate, i)
+		err := testProducer.Publish(testExchangeName, testKey, testProducer.BuildMessageWithExpiration(message, constant.DefaultJSONContentType, testExpiration))
+		asst.Nil(err, common.CombineMessageWithError("test Publish() failed", err))
+	}
 }

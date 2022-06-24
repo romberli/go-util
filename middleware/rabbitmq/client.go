@@ -29,7 +29,7 @@ func NewConfig(addr, user, pass, vhost string) *Config {
 }
 
 func NewConfigWithDefault(addr, user, pass string) *Config {
-	return NewConfig(addr, user, user, defaultVhost)
+	return NewConfig(addr, user, pass, defaultVhost)
 }
 
 // GetAddr returns the address

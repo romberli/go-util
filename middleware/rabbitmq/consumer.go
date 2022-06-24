@@ -95,6 +95,12 @@ func (c *Consumer) QueueBind(queue, exchange, key string) error {
 	return errors.Trace(c.GetChannel().QueueBind(queue, key, exchange, false, nil))
 }
 
+// Qos controls how many messages or how many bytes the server will try to keep on
+// the network for consumers before receiving delivery acks.
+func (c *Consumer) Qos(prefetchCount int, global bool) error {
+	return errors.Trace(c.GetChannel().Qos(prefetchCount, constant.ZeroInt, global))
+}
+
 // Consume consumes messages from the queue
 func (c *Consumer) Consume(queue, consumer string, exclusive bool) (<-chan amqp.Delivery, error) {
 	deliveryChan, err := c.GetChannel().Consume(queue, consumer, false, exclusive, false, false, nil)
@@ -105,10 +111,9 @@ func (c *Consumer) Consume(queue, consumer string, exclusive bool) (<-chan amqp.
 	return deliveryChan, nil
 }
 
-// Qos controls how many messages or how many bytes the server will try to keep on
-// the network for consumers before receiving delivery acks.
-func (c *Consumer) Qos(prefetchCount int, global bool) error {
-	return errors.Trace(c.GetChannel().Qos(prefetchCount, constant.ZeroInt, global))
+// Cancel cancels the delivery of a consumer
+func (c *Consumer) Cancel(consumer string) error {
+	return errors.Trace(c.GetChannel().Cancel(consumer, false))
 }
 
 // Ack acknowledges a delivery

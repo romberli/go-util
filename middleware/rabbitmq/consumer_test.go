@@ -31,9 +31,10 @@ func TestConsumer_All(t *testing.T) {
 	TestConsumer_QueueDeclare(t)
 	TestConsumer_QueueBind(t)
 	TestConsumer_Qos(t)
+	TestConsumer_Consume(t)
+	TestConsumer_Cancel(t)
 	TestConsumer_Ack(t)
 	TestConsumer_Nack(t)
-	TestConsumer_Consume(t)
 }
 
 func TestConsumer_ExchangeDeclare(t *testing.T) {
@@ -65,6 +66,34 @@ func TestConsumer_Qos(t *testing.T) {
 	asst.Nil(err, common.CombineMessageWithError("test Qos() failed", err))
 }
 
+func TestConsumer_Consume(t *testing.T) {
+	asst := assert.New(t)
+
+	deliveryChan, err := testConsumer.Consume(testQueueName, testConsumerName, testExclusive)
+	asst.Nil(err, common.CombineMessageWithError("test Consume() failed", err))
+
+	for {
+		select {
+		case d := <-deliveryChan:
+			log.Infof("%s", d.Body)
+		default:
+			log.Infof("no message to consume, will exit now")
+			err = testConsumer.Cancel(testConsumerName)
+			asst.Nil(err, common.CombineMessageWithError("test Consume() failed", err))
+			return
+		}
+	}
+}
+
+func TestConsumer_Cancel(t *testing.T) {
+	asst := assert.New(t)
+
+	_, err := testConsumer.Consume(testQueueName, testConsumerName, testExclusive)
+	asst.Nil(err, common.CombineMessageWithError("test Ack() failed", err))
+	err = testConsumer.Cancel(testConsumerName)
+	asst.Nil(err, common.CombineMessageWithError("test Cancel() failed", err))
+}
+
 func TestConsumer_Ack(t *testing.T) {
 	asst := assert.New(t)
 
@@ -78,6 +107,8 @@ func TestConsumer_Ack(t *testing.T) {
 			asst.Nil(err, common.CombineMessageWithError("test Ack() failed", err))
 		default:
 			log.Infof("no message to consume, will exit now")
+			err = testConsumer.Cancel(testConsumerName)
+			asst.Nil(err, common.CombineMessageWithError("test Ack() failed", err))
 			return
 		}
 	}
@@ -96,23 +127,8 @@ func TestConsumer_Nack(t *testing.T) {
 			asst.Nil(err, common.CombineMessageWithError("test Nack() failed", err))
 		default:
 			log.Infof("no message to consume, will exit now")
-			return
-		}
-	}
-}
-
-func TestConsumer_Consume(t *testing.T) {
-	asst := assert.New(t)
-
-	deliveryChan, err := testConsumer.Consume(testQueueName, testConsumerName, testExclusive)
-	asst.Nil(err, common.CombineMessageWithError("test Consume() failed", err))
-
-	for {
-		select {
-		case d := <-deliveryChan:
-			log.Infof("%s", d.Body)
-		default:
-			log.Infof("no message to consume, will exit now")
+			err = testConsumer.Cancel(testConsumerName)
+			asst.Nil(err, common.CombineMessageWithError("test Nack() failed", err))
 			return
 		}
 	}

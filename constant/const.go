@@ -86,6 +86,9 @@ const (
 	DefaultMySQLPort                = 3306
 	DefaultRootUserName             = "root"
 	DefaultRootUserPass             = "root"
+	DefaultRabbitmqPort             = 5672
+	DefaultGuestUserName            = "guest"
+	DefaultGuestUserPass            = "guest"
 
 	DefaultTextContentType = "text/plain"
 	DefaultJSONContentType = "application/json"

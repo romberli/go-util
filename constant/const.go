@@ -12,6 +12,7 @@ const (
 	CommaString                         = ","
 	AsteriskString                      = "*"
 	DotString                           = "."
+	QuestionMarkString                  = "?"
 	VerticalBarString                   = "|"
 	ColonString                         = ":"
 	SemicolonString                     = ";"

@@ -148,8 +148,9 @@ const (
             "type": "DELETE"
         }
     `
-	testMessageInsertSQL = `INSERT INTO test_db.test_table(pk1,pk2,col1,col2) VALUES (?,?,?,?),(?,?,?,?) ;`
-	testMessageUpdateSQL = `UPDATE test_db.test_table SET col1=? WHERE pk1=? AND pk2=? ;`
+	testMessageReplaceSQL = `REPLACE INTO test_db.test_table(pk1,pk2,col1,col2) VALUES (?,?,?,?),(?,?,?,?) ;`
+	testMessageInsertSQL  = `INSERT INTO test_db.test_table(pk1,pk2,col1,col2) VALUES (?,?,?,?),(?,?,?,?) ON DUPLICATE KEY UPDATE col1=VALUES(col1),col2=VALUES(col2) ;`
+	testMessageUpdateSQL  = `UPDATE test_db.test_table SET col1=? WHERE pk1=? AND pk2=? ;`
 )
 
 var (
@@ -168,10 +169,6 @@ var (
 		map[string]interface{}{"col1": "test_old_col2_b"},
 	}
 )
-
-func testMessageCreateMessage(sqlType string, data, old []map[string]interface{}) *Message {
-	return NewMessage(sqlType, testMessageIsDDL, testMessageDBName, testMessageTableName, testMessagePKNames, testMessageColumns, data, old)
-}
 
 func TestMessage_All(t *testing.T) {
 	TestMessage_GetColumnNames(t)
@@ -195,6 +192,7 @@ func TestMessage_GetColumnNames(t *testing.T) {
 func TestMessage_ConvertToSQL(t *testing.T) {
 	TestMessage_convertToInsertSQL(t)
 	TestMessage_convertToUpdateSQL(t)
+	TestMessage_convertToDeleteSQL(t)
 }
 
 func TestMessage_convertToInsertSQL(t *testing.T) {
@@ -204,19 +202,37 @@ func TestMessage_convertToInsertSQL(t *testing.T) {
 	err := json.Unmarshal([]byte(testMessageInsertJSONString), &testMessage)
 	asst.Nil(err, common.CombineMessageWithError("test convertToInsertSQL() failed", err))
 
-	statements, err := testMessage.ConvertToSQL(true)
-	asst.Nil(err, common.CombineMessageWithError("test ConvertToSQL() failed", err))
-	asst.Equal(1, len(statements), "test ConvertToSQL() failed")
+	// useReplace is true
+	statements, err := testMessage.ConvertToSQL(true, true)
+	asst.Nil(err, common.CombineMessageWithError("test convertToInsertSQL() failed", err))
+	asst.Equal(1, len(statements), "test convertToInsertSQL() failed")
 	for _, statement := range statements {
 		for _, values := range statement {
-			asst.Equal(8, len(values), "test ConvertToSQL() failed")
+			asst.Equal(8, len(values), "test convertToInsertSQL() failed")
 		}
 	}
-	t.Log(testMessageInsertSQL)
+	t.Logf("expected:\t%s", testMessageReplaceSQL)
 	for _, statement := range statements {
 		for sql, values := range statement {
-			t.Log(sql)
-			t.Log(values)
+			t.Logf("actual:\t%s", sql)
+			t.Logf("values:\t%v", values)
+		}
+	}
+
+	// useReplace is false
+	statements, err = testMessage.ConvertToSQL(true, false)
+	asst.Nil(err, common.CombineMessageWithError("test convertToInsertSQL() failed", err))
+	asst.Equal(1, len(statements), "test convertToInsertSQL() failed")
+	for _, statement := range statements {
+		for _, values := range statement {
+			asst.Equal(8, len(values), "test convertToInsertSQL() failed")
+		}
+	}
+	t.Logf("expected:\t%s", testMessageInsertSQL)
+	for _, statement := range statements {
+		for sql, values := range statement {
+			t.Logf("actual:\t%s", sql)
+			t.Logf("values:\t%v", values)
 		}
 	}
 }
@@ -228,19 +244,41 @@ func TestMessage_convertToUpdateSQL(t *testing.T) {
 	err := json.Unmarshal([]byte(testMessageUpdateJSONString), &testMessage)
 	asst.Nil(err, common.CombineMessageWithError("test convertToUpdateSQL() failed", err))
 
-	statements, err := testMessage.ConvertToSQL(true)
-	asst.Nil(err, common.CombineMessageWithError("test ConvertToSQL() failed", err))
-	asst.Equal(2, len(statements), "test ConvertToSQL() failed")
+	// useReplace is true
+	statements, err := testMessage.ConvertToSQL(true, true)
+	asst.Nil(err, common.CombineMessageWithError("test convertToUpdateSQL() failed", err))
+	asst.Equal(1, len(statements), "test convertToUpdateSQL() failed")
 	for _, statement := range statements {
 		for _, values := range statement {
-			asst.Equal(3, len(values), "test ConvertToSQL() failed")
+			asst.Equal(8, len(values), "test convertToUpdateSQL() failed")
 		}
 	}
-	t.Log(testMessageUpdateSQL)
+	t.Logf("expected:\t%s", testMessageReplaceSQL)
 	for _, statement := range statements {
 		for sql, values := range statement {
-			t.Log(sql)
-			t.Log(values)
+			t.Logf("actual:\t%s", sql)
+			t.Logf("values:\t%v", values)
 		}
 	}
+
+	// useReplace is false
+	statements, err = testMessage.ConvertToSQL(true, false)
+	asst.Nil(err, common.CombineMessageWithError("test convertToUpdateSQL() failed", err))
+	asst.Equal(2, len(statements), "test convertToUpdateSQL() failed")
+	for _, statement := range statements {
+		for _, values := range statement {
+			asst.Equal(3, len(values), "test convertToUpdateSQL() failed")
+		}
+	}
+	t.Logf("expected:\t%s", testMessageUpdateSQL)
+	for _, statement := range statements {
+		for sql, values := range statement {
+			t.Logf("actual:\t%s", sql)
+			t.Logf("values:\t%v", values)
+		}
+	}
+}
+
+func TestMessage_convertToDeleteSQL(t *testing.T) {
+
 }

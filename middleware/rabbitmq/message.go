@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/pingcap/errors"
+	"github.com/romberli/go-util/common"
 	"github.com/romberli/go-util/constant"
 )
 
@@ -105,7 +106,16 @@ func (m *Message) GetColumnNames() []string {
 }
 
 // ConvertToSQL returns a map of the sql statement and the values
-func (m *Message) ConvertToSQL(ignoreDDL bool) ([]map[string][]interface{}, error) {
+// if ignoreDDL is true, and sql type is ddl, it will only return nil, nil,
+// if ignoreDDL is false, and sql type is ddl, it will return nil, error
+// if useReplace is true, message with insert or update type will be converted to statements like "replace into ... values ..."
+// if useReplace is false, message with insert type will be converted to statements like "insert into ... values ... on duplicate key update ..."
+// if useReplace is false, message with update type will be converted to statements like "update ... set ... where ..."
+func (m *Message) ConvertToSQL(ignoreDDL bool, useReplace bool) ([]map[string][]interface{}, error) {
+	if len(m.GetData()) == constant.ZeroInt {
+		return nil, errors.New("data should not be empty")
+	}
+
 	if m.GetIsDDL() {
 		if ignoreDDL {
 			return nil, nil
@@ -116,8 +126,14 @@ func (m *Message) ConvertToSQL(ignoreDDL bool) ([]map[string][]interface{}, erro
 
 	switch m.GetSQLType() {
 	case SQLTypeInsert:
+		if useReplace {
+			return m.convertToReplaceSQL()
+		}
 		return m.convertToInsertSQL()
 	case SQLTypeUpdate:
+		if useReplace {
+			return m.convertToReplaceSQL()
+		}
 		return m.convertToUpdateSQL()
 	case SQLTypeDelete:
 		return m.convertToDeleteSQL()
@@ -126,12 +142,7 @@ func (m *Message) ConvertToSQL(ignoreDDL bool) ([]map[string][]interface{}, erro
 	}
 }
 
-// convertToInsertSQL converts message to a insert sql statement
-func (m *Message) convertToInsertSQL() ([]map[string][]interface{}, error) {
-	if len(m.GetData()) == constant.ZeroInt {
-		return nil, errors.New("data should not be empty")
-	}
-
+func (m *Message) convertToReplaceSQL() ([]map[string][]interface{}, error) {
 	var (
 		columnNamesStr string
 		valuesStr      string
@@ -154,8 +165,49 @@ func (m *Message) convertToInsertSQL() ([]map[string][]interface{}, error) {
 	valuesStr = strings.Repeat(value, len(m.GetData()))
 	valuesStr = strings.TrimSuffix(valuesStr, constant.CommaString)
 
-	sql := `INSERT INTO %s.%s(%s) VALUES %s ;`
+	sql := `REPLACE INTO %s.%s(%s) VALUES %s ;`
 	sql = fmt.Sprintf(sql, m.GetDBName(), m.GetTableName(), columnNamesStr, valuesStr)
+
+	for _, data := range m.GetData() {
+		for _, columnName := range columnNames {
+			values = append(values, data[columnName])
+		}
+	}
+
+	return []map[string][]interface{}{{sql: values}}, nil
+}
+
+// convertToInsertSQL converts message to a insert sql statement
+func (m *Message) convertToInsertSQL() ([]map[string][]interface{}, error) {
+	var (
+		columnNamesStr string
+		valuesStr      string
+		duplicateStr   string
+		values         []interface{}
+	)
+
+	// use column slice to determine the column order
+	columnNames := m.GetColumnNames()
+
+	for _, columnName := range columnNames {
+		columnNamesStr += columnName + constant.CommaString
+		if !common.StringInSlice(m.GetPKNames(), columnName) {
+			duplicateStr += fmt.Sprintf("%s=VALUES(%s),", columnName, columnName)
+		}
+	}
+
+	columnNamesStr = strings.TrimSuffix(columnNamesStr, constant.CommaString)
+	duplicateStr = strings.TrimSuffix(duplicateStr, constant.CommaString)
+
+	value := constant.LeftParenthesisString
+	value += strings.Repeat(constant.QuestionMarkString+constant.CommaString, len(columnNames))
+	value = strings.TrimSuffix(value, constant.CommaString)
+	value += constant.RightParenthesisString + constant.CommaString
+	valuesStr = strings.Repeat(value, len(m.GetData()))
+	valuesStr = strings.TrimSuffix(valuesStr, constant.CommaString)
+
+	sql := `INSERT INTO %s.%s(%s) VALUES %s ON DUPLICATE KEY UPDATE %s ;`
+	sql = fmt.Sprintf(sql, m.GetDBName(), m.GetTableName(), columnNamesStr, valuesStr, duplicateStr)
 
 	for _, data := range m.GetData() {
 		for _, columnName := range columnNames {
@@ -168,10 +220,6 @@ func (m *Message) convertToInsertSQL() ([]map[string][]interface{}, error) {
 
 // convertToUpdateSQL converts message to a update sql statement
 func (m *Message) convertToUpdateSQL() ([]map[string][]interface{}, error) {
-	if len(m.GetData()) == constant.ZeroInt {
-		return nil, errors.New("data should not be empty")
-	}
-
 	lenData := len(m.GetData())
 	lenOld := len(m.GetOld())
 	if len(m.GetData()) != len(m.GetOld()) {

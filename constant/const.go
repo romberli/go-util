@@ -46,7 +46,7 @@ const (
 	NullString                          = "null"
 	NoneString                          = "none"
 	NanString                           = "nan"
-	EmptyList                           = "[]"
+	EmptyListString                     = "[]"
 	TransportProtocolTCP                = "tcp"
 	TransportProtocolUDP                = "udp"
 	GOOSLinux                           = "linux"

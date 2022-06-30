@@ -142,6 +142,7 @@ func (m *Message) ConvertToSQL(ignoreDDL bool, useReplace bool) ([]map[string][]
 	}
 }
 
+// convertToReplaceSQL converts the message to replace sql statements
 func (m *Message) convertToReplaceSQL() ([]map[string][]interface{}, error) {
 	var (
 		columnNamesStr string
@@ -177,7 +178,7 @@ func (m *Message) convertToReplaceSQL() ([]map[string][]interface{}, error) {
 	return []map[string][]interface{}{{sql: values}}, nil
 }
 
-// convertToInsertSQL converts message to a insert sql statement
+// convertToInsertSQL converts the message to insert sql statements
 func (m *Message) convertToInsertSQL() ([]map[string][]interface{}, error) {
 	var (
 		columnNamesStr string
@@ -218,7 +219,7 @@ func (m *Message) convertToInsertSQL() ([]map[string][]interface{}, error) {
 	return []map[string][]interface{}{{sql: values}}, nil
 }
 
-// convertToUpdateSQL converts message to a update sql statement
+// convertToUpdateSQL converts the message to update sql statements
 func (m *Message) convertToUpdateSQL() ([]map[string][]interface{}, error) {
 	lenData := len(m.GetData())
 	lenOld := len(m.GetOld())
@@ -266,6 +267,7 @@ func (m *Message) convertToUpdateSQL() ([]map[string][]interface{}, error) {
 	return statements, nil
 }
 
+// convertToDeleteSQL converts the message to delete sql statements
 func (m *Message) convertToDeleteSQL() ([]map[string][]interface{}, error) {
 	// todo: implement
 	return nil, errors.New("does not support delete statement")

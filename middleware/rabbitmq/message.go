@@ -240,7 +240,7 @@ func (m *Message) convertToUpdateSQL() ([]map[string][]interface{}, error) {
 		whereStr := constant.EmptyString
 
 		data := m.GetData()[i]
-		for columnName, _ := range old {
+		for columnName := range old {
 			values = append(values, data[columnName])
 			setStr += columnName + constant.EqualString + constant.QuestionMarkString + constant.CommaString
 		}

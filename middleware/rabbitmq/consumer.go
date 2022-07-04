@@ -60,19 +60,21 @@ func (c *Consumer) GetQueue() amqp.Queue {
 	return c.Queue
 }
 
-// Close closes the channel
-func (c *Consumer) Close() error {
+// CloseChannel closes the channel
+func (c *Consumer) CloseChannel() error {
 	return errors.Trace(c.GetChannel().Close())
 }
 
-// Disconnect disconnects the rabbitmq server
-func (c *Consumer) Disconnect() error {
-	err := c.Close()
-	if err != nil {
-		return err
+// Close disconnects the rabbitmq server
+func (c *Consumer) Close() error {
+	if c.GetChannel() != nil && !c.GetChannel().IsClosed() {
+		err := c.CloseChannel()
+		if err != nil {
+			return err
+		}
 	}
 
-	return c.Conn.Close()
+	return c.GetConn().Close()
 }
 
 // ExchangeDeclare declares an exchange

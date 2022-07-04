@@ -1,9 +1,16 @@
 package rabbitmq
 
 import (
+	"fmt"
+
 	"github.com/pingcap/errors"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/romberli/go-util/constant"
+)
+
+const (
+	ErrQueueExclusiveUseCode           = amqp.AccessRefused
+	ErrQueueExclusiveUseReasonTemplate = `ACCESS_REFUSED - queue '%s' in vhost '%s' in exclusive use`
 )
 
 type Consumer struct {
@@ -126,4 +133,15 @@ func (c *Consumer) Ack(tag uint64, multiple bool) error {
 // Nack negatively acknowledge a delivery
 func (c *Consumer) Nack(tag uint64, multiple bool, requeue bool) error {
 	return errors.Trace(c.GetChannel().Nack(tag, multiple, requeue))
+}
+
+func (c *Consumer) IsExclusiveUseError(queue string, err error) bool {
+	e, ok := err.(*amqp.Error)
+	if !ok {
+		return false
+	}
+
+	message := fmt.Sprintf(ErrQueueExclusiveUseReasonTemplate, queue, c.GetConn().GetConfig().GetVhost())
+
+	return e.Code == ErrQueueExclusiveUseCode && e.Reason == message
 }

@@ -35,6 +35,9 @@ func (t *Timer) GetMutex() *sync.Mutex {
 
 // GetNextStartTime returns the next start time
 func (t *Timer) GetNextStartTime() time.Time {
+	t.GetMutex().Lock()
+	defer t.GetMutex().Unlock()
+
 	return t.nextStartTime
 }
 

@@ -94,4 +94,6 @@ const (
 
 	DefaultTextContentType = "text/plain"
 	DefaultJSONContentType = "application/json"
+
+	LogWithStackString = "%+v"
 )

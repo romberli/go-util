@@ -5,6 +5,7 @@ import (
 
 	"github.com/pingcap/errors"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/romberli/go-util/constant"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -30,6 +31,10 @@ func NewConfigWithDefault(addr, user, pass string) *Config {
 
 // newConfig returns a new *Config
 func newConfig(addr, user, pass, vhost, tag string) *Config {
+	if tag == constant.EmptyString {
+		tag = uuid.NewV4().String()
+	}
+
 	return &Config{
 		Addr:  addr,
 		User:  user,

@@ -121,8 +121,8 @@ func (c *Consumer) Consume(queue string, exclusive bool) (<-chan amqp.Delivery, 
 }
 
 // Cancel cancels the delivery of a consumer
-func (c *Consumer) Cancel(consumer string) error {
-	return errors.Trace(c.GetChannel().Cancel(consumer, false))
+func (c *Consumer) Cancel() error {
+	return errors.Trace(c.GetChannel().Cancel(c.GetConn().GetConfig().GetTag(), false))
 }
 
 // Ack acknowledges a delivery

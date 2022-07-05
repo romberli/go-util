@@ -78,7 +78,7 @@ func TestConsumer_Consume(t *testing.T) {
 			log.Infof("%s", d.Body)
 		default:
 			log.Infof("no message to consume, will exit now")
-			err = testConsumer.Cancel(testTag)
+			err = testConsumer.Cancel()
 			asst.Nil(err, common.CombineMessageWithError("test Consume() failed", err))
 			return
 		}
@@ -90,7 +90,7 @@ func TestConsumer_Cancel(t *testing.T) {
 
 	_, err := testConsumer.Consume(testQueueName, testExclusive)
 	asst.Nil(err, common.CombineMessageWithError("test Ack() failed", err))
-	err = testConsumer.Cancel(testTag)
+	err = testConsumer.Cancel()
 	asst.Nil(err, common.CombineMessageWithError("test Cancel() failed", err))
 }
 
@@ -107,7 +107,7 @@ func TestConsumer_Ack(t *testing.T) {
 			asst.Nil(err, common.CombineMessageWithError("test Ack() failed", err))
 		default:
 			log.Infof("no message to consume, will exit now")
-			err = testConsumer.Cancel(testTag)
+			err = testConsumer.Cancel()
 			asst.Nil(err, common.CombineMessageWithError("test Ack() failed", err))
 			return
 		}
@@ -127,7 +127,7 @@ func TestConsumer_Nack(t *testing.T) {
 			asst.Nil(err, common.CombineMessageWithError("test Nack() failed", err))
 		default:
 			log.Infof("no message to consume, will exit now")
-			err = testConsumer.Cancel(testTag)
+			err = testConsumer.Cancel()
 			asst.Nil(err, common.CombineMessageWithError("test Nack() failed", err))
 			return
 		}

@@ -9,6 +9,7 @@ const (
 	testUser  = "guest"
 	testPass  = "guest"
 	testVhost = "/test_vhost"
+	testTag   = "test_consumer"
 
 	testExchangeName    = "test_exchange"
 	testExchangeType    = "topic"
@@ -19,7 +20,6 @@ const (
 	testExpiration      = 1000 * 60 * 60 * 5 // 5 minutes
 	testPublishCount    = 5
 
-	testConsumerName  = "test_consumer"
 	testPrefetchCount = 3
 	testGlobal        = true
 	testExclusive     = true
@@ -37,7 +37,7 @@ func init() {
 func testCreateConn(addr, user, pass string) *Conn {
 	var err error
 
-	testConn, err = NewConnWithDefault(addr, user, pass)
+	testConn, err = NewConn(addr, user, pass, testVhost, testTag)
 	if err != nil {
 		log.Errorf("creating new Connection failed. %s", err)
 	}

@@ -20,8 +20,8 @@ type Consumer struct {
 }
 
 // NewConsumer returns a new *Consumer
-func NewConsumer(addr, user, pass, vhost string) (*Consumer, error) {
-	return NewConsumerWithConfig(NewConfig(addr, user, pass, vhost))
+func NewConsumer(addr, user, pass, vhost, tag string) (*Consumer, error) {
+	return NewConsumerWithConfig(NewConfig(addr, user, pass, vhost, tag))
 }
 
 // NewConsumerWithDefault returns a new *Consumer with default config
@@ -111,8 +111,8 @@ func (c *Consumer) Qos(prefetchCount int, global bool) error {
 }
 
 // Consume consumes messages from the queue
-func (c *Consumer) Consume(queue, consumer string, exclusive bool) (<-chan amqp.Delivery, error) {
-	deliveryChan, err := c.GetChannel().Consume(queue, consumer, false, exclusive, false, false, nil)
+func (c *Consumer) Consume(queue string, exclusive bool) (<-chan amqp.Delivery, error) {
+	deliveryChan, err := c.GetChannel().Consume(queue, c.GetConn().GetConfig().GetTag(), false, exclusive, false, false, nil)
 	if err != nil {
 		return nil, errors.Trace(err)
 	}

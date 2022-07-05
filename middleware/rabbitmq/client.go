@@ -5,31 +5,38 @@ import (
 
 	"github.com/pingcap/errors"
 	amqp "github.com/rabbitmq/amqp091-go"
+	uuid "github.com/satori/go.uuid"
 )
 
-const (
-	defaultVhost = "/"
-)
+const DefaultRabbitmqVhost = "/"
 
 type Config struct {
 	Addr  string
 	User  string
 	Pass  string
 	Vhost string
+	Tag   string
 }
 
 // NewConfig returns a new *Config
-func NewConfig(addr, user, pass, vhost string) *Config {
+func NewConfig(addr, user, pass, vhost, tag string) *Config {
+	return newConfig(addr, user, pass, vhost, tag)
+}
+
+// NewConfigWithDefault returns a new *Config with default values
+func NewConfigWithDefault(addr, user, pass string) *Config {
+	return NewConfig(addr, user, pass, DefaultRabbitmqVhost, uuid.NewV4().String())
+}
+
+// newConfig returns a new *Config
+func newConfig(addr, user, pass, vhost, tag string) *Config {
 	return &Config{
 		Addr:  addr,
 		User:  user,
 		Pass:  pass,
 		Vhost: vhost,
+		Tag:   tag,
 	}
-}
-
-func NewConfigWithDefault(addr, user, pass string) *Config {
-	return NewConfig(addr, user, pass, defaultVhost)
 }
 
 // GetAddr returns the address
@@ -52,6 +59,11 @@ func (c *Config) GetVhost() string {
 	return c.Vhost
 }
 
+// GetTag returns the tag
+func (c *Config) GetTag() string {
+	return c.Tag
+}
+
 // GetURL returns the URL
 func (c *Config) GetURL() string {
 	return fmt.Sprintf("amqp://%s:%s@%s%s", c.GetUser(), c.GetPass(), c.GetAddr(), c.GetVhost())
@@ -62,14 +74,14 @@ type Conn struct {
 	*amqp.Connection
 }
 
-// NewConn returns a new *Conn with given address, user and password
-func NewConn(addr, user, pass, vhost string) (*Conn, error) {
-	config := NewConfig(addr, user, pass, vhost)
+// NewConn returns a new *Conn
+func NewConn(addr, user, pass, vhost, tag string) (*Conn, error) {
+	config := NewConfig(addr, user, pass, vhost, tag)
 
 	return NewConnWithConfig(config)
 }
 
-// NewConnWithDefault returns a new *Conn with default config
+// NewConnWithDefault returns a new *Conn with default values
 func NewConnWithDefault(addr, user, pass string) (*Conn, error) {
 	return NewConnWithConfig(NewConfigWithDefault(addr, user, pass))
 }

@@ -13,8 +13,8 @@ type Producer struct {
 }
 
 // NewProducer returns a new *Producer
-func NewProducer(addr, user, pass, vhost string) (*Producer, error) {
-	return NewProducerWithConfig(NewConfig(addr, user, pass, vhost))
+func NewProducer(addr, user, pass, vhost, tag string) (*Producer, error) {
+	return NewProducerWithConfig(NewConfig(addr, user, pass, vhost, tag))
 }
 
 // NewProducerWithDefault returns a new *Producer with default config

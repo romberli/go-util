@@ -50,24 +50,26 @@ const (
 
 	LogWithStackString = "%+v"
 
-	TransportProtocolTCP                = "tcp"
-	TransportProtocolUDP                = "udp"
-	GOOSLinux                           = "linux"
-	GOOSDarwin                          = "darwin"
-	GOOSWindows                         = "windows"
-	DefaultFileMode         os.FileMode = 0644
-	DefaultExecFileMode     os.FileMode = 0755
-	DefaultKillSignal                   = 15
-	DefaultNormalExitCode               = 0
-	DefaultAbnormalExitCode             = 1
-	MaxPercentage                       = 100
-	ZeroInt                             = 0
-	MinUInt                 uint        = 0
-	MaxUInt                             = ^uint(0)
-	MaxInt                              = int(^uint(0) >> 1)
-	MinInt                              = ^MaxInt
-	MinPort                             = 1
-	MaxPort                             = 65535
+	TransportProtocolTCP                  = "tcp"
+	TransportProtocolUDP                  = "udp"
+	GOOSLinux                             = "linux"
+	GOOSDarwin                            = "darwin"
+	GOOSWindows                           = "windows"
+	DefaultFileMode         os.FileMode   = 0644
+	DefaultExecFileMode     os.FileMode   = 0755
+	DefaultKillSignal                     = 15
+	DefaultNormalExitCode                 = 0
+	DefaultAbnormalExitCode               = 1
+	MaxPercentage                         = 100
+	ZeroInt                               = 0
+	MinUInt                 uint          = 0
+	MaxUInt                               = ^uint(0)
+	MaxInt                                = int(^uint(0) >> 1)
+	MinInt                                = ^MaxInt
+	MinPort                               = 1
+	MaxPort                               = 65535
+	MinTimeDuration         time.Duration = -1 << 63
+	MaxTimeDuration         time.Duration = 1<<63 - 1
 
 	RootDir                         = "/"
 	CurrentDir                      = "./"

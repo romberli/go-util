@@ -224,8 +224,8 @@ github.com/romberli/dynamic-struct v1.2.1 h1:vle/rxIUl7IgreLScMSg9RhYBjygY/5Hj/O
 github.com/romberli/dynamic-struct v1.2.1/go.mod h1:Jk2Z0Dm0diV7O4Lg1MfIyJ0kvOxfN+imwZVO5SOUL94=
 github.com/romberli/go-multierror v1.1.2-0.20220118054508-60f25a547317 h1:TtgDgZp/5SewHecWKMQZ7QmxNDrmIXV09VfzTsfZFvY=
 github.com/romberli/go-multierror v1.1.2-0.20220118054508-60f25a547317/go.mod h1:zl7X0Cn5uTu9unezPrgXXsrQAq2Nj/6Cne0qJkFiAOs=
-github.com/romberli/log v1.0.21-0.20220118103033-fc370f89c0ea h1:83DFT3u0iZYOMyzPVX5bLlW1aseobm/s4qej2jRRq7Y=
-github.com/romberli/log v1.0.21-0.20220118103033-fc370f89c0ea/go.mod h1:dimUkjZUlfFt+ECjq85mQGjEgh5PHYxjOnHzCux3FYE=
+github.com/romberli/log v1.0.24-0.20220725090016-7b93bd007126 h1:zAe+DpXP26dOJU3+ZGrXr635b5UZLA/qHUKl3+dTQ00=
+github.com/romberli/log v1.0.24-0.20220725090016-7b93bd007126/go.mod h1:D/TkYeEyKz+DXbGPeSZccQBUF6uhrs8CXDABCDo/bjM=
 github.com/satori/go.uuid v1.2.0 h1:0uYX9dsZ2yD7q2RtLRtPSdGDWzjeM3TbMJP9utgA0ww=
 github.com/satori/go.uuid v1.2.0/go.mod h1:dA0hQrYB0VpLJoorglMZABFdXlWrHn1NEOzdhQKdks0=
 github.com/shirou/gopsutil/v3 v3.20.11 h1:NeVf1K0cgxsWz+N3671ojRptdgzvp7BXL3KV21R0JnA=
@@ -343,8 +343,9 @@ golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c/go.mod h1:h1NjWce9XRLGQEsW7w
 golang.org/x/sys v0.0.0-20210330210617-4fbd30eecc44/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20210403161142-5e06dd20ab57/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20210510120138-977fb7262007/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
-golang.org/x/sys v0.0.0-20210603081109-ebe580a85c40 h1:JWgyZ1qgdTaF3N3oxC+MdTV7qvEEgHo3otj+HB5CM7Q=
 golang.org/x/sys v0.0.0-20210603081109-ebe580a85c40/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+golang.org/x/sys v0.0.0-20220721230656-c6bc011c0c49 h1:TMjZDarEwf621XDryfitp/8awEhiZNiwgphKlTMGRIg=
+golang.org/x/sys v0.0.0-20220721230656-c6bc011c0c49/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1/go.mod h1:bj7SfCRtBDWHUb9snDiAeCFNEtKQo2Wmx5Cou7ajbmo=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 golang.org/x/text v0.3.1-0.20180807135948-17ff2d5776d2/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=

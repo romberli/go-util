@@ -2,6 +2,7 @@ package rabbitmq
 
 import (
 	"testing"
+	"time"
 
 	"github.com/romberli/go-util/common"
 	"github.com/romberli/log"
@@ -123,13 +124,16 @@ func TestConsumer_Nack(t *testing.T) {
 		select {
 		case d := <-deliveryChan:
 			log.Infof("%s", d.Body)
-			err = testConsumer.Nack(d.DeliveryTag, testMultiple, testRequeue)
+			// err = testConsumer.Nack(d.DeliveryTag, testMultiple, testRequeue)
 			asst.Nil(err, common.CombineMessageWithError("test Nack() failed", err))
 		default:
-			log.Infof("no message to consume, will exit now")
-			err = testConsumer.Cancel()
-			asst.Nil(err, common.CombineMessageWithError("test Nack() failed", err))
-			return
+			log.Infof("no message to consume...")
+			time.Sleep(time.Second)
+			continue
+			// log.Infof("no message to consume, will exit now")
+			// err = testConsumer.Cancel()
+			// asst.Nil(err, common.CombineMessageWithError("test Nack() failed", err))
+			// return
 		}
 	}
 }

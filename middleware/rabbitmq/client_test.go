@@ -8,7 +8,7 @@ const (
 	testAddr  = "192.168.137.11:5672"
 	testUser  = "guest"
 	testPass  = "guest"
-	testVhost = "/test_vhost"
+	testVhost = "/"
 	testTag   = "test_consumer"
 
 	testExchangeName    = "test_exchange"

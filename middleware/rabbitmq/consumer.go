@@ -14,9 +14,9 @@ const (
 )
 
 type Consumer struct {
-	Conn    *Conn
-	Channel *amqp.Channel
-	Queue   amqp.Queue
+	Conn  *Conn
+	Chan  *amqp.Channel
+	Queue amqp.Queue
 }
 
 // NewConsumer returns a new *Consumer
@@ -47,8 +47,8 @@ func NewConsumerWithConn(conn *Conn) (*Consumer, error) {
 	}
 
 	return &Consumer{
-		Conn:    conn,
-		Channel: channel,
+		Conn: conn,
+		Chan: channel,
 	}, nil
 }
 
@@ -59,7 +59,7 @@ func (c *Consumer) GetConn() *Conn {
 
 // GetChannel returns the channel
 func (c *Consumer) GetChannel() *amqp.Channel {
-	return c.Channel
+	return c.Chan
 }
 
 // GetQueue returns the queue
@@ -84,14 +84,39 @@ func (c *Consumer) Close() error {
 	return c.GetConn().Close()
 }
 
+// Channel returns the amqp channel,
+// if the channel of the consumer is nil or had been closed, a new channel will be opened,
+// otherwise the existing channel will be returned
+func (c *Consumer) Channel() (*amqp.Channel, error) {
+	if c.GetChannel() == nil || c.GetChannel().IsClosed() {
+		var err error
+		c.Chan, err = c.GetConn().Channel()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return c.GetChannel(), nil
+}
+
 // ExchangeDeclare declares an exchange
 func (c *Consumer) ExchangeDeclare(name, kind string) error {
-	return errors.Trace(c.GetChannel().ExchangeDeclare(name, kind, true, false, false, false, nil))
+	channel, err := c.Channel()
+	if err != nil {
+		return err
+	}
+
+	return errors.Trace(channel.ExchangeDeclare(name, kind, true, false, false, false, nil))
 }
 
 // QueueDeclare declares a queue
 func (c *Consumer) QueueDeclare(name string) (amqp.Queue, error) {
-	queue, err := c.GetChannel().QueueDeclare(name, true, false, false, false, nil)
+	channel, err := c.Channel()
+	if err != nil {
+		return amqp.Queue{}, err
+	}
+
+	queue, err := channel.QueueDeclare(name, true, false, false, false, nil)
 	if err != nil {
 		return amqp.Queue{}, errors.Trace(err)
 	}
@@ -101,18 +126,33 @@ func (c *Consumer) QueueDeclare(name string) (amqp.Queue, error) {
 
 // QueueBind binds a queue to an exchange
 func (c *Consumer) QueueBind(queue, exchange, key string) error {
-	return errors.Trace(c.GetChannel().QueueBind(queue, key, exchange, false, nil))
+	channel, err := c.Channel()
+	if err != nil {
+		return err
+	}
+
+	return errors.Trace(channel.QueueBind(queue, key, exchange, false, nil))
 }
 
 // Qos controls how many messages or how many bytes the server will try to keep on
 // the network for consumers before receiving delivery acks.
 func (c *Consumer) Qos(prefetchCount int, global bool) error {
-	return errors.Trace(c.GetChannel().Qos(prefetchCount, constant.ZeroInt, global))
+	channel, err := c.Channel()
+	if err != nil {
+		return err
+	}
+
+	return errors.Trace(channel.Qos(prefetchCount, constant.ZeroInt, global))
 }
 
 // Consume consumes messages from the queue
 func (c *Consumer) Consume(queue string, exclusive bool) (<-chan amqp.Delivery, error) {
-	deliveryChan, err := c.GetChannel().Consume(queue, c.GetConn().GetConfig().GetTag(), false, exclusive, false, false, nil)
+	channel, err := c.Channel()
+	if err != nil {
+		return nil, err
+	}
+
+	deliveryChan, err := channel.Consume(queue, c.GetConn().GetConfig().GetTag(), false, exclusive, false, false, nil)
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
@@ -122,20 +162,39 @@ func (c *Consumer) Consume(queue string, exclusive bool) (<-chan amqp.Delivery, 
 
 // Cancel cancels the delivery of a consumer
 func (c *Consumer) Cancel() error {
-	return errors.Trace(c.GetChannel().Cancel(c.GetConn().GetConfig().GetTag(), false))
+	channel, err := c.Channel()
+	if err != nil {
+		return err
+	}
+
+	return errors.Trace(channel.Cancel(c.GetConn().GetConfig().GetTag(), false))
 }
 
 // Ack acknowledges a delivery
 func (c *Consumer) Ack(tag uint64, multiple bool) error {
-	return errors.Trace(c.GetChannel().Ack(tag, multiple))
+	channel, err := c.Channel()
+	if err != nil {
+		return err
+	}
+
+	return errors.Trace(channel.Ack(tag, multiple))
 }
 
 // Nack negatively acknowledge a delivery
 func (c *Consumer) Nack(tag uint64, multiple bool, requeue bool) error {
-	return errors.Trace(c.GetChannel().Nack(tag, multiple, requeue))
+	channel, err := c.Channel()
+	if err != nil {
+		return err
+	}
+
+	return errors.Trace(channel.Nack(tag, multiple, requeue))
 }
 
 func (c *Consumer) IsExclusiveUseError(queue string, err error) bool {
+	if errors.HasStack(err) {
+		err = errors.Unwrap(err)
+	}
+
 	e, ok := err.(*amqp.Error)
 	if !ok {
 		return false

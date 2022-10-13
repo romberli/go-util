@@ -261,7 +261,7 @@ func (p *Pool) init() error {
 	}
 
 	// start a new routine to maintain free connection channel
-	// go p.maintainFreeChan()
+	go p.maintainFreeChan()
 
 	return nil
 }

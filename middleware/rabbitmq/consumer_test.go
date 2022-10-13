@@ -118,22 +118,75 @@ func TestConsumer_Ack(t *testing.T) {
 func TestConsumer_Nack(t *testing.T) {
 	asst := assert.New(t)
 
-	deliveryChan, err := testConsumer.Consume(testQueueName, testExclusive)
-	asst.Nil(err, common.CombineMessageWithError("test Nack() failed", err))
 	for {
-		select {
-		case d := <-deliveryChan:
-			log.Infof("%s", d.Body)
-			// err = testConsumer.Nack(d.DeliveryTag, testMultiple, testRequeue)
-			asst.Nil(err, common.CombineMessageWithError("test Nack() failed", err))
-		default:
-			log.Infof("no message to consume...")
-			time.Sleep(time.Second)
-			continue
-			// log.Infof("no message to consume, will exit now")
-			// err = testConsumer.Cancel()
-			// asst.Nil(err, common.CombineMessageWithError("test Nack() failed", err))
-			// return
+		deliveryChan, err := testConsumer.Consume(testQueueName, testExclusive)
+		// asst.Nil(err, common.CombineMessageWithError("test Nack() failed", err))
+		if err != nil {
+			if testConsumer.IsExclusiveUseError(testQueueName, err) {
+				log.Infof("queue %s is exclusive used, will sleep 3 seconds and try again", testQueueName)
+				time.Sleep(time.Second * 3)
+				continue
+			}
+		}
+		for {
+			select {
+			case d, ok := <-deliveryChan:
+				if !ok {
+					log.Infof("delivery chan has been closed")
+					time.Sleep(time.Second * 3)
+					continue
+				}
+				log.Infof("%s", d.Body)
+				// err = testConsumer.Nack(d.DeliveryTag, testMultiple, testRequeue)
+				asst.Nil(err, common.CombineMessageWithError("test Nack() failed", err))
+				time.Sleep(time.Second * 3)
+			default:
+				log.Infof("no message to consume...")
+				time.Sleep(time.Second * 3)
+				continue
+				// log.Infof("no message to consume, will exit now")
+				// err = testConsumer.Cancel()
+				// asst.Nil(err, common.CombineMessageWithError("test Nack() failed", err))
+				// return
+			}
+		}
+	}
+}
+
+func TestConsumer_Nack1(t *testing.T) {
+	asst := assert.New(t)
+
+	for {
+		deliveryChan, err := testConsumer.Consume(testQueueName, testExclusive)
+		// asst.Nil(err, common.CombineMessageWithError("test Nack() failed", err))
+		if err != nil {
+			if testConsumer.IsExclusiveUseError(testQueueName, err) {
+				log.Infof("queue %s is exclusive used, will sleep 3 seconds and try again", testQueueName)
+				time.Sleep(time.Second * 3)
+				continue
+			}
+		}
+		for {
+			select {
+			case d, ok := <-deliveryChan:
+				if !ok {
+					log.Infof("delivery chan has been closed")
+					time.Sleep(time.Second * 3)
+					continue
+				}
+				log.Infof("%s", d.Body)
+				// err = testConsumer.Nack(d.DeliveryTag, testMultiple, testRequeue)
+				asst.Nil(err, common.CombineMessageWithError("test Nack() failed", err))
+				time.Sleep(time.Second * 3)
+			default:
+				log.Infof("no message to consume...")
+				time.Sleep(time.Second * 3)
+				continue
+				// log.Infof("no message to consume, will exit now")
+				// err = testConsumer.Cancel()
+				// asst.Nil(err, common.CombineMessageWithError("test Nack() failed", err))
+				// return
+			}
 		}
 	}
 }

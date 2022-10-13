@@ -13,13 +13,14 @@ import (
 )
 
 const (
-	DefaultMaxConnections     = 20
-	DefaultInitConnections    = 5
-	DefaultMaxIdleConnections = 10
-	DefaultMaxIdleTime        = 1800 // seconds
-	DefaultKeepAliveInterval  = 300  // seconds
-	DefaultKeepAliveChunkSize = 5
-	DefaultSleepTime          = 1 // seconds
+	DefaultMaxConnections      = 20
+	DefaultInitConnections     = 5
+	DefaultMaxIdleConnections  = 10
+	DefaultMaxIdleTime         = 1800 // seconds
+	DefaultKeepAliveInterval   = 300  // seconds
+	DefaultKeepAliveChunkSize  = 5
+	DefaultSleepTime           = 1 // seconds
+	DefaultFreeChanLengthTimes = 2
 )
 
 var _ middleware.PoolConn = (*PoolConn)(nil)
@@ -136,6 +137,11 @@ func (pc *PoolConn) Close() error {
 	pc.Pool.Lock()
 	defer pc.Pool.Unlock()
 
+	err := pc.Rollback()
+	if err != nil {
+		return err
+	}
+
 	pc.Pool.put(pc)
 
 	return nil
@@ -145,6 +151,12 @@ func (pc *PoolConn) Close() error {
 // there is no need to disconnect manually, consider to use Close() instead.
 func (pc *PoolConn) Disconnect() error {
 	pc.Pool = nil
+
+	err := pc.Rollback()
+	if err != nil {
+		return err
+	}
+
 	return pc.Conn.Close()
 }
 
@@ -219,9 +231,13 @@ func NewPoolWithConfig(config Config, maxConnections, initConnections, maxIdleCo
 
 // NewPoolWithPoolConfig returns a new *Pool with a PoolConfig object
 func NewPoolWithPoolConfig(config PoolConfig) (*Pool, error) {
+	if config.InitConnections > config.MaxConnections {
+		return nil, errors.Errorf("init connections should not be less or equal than max connections. init connections: %d, max connections: %d", config.InitConnections, config.MaxConnections)
+	}
+
 	p := &Pool{
 		PoolConfig:      config,
-		freeConnChan:    make(chan *PoolConn, config.MaxConnections),
+		freeConnChan:    make(chan *PoolConn, config.MaxConnections*DefaultFreeChanLengthTimes),
 		usedConnections: constant.ZeroInt,
 		expireTime:      time.Now().Add(time.Duration(config.MaxIdleTime) * time.Second),
 		keepAliveTime:   time.Now().Add(time.Duration(config.KeepAliveInterval) * time.Second),
@@ -245,7 +261,7 @@ func (p *Pool) init() error {
 	}
 
 	// start a new routine to maintain free connection channel
-	go p.maintainFreeChan()
+	// go p.maintainFreeChan()
 
 	return nil
 }
@@ -271,6 +287,10 @@ func (p *Pool) Supply(num int) error {
 // supply creates given number of connections and add them to free connection channel
 func (p *Pool) supply(num int) error {
 	if p.isClosed {
+		return nil
+	}
+
+	if num <= constant.ZeroInt {
 		return nil
 	}
 
@@ -309,6 +329,7 @@ func (p *Pool) put(pc *PoolConn) {
 // getFromFreeChan gets a *PoolConn from free connection channel
 func (p *Pool) getFromFreeChan() (*PoolConn, bool) {
 	pc, ok := <-p.freeConnChan
+
 	return pc, ok
 }
 

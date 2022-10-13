@@ -25,7 +25,7 @@ func TestPool(t *testing.T) {
 
 	log.SetLevel(zapcore.DebugLevel)
 
-	addr := "192.168.10.219:3306"
+	addr := "192.168.137.11:3306"
 	dbName := "test"
 	dbUser := "root"
 	dbPass := "root"
@@ -64,4 +64,63 @@ func TestPool(t *testing.T) {
 
 	err = pool.Close()
 	asst.Nil(err, "close pool failed")
+}
+
+func TestPool_Transaction(t *testing.T) {
+	var (
+		err  error
+		pool *Pool
+	)
+
+	asst := assert.New(t)
+
+	log.SetLevel(zapcore.DebugLevel)
+
+	addr := "192.168.137.11:3306"
+	dbName := "test"
+	dbUser := "root"
+	dbPass := "root"
+
+	// create pool
+	pool, err = NewPool(addr, dbName, dbUser, dbPass, 1, 1, 1, 10000, 1000)
+	asst.Nil(err, "create pool failed. addr: %s, dbName: %s, dbUser: %s, dbPass: %s", addr, dbName, dbUser, dbPass)
+
+	// get transaction from the pool
+	trx, err := pool.Transaction()
+	asst.Nil(err, "get transaction from the pool failed")
+
+	defer func() {
+		err = trx.Close()
+		asst.Nil(err, "Close transaction failed")
+	}()
+
+	err = trx.Begin()
+	asst.Nil(err, "Begin transaction failed")
+
+	sql := "INSERT INTO t01 (id, col1) VALUES (?, ?)"
+	_, err = trx.Execute(sql, 1, 1)
+	asst.Nil(err, "execute sql failed. sql: %s", sql)
+	result, err := trx.Execute("SELECT COUNT(*) FROM t01")
+	asst.Nil(err, "execute sql failed. sql: %s", sql)
+	count, err := result.GetInt(0, 0)
+	asst.Nil(err, "get count failed")
+	t.Logf("count: %d", count)
+
+	err = trx.Close()
+	asst.Nil(err, "Close transaction failed")
+
+	trx, err = pool.Transaction()
+	asst.Nil(err, "get transaction from the pool failed")
+	// err = trx.Begin()
+	// asst.Nil(err, "Begin transaction failed")
+	_, err = trx.Execute(sql, 2, 2)
+	asst.Nil(err, "execute sql failed. sql: %s", sql)
+	result, err = trx.Execute("SELECT COUNT(*) FROM t01")
+	asst.Nil(err, "execute sql failed. sql: %s", sql)
+	count, err = result.GetInt(0, 0)
+	asst.Nil(err, "get count failed")
+	t.Logf("count: %d", count)
+
+	err = trx.Begin()
+	asst.Nil(err, "Begin transaction failed")
 }

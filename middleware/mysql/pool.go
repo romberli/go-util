@@ -132,7 +132,7 @@ func NewPoolConnWithPool(pool *Pool, addr, dbName, dbUser, dbPass string) (*Pool
 
 // Close returns connection back to the pool
 func (pc *PoolConn) Close() error {
-	if pc.Pool.isClosed == true || pc.Pool == nil {
+	if pc.Pool.IsClosed() == true || pc.Pool == nil {
 		return pc.Disconnect()
 	}
 
@@ -288,7 +288,7 @@ func (p *Pool) Supply(num int) error {
 
 // supply creates given number of connections and add them to free connection channel
 func (p *Pool) supply(num int) error {
-	if p.isClosed {
+	if p.IsClosed() {
 		return nil
 	}
 
@@ -351,7 +351,7 @@ func (p *Pool) Get() (middleware.PoolConn, error) {
 // get gets a connection from the pool and validate it,
 // if there is no valid connection in the pool, it will create a new connection
 func (p *Pool) get() (*PoolConn, error) {
-	if p.isClosed {
+	if p.IsClosed() {
 		return nil, errors.New("pool had been closed")
 	}
 
@@ -400,7 +400,7 @@ func (p *Pool) Transaction() (middleware.Transaction, error) {
 // it will log with debug level
 func (p *Pool) maintainFreeChan() {
 	for {
-		if p.isClosed {
+		if p.IsClosed() {
 			return
 		}
 

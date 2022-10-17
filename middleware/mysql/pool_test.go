@@ -106,11 +106,11 @@ func TestPool_Transaction(t *testing.T) {
 	asst.Nil(err, "get count failed")
 	t.Logf("count: %d", count)
 
-	err = trx.Close()
-	asst.Nil(err, "Close transaction failed")
+	// err = trx.Close()
+	// asst.Nil(err, "Close transaction failed")
 
-	trx, err = pool.Transaction()
-	asst.Nil(err, "get transaction from the pool failed")
+	// trx, err = pool.Transaction()
+	// asst.Nil(err, "get transaction from the pool failed")
 	// err = trx.Begin()
 	// asst.Nil(err, "Begin transaction failed")
 	_, err = trx.Execute(sql, 2, 2)
@@ -121,6 +121,6 @@ func TestPool_Transaction(t *testing.T) {
 	asst.Nil(err, "get count failed")
 	t.Logf("count: %d", count)
 
-	err = trx.Begin()
+	err = trx.Commit()
 	asst.Nil(err, "Begin transaction failed")
 }

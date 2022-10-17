@@ -123,7 +123,9 @@ func NewPoolConnWithPool(pool *Pool, addr, dbName, dbUser, dbPass string) (*Pool
 		return pc, nil
 	}
 
-	_ = pc.Disconnect()
+	if pc != nil {
+		_ = pc.Disconnect()
+	}
 
 	return nil, errors.New("new created connection is not valid")
 }
@@ -369,7 +371,7 @@ func (p *Pool) get() (*PoolConn, error) {
 
 		err := pc.Disconnect()
 		if err != nil {
-			return nil, errors.Errorf("disconnecting invalid connection failed when getting connection from the pool. error:\n%+v", err)
+			log.Errorf("disconnecting invalid connection failed when getting connection from the pool. error:\n%+v", err)
 		}
 	}
 
@@ -386,6 +388,9 @@ func (p *Pool) get() (*PoolConn, error) {
 
 // Transaction simply returns *PoolConn, because it had implemented Transaction interface
 func (p *Pool) Transaction() (middleware.Transaction, error) {
+	p.Lock()
+	defer p.Unlock()
+
 	return p.get()
 }
 
@@ -436,7 +441,7 @@ func (p *Pool) maintainFreeChan() {
 // keepAlive keeps alive given number of connections in the pool to avoid disconnected by server side automatically,
 // it also checks if connections are still valid
 func (p *Pool) keepAlive(num int) error {
-	if len(p.freeConnChan) == 0 {
+	if len(p.freeConnChan) == constant.ZeroInt {
 		return nil
 	}
 
@@ -473,8 +478,8 @@ func (p *Pool) Release(num int) error {
 func (p *Pool) release(num int) error {
 	merr := &multierror.Error{}
 
-	for i := 0; i < num; i++ {
-		if len(p.freeConnChan) == 0 {
+	for i := constant.ZeroInt; i < num; i++ {
+		if len(p.freeConnChan) == constant.ZeroInt {
 			return nil
 		}
 

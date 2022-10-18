@@ -57,20 +57,20 @@ func initConn() *Conn {
 
 func createTable() error {
 	sql := `
-		create table if not exists t05(
-			id int(11) auto_increment primary key,
-			name varchar(100),
-			col1 int(11),
-			col2 decimal(16, 4),
-			last_update_time datetime(6) not null default current_timestamp(6) on update current_timestamp(6)
-		) engine=innodb character set utf8mb4;
+		CREATE TABLE if NOT EXISTS t05(
+			id INT(11) auto_increment PRIMARY KEY,
+			NAME VARCHAR(100),
+			col1 INT(11),
+			col2 DECIMAL(16, 4),
+			last_update_time datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)
+		) engine=innodb CHARACTER SET utf8mb4;
 	`
 	_, err := conn.Execute(sql)
 	return err
 }
 
 func dropTable() error {
-	sql := `drop table if exists t05;`
+	sql := `DROP TABLE if EXISTS t05;`
 	_, err := conn.Execute(sql)
 	return err
 }
@@ -101,7 +101,7 @@ func TestMySQLConnection(t *testing.T) {
 	// insert data
 	ts := newTestStruct("aa", 1, 3.14)
 	tsEmpty := newTestStructWithDefault()
-	sql = `insert into t05(name, col1, col2) values(?, ?, ?), (?, ?, ?);`
+	sql = `INSERT INTO t05(name, col1, col2) VALUES(?, ?, ?), (?, ?, ?);`
 	result, err = conn.Execute(sql, ts.Name, ts.Col1, ts.Col2, tsEmpty.Name, tsEmpty.Col1, tsEmpty.Col2)
 	asst.Nil(err, "execute insert sql failed")
 
@@ -110,7 +110,7 @@ func TestMySQLConnection(t *testing.T) {
 	asst.Nil(err, "execute select sql failed")
 	inClause, err = middleware.ConvertSliceToString(interfaces...)
 	timeStr := time.Now().Add(-time.Hour).Format(constant.DefaultTimeLayout)
-	sql = `select id, name, col1, col2, last_update_time from t05 where name in (%s) and last_update_time >= ?`
+	sql = `SELECT id, name, col1, col2, last_update_time FROM t05 WHERE name IN (%s) AND last_update_time >= ?`
 	sql = fmt.Sprintf(sql, inClause)
 	result, err = conn.Execute(sql, timeStr)
 	asst.Nil(err, "execute select sql failed")
@@ -134,4 +134,14 @@ func TestMySQLConnection(t *testing.T) {
 	// drop table
 	err = dropTable()
 	asst.Nil(err, "execute drop sql failed")
+}
+
+func TestConn_Execute(t *testing.T) {
+	asst := assert.New(t)
+
+	sql := "SELECT col2 FROM test.t01 WHERE id = 1;"
+	result, err := conn.Execute(sql)
+	asst.Nil(err, "execute sql failed")
+	col2, err := result.GetString(0, 0)
+	asst.Equal(0, col2, "execute sql failed")
 }

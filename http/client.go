@@ -8,6 +8,9 @@ import (
 )
 
 const (
+	StatusOk                  = http.StatusOK
+	StatusInternalServerError = http.StatusInternalServerError
+
 	defaultDialTimeout         = 30 * time.Second
 	defaultKeepAlive           = 30 * time.Second
 	defaultTLSHandshakeTimeout = 10 * time.Second

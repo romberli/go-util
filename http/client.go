@@ -2,17 +2,26 @@ package http
 
 import (
 	"bytes"
+	errs "errors"
+	"io"
 	"net"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/buger/jsonparser"
+	"github.com/pingcap/errors"
+	"github.com/romberli/go-util/constant"
+	"github.com/romberli/log"
 )
 
 const (
 	defaultHTTPScheme         = "http://"
 	defaultHTTPSScheme        = "https://"
-	StatusOk                  = http.StatusOK
+	StatusOK                  = http.StatusOK
 	StatusInternalServerError = http.StatusInternalServerError
+
+	defaultResponseCodeJSON = "code"
 
 	defaultDialTimeout         = 30 * time.Second
 	defaultKeepAlive           = 30 * time.Second
@@ -81,4 +90,36 @@ func (c *Client) getURL(url string) string {
 	}
 
 	return defaultHTTPScheme + url
+}
+
+func (c *Client) PostDAS(url string, body []byte) ([]byte, error) {
+	resp, err := c.Post(url, body)
+	if err != nil {
+		return nil, err
+	}
+	// read response body
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		err = resp.Body.Close()
+		if err != nil {
+			log.Errorf("http Client.PostAndParse(): http response body failed. error:\n%+v", err)
+		}
+	}()
+	// check http status code
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.Errorf("got wrong http response status code. status code: %d, body: %s", resp.StatusCode, respBody)
+	}
+
+	code, err := jsonparser.GetInt(respBody, defaultResponseCodeJSON)
+	if err != nil && !errs.As(err, &jsonparser.KeyPathNotFoundError) {
+		return nil, errors.Errorf("got error when getting code field from response body. error:\n%+v", err)
+	}
+	if code != constant.ZeroInt {
+		return nil, errors.Errorf("code field in response body is not 0. code: %d, body: %s", code, respBody)
+	}
+
+	return respBody, nil
 }

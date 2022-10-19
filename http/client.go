@@ -4,10 +4,13 @@ import (
 	"bytes"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 )
 
 const (
+	defaultHTTPScheme         = "http://"
+	defaultHTTPSScheme        = "https://"
 	StatusOk                  = http.StatusOK
 	StatusInternalServerError = http.StatusInternalServerError
 
@@ -61,7 +64,7 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 }
 
 func (c *Client) Get(url string) (*http.Response, error) {
-	return c.client.Get(url)
+	return c.client.Get(c.getURL(url))
 }
 
 func (c *Client) Post(url string, body []byte) (*http.Response, error) {
@@ -69,5 +72,13 @@ func (c *Client) Post(url string, body []byte) (*http.Response, error) {
 }
 
 func (c *Client) postJSON(url string, body []byte) (*http.Response, error) {
-	return c.client.Post(url, defaultContentType, bytes.NewBuffer(body))
+	return c.client.Post(c.getURL(url), defaultContentType, bytes.NewBuffer(body))
+}
+
+func (c *Client) getURL(url string) string {
+	if strings.HasPrefix(url, defaultHTTPScheme) || strings.HasPrefix(url, defaultHTTPSScheme) {
+		return url
+	}
+
+	return defaultHTTPScheme + url
 }

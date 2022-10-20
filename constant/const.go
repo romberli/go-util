@@ -99,6 +99,9 @@ const (
 	DefaultGuestUserName = "guest"
 	DefaultGuestUserPass = "guest"
 
+	HTTPScheme             = "http"
+	HTTPSScheme            = "https"
+	DefaultHTTPPort        = 80
 	DefaultTextContentType = "text/plain"
 	DefaultJSONContentType = "application/json"
 )

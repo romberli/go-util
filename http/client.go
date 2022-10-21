@@ -20,6 +20,7 @@ const (
 
 	defaultResponseCodeJSON = "code"
 
+	defaultClientTimeout       = 60 * time.Second
 	defaultDialTimeout         = 30 * time.Second
 	defaultKeepAlive           = 30 * time.Second
 	defaultTLSHandshakeTimeout = 10 * time.Second
@@ -45,7 +46,7 @@ func NewClient(client *http.Client) *Client {
 func NewClientWithDefault() *Client {
 	client := &http.Client{
 		Transport: DefaultTransport,
-		Timeout:   defaultDialTimeout,
+		Timeout:   defaultClientTimeout,
 	}
 
 	return newClient(client)

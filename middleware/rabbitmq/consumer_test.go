@@ -165,7 +165,17 @@ func TestConsumer_Nack1(t *testing.T) {
 				time.Sleep(time.Second * 3)
 				continue
 			}
+
+			if testConsumer.IsChannelOrConnectionClosedError(err) {
+				log.Infof("channel or connection is closed, will open connection and channel again")
+
+				testConn = testCreateConn(testAddr, testUser, testPass)
+				testConsumer = testCreateConsumer(testConn)
+				time.Sleep(time.Second * 3)
+				continue
+			}
 		}
+
 		for {
 			select {
 			case d, ok := <-deliveryChan:

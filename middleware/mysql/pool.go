@@ -142,8 +142,8 @@ func (pc *PoolConn) Close() error {
 	err := pc.Rollback()
 	if err != nil {
 		merr := &multierror.Error{}
-
 		merr = multierror.Append(merr, err)
+
 		disconnectErr := pc.Disconnect()
 		if disconnectErr != nil {
 			merr = multierror.Append(merr, disconnectErr)

@@ -11,6 +11,8 @@ import (
 const (
 	ErrQueueExclusiveUseCode           = amqp.AccessRefused
 	ErrQueueExclusiveUseReasonTemplate = `ACCESS_REFUSED - queue '%s' in vhost '%s' in exclusive use`
+	ErrChannelOrConnectionClosedCode   = amqp.ChannelError
+	ErrChannelOrConnectionClosedReason = `channel/connection is not open`
 )
 
 type Consumer struct {
@@ -190,6 +192,7 @@ func (c *Consumer) Nack(tag uint64, multiple bool, requeue bool) error {
 	return errors.Trace(channel.Nack(tag, multiple, requeue))
 }
 
+// IsExclusiveUseError returns true if the error is exclusive use error
 func (c *Consumer) IsExclusiveUseError(queue string, err error) bool {
 	if errors.HasStack(err) {
 		err = errors.Unwrap(err)
@@ -203,4 +206,18 @@ func (c *Consumer) IsExclusiveUseError(queue string, err error) bool {
 	message := fmt.Sprintf(ErrQueueExclusiveUseReasonTemplate, queue, c.GetConn().GetConfig().GetVhost())
 
 	return e.Code == ErrQueueExclusiveUseCode && e.Reason == message
+}
+
+// IsNotFoundQueueError returns true if the error is channel or connection closed error
+func (c *Consumer) IsChannelOrConnectionClosedError(err error) bool {
+	if errors.HasStack(err) {
+		err = errors.Unwrap(err)
+	}
+
+	e, ok := err.(*amqp.Error)
+	if !ok {
+		return false
+	}
+
+	return e.Code == ErrChannelOrConnectionClosedCode && e.Reason == ErrChannelOrConnectionClosedReason
 }

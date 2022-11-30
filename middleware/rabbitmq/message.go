@@ -105,6 +105,22 @@ func (m *Message) GetColumnNames() []string {
 	return columnNames
 }
 
+// Split splits the message if the message contains multiple data
+func (m *Message) Split() []*Message {
+	var messages []*Message
+	for i, data := range m.GetData() {
+		var old map[string]interface{}
+
+		if m.GetSQLType() == SQLTypeUpdate {
+			old = m.GetOld()[i]
+		}
+		messages = append(messages, NewMessage(m.GetSQLType(), m.GetIsDDL(), m.GetDBName(), m.GetTableName(),
+			m.GetPKNames(), m.GetColumns(), []map[string]interface{}{data}, []map[string]interface{}{old}))
+	}
+
+	return messages
+}
+
 // ConvertToSQL returns a map of the sql statement and the values
 // if ignoreDDL is true, and sql type is ddl, it will only return nil, nil,
 // if ignoreDDL is false, and sql type is ddl, it will return nil, error

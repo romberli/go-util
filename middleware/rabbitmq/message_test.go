@@ -172,6 +172,7 @@ var (
 
 func TestMessage_All(t *testing.T) {
 	TestMessage_GetColumnNames(t)
+	TestMessage_Split(t)
 	TestMessage_ConvertToSQL(t)
 }
 
@@ -187,6 +188,17 @@ func TestMessage_GetColumnNames(t *testing.T) {
 	for _, columnName := range columnNames {
 		asst.Contains(testMessageColumns, columnName, "test GetColumnNames() failed")
 	}
+}
+
+func TestMessage_Split(t *testing.T) {
+	asst := assert.New(t)
+
+	testMessage := NewEmptyMessage()
+	err := json.Unmarshal([]byte(testMessageInsertJSONString), &testMessage)
+	asst.Nil(err, common.CombineMessageWithError("test Split() failed", err))
+
+	messages := testMessage.Split()
+	asst.Equal(len(testMessage.GetData()), len(messages), "test Split() failed")
 }
 
 func TestMessage_ConvertToSQL(t *testing.T) {

@@ -3,6 +3,7 @@ package mysql
 import (
 	"database/sql/driver"
 
+	"github.com/romberli/go-util/constant"
 	"github.com/romberli/go-util/middleware"
 	"github.com/romberli/go-util/middleware/result"
 
@@ -21,23 +22,50 @@ type Result struct {
 
 // NewResult returns *Result
 func NewResult(r *mysql.Result) *Result {
-	columns := make([]string, r.ColumnNumber())
-	for fieldName, fieldIndex := range r.FieldNames {
-		columns[fieldIndex] = fieldName
+	if r == nil {
+		columns := make([]string, constant.ZeroInt)
+		filedNames := make(map[string]int)
+		values := make([][]driver.Value, constant.ZeroInt)
+
+		return &Result{
+			&mysql.Result{Resultset: &mysql.Resultset{}},
+			result.NewRows(columns, filedNames, values),
+			result.NewEmptyMap(middlewareType),
+		}
 	}
 
-	values := make([][]driver.Value, r.RowNumber())
-	for i := 0; i < r.RowNumber(); i++ {
-		values[i] = make([]driver.Value, r.ColumnNumber())
+	rowNum := r.RowNumber()
 
-		for j := 0; j < r.ColumnNumber(); j++ {
-			values[i][j] = r.Values[i][j].Value()
+	var colNum int
+	if r.Resultset != nil {
+		colNum = r.ColumnNumber()
+	}
+
+	columns := make([]string, colNum)
+	values := make([][]driver.Value, rowNum)
+	fieldNames := make(map[string]int)
+
+	if r.Resultset != nil {
+		if r.Resultset.FieldNames != nil {
+			fieldNames = r.Resultset.FieldNames
+		}
+
+		for fieldName, fieldIndex := range r.Resultset.FieldNames {
+			columns[fieldIndex] = fieldName
+		}
+
+		for i := constant.ZeroInt; i < r.RowNumber(); i++ {
+			values[i] = make([]driver.Value, colNum)
+
+			for j := constant.ZeroInt; j < r.ColumnNumber(); j++ {
+				values[i][j] = r.Resultset.Values[i][j].Value()
+			}
 		}
 	}
 
 	return &Result{
 		r,
-		result.NewRows(columns, r.FieldNames, values),
+		result.NewRows(columns, fieldNames, values),
 		result.NewEmptyMap(middlewareType),
 	}
 }

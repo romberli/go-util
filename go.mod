@@ -8,7 +8,7 @@ require (
 	github.com/ClickHouse/clickhouse-go v1.4.7
 	github.com/Shopify/sarama v1.26.1
 	github.com/buger/jsonparser v1.1.1
-	github.com/go-mysql-org/go-mysql v1.3.0
+	github.com/go-mysql-org/go-mysql v1.6.0
 	github.com/json-iterator/go v1.1.11
 	github.com/percona/go-mysql v0.0.0-20210427141028-73d29c6da78c
 	github.com/pingcap/errors v0.11.5-0.20211224045212-9687c2b0f87c

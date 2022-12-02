@@ -155,6 +155,14 @@ func TestConn_Execute(t *testing.T) {
 	asst.Equal(0, col2, "execute sql failed")
 }
 
+func TestConn_IsSlave(t *testing.T) {
+	asst := assert.New(t)
+
+	isSlave, err := conn.IsSlave()
+	asst.Nil(err, "test IsSlave() failed")
+	asst.False(isSlave, "test IsSlave() failed")
+}
+
 func TestConn_IsMater(t *testing.T) {
 	asst := assert.New(t)
 

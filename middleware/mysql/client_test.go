@@ -79,6 +79,7 @@ func TestConn_All(t *testing.T) {
 	TestMySQLConnection(t)
 	TestConn_Execute(t)
 	TestConn_IsMater(t)
+	TestConn_IsReplicationSlave(t)
 	TestConn_IsMGR(t)
 	TestConn_IsReadOnly(t)
 	TestConn_IsSuperReadOnly(t)
@@ -155,12 +156,12 @@ func TestConn_Execute(t *testing.T) {
 	asst.Equal(0, col2, "execute sql failed")
 }
 
-func TestConn_IsSlave(t *testing.T) {
+func TestConn_IsReplicationSlave(t *testing.T) {
 	asst := assert.New(t)
 
-	isSlave, err := conn.IsSlave()
-	asst.Nil(err, "test IsSlave() failed")
-	asst.False(isSlave, "test IsSlave() failed")
+	isSlave, err := conn.IsReplicationSlave()
+	asst.Nil(err, "test IsReplicationSlave() failed")
+	asst.False(isSlave, "test IsReplicationSlave() failed")
 }
 
 func TestConn_IsMater(t *testing.T) {

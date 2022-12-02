@@ -235,7 +235,7 @@ func (conn *Conn) GetReplicationRole() (role ReplicationRole, err error) {
 }
 
 func (conn *Conn) IsMaster() (bool, error) {
-	isSlave, err := conn.IsSlave()
+	isSlave, err := conn.IsReplicationSlave()
 	if err != nil {
 		return false, err
 	}
@@ -310,7 +310,7 @@ func (conn *Conn) IsMaster() (bool, error) {
 	return true, nil
 }
 
-func (conn *Conn) IsSlave() (bool, error) {
+func (conn *Conn) IsReplicationSlave() (bool, error) {
 	result, err := conn.Execute(ShowSlaveStatusSQL)
 	if err != nil {
 		return false, err

@@ -57,22 +57,31 @@ func initConn() *Conn {
 
 func createTable() error {
 	sql := `
-		CREATE TABLE if NOT EXISTS t05(
-			id INT(11) auto_increment PRIMARY KEY,
-			NAME VARCHAR(100),
-			col1 INT(11),
-			col2 DECIMAL(16, 4),
+		CREATE TABLE IF NOT EXISTS t05(
+			id int(11) AUTO_INCREMENT PRIMARY KEY,
+			name varchar(100),
+			col1 int(11),
+			col2 decimal(16, 4),
 			last_update_time datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)
-		) engine=innodb CHARACTER SET utf8mb4;
+		) ENGINE=innodb CHARACTER SET utf8mb4;
 	`
 	_, err := conn.Execute(sql)
 	return err
 }
 
 func dropTable() error {
-	sql := `DROP TABLE if EXISTS t05;`
+	sql := `DROP TABLE IF EXISTS t05;`
 	_, err := conn.Execute(sql)
 	return err
+}
+
+func TestConn_All(t *testing.T) {
+	TestMySQLConnection(t)
+	TestConn_Execute(t)
+	TestConn_IsMater(t)
+	TestConn_IsMGR(t)
+	TestConn_IsReadOnly(t)
+	TestConn_IsSuperReadOnly(t)
 }
 
 func TestMySQLConnection(t *testing.T) {
@@ -144,4 +153,36 @@ func TestConn_Execute(t *testing.T) {
 	asst.Nil(err, "execute sql failed")
 	col2, err := result.GetString(0, 0)
 	asst.Equal(0, col2, "execute sql failed")
+}
+
+func TestConn_IsMater(t *testing.T) {
+	asst := assert.New(t)
+
+	isMaster, err := conn.IsMaster()
+	asst.Nil(err, "test IsMaster() failed")
+	asst.True(isMaster, "test IsMaster() failed")
+}
+
+func TestConn_IsMGR(t *testing.T) {
+	asst := assert.New(t)
+
+	isMGR, err := conn.IsMGR()
+	asst.Nil(err, "test IsMGR() failed")
+	asst.False(isMGR, "test IsMGR() failed")
+}
+
+func TestConn_IsReadOnly(t *testing.T) {
+	asst := assert.New(t)
+
+	status, err := conn.IsReadOnly()
+	asst.Nil(err, "test IsReadOnly() failed")
+	asst.False(status, "test IsReadOnly() failed")
+}
+
+func TestConn_IsSuperReadOnly(t *testing.T) {
+	asst := assert.New(t)
+
+	status, err := conn.IsSuperReadOnly()
+	asst.Nil(err, "test IsSuperReadOnly() failed")
+	asst.False(status, "test IsSuperReadOnly() failed")
 }

@@ -12,7 +12,12 @@ import (
 const (
 	defaultSeparator     = "."
 	mysqlVersionSliceLen = 3
+	LessThan             = -1
+	Equal                = 0
+	GreaterThan          = 1
 )
+
+var Version8 = &version{8, 0, 0}
 
 type Version interface {
 	// GetMajor returns major
@@ -21,6 +26,16 @@ type Version interface {
 	GetMinor() int
 	// GetRelease returns release
 	GetRelease() int
+	// Compare compares two versions
+	Compare(other Version) int
+	// LessThan returns true if current version is less than other version
+	LessThan(other Version) bool
+	// Equal returns true if current version is equal to other version
+	Equal(other Version) bool
+	// GreaterThan returns true if current version is greater than other version
+	GreaterThan(other Version) bool
+	// IsMySQL8 returns true if current version is greater than or equal to 8.0.0
+	IsMySQL8() bool
 	// String returns string format of version
 	String() string
 }
@@ -82,6 +97,44 @@ func (v *version) GetMinor() int {
 // GetRelease returns release
 func (v *version) GetRelease() int {
 	return v.release
+}
+
+func (v *version) Compare(other Version) int {
+	if v.GetMajor() > other.GetMajor() {
+		return GreaterThan
+	} else if v.major < other.GetMajor() {
+		return LessThan
+	}
+
+	if v.GetMinor() > other.GetMinor() {
+		return GreaterThan
+	} else if v.GetMinor() < other.GetMinor() {
+		return LessThan
+	}
+
+	if v.GetRelease() > other.GetRelease() {
+		return GreaterThan
+	} else if v.GetRelease() < other.GetRelease() {
+		return LessThan
+	}
+
+	return Equal
+}
+
+func (v *version) LessThan(other Version) bool {
+	return v.Compare(other) == LessThan
+}
+
+func (v *version) Equal(other Version) bool {
+	return v.Compare(other) == Equal
+}
+
+func (v *version) GreaterThan(other Version) bool {
+	return v.Compare(other) == GreaterThan
+}
+
+func (v *version) IsMySQL8() bool {
+	return !v.LessThan(Version8)
 }
 
 // String returns string format of version

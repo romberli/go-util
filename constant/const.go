@@ -62,12 +62,23 @@ const (
 	DefaultAbnormalExitCode             = 1
 	MaxPercentage                       = 100
 	ZeroInt                             = 0
-	MinUInt                 uint        = 0
-	MaxUInt                             = ^uint(0)
-	MaxInt                              = int(^uint(0) >> 1)
-	MinInt                              = ^MaxInt
-	MinPort                             = 1
-	MaxPort                             = 65535
+	OneInt                              = 1
+	TwoInt                              = 2
+	ThreeInt                            = 3
+	FourInt                             = 4
+	FiveInt                             = 5
+	SixInt                              = 6
+	SevenInt                            = 7
+	EightInt                            = 8
+	NineInt                             = 9
+	TenInt                              = 10
+
+	MinUInt uint = 0
+	MaxUInt      = ^uint(0)
+	MaxInt       = int(^uint(0) >> 1)
+	MinInt       = ^MaxInt
+	MinPort      = 1
+	MaxPort      = 65535
 
 	RootDir                         = "/"
 	CurrentDir                      = "./"

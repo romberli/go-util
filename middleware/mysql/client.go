@@ -3,6 +3,7 @@ package mysql
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/go-mysql-org/go-mysql/client"
 	"github.com/pingcap/errors"
@@ -13,6 +14,9 @@ import (
 type ReplicationRole string
 
 const (
+	DefaultAddrSliceLen = 2
+	ValueStr            = "Value"
+
 	DefaultCharSet                = "utf8mb4"
 	HostString                    = "host"
 	PortString                    = "port"
@@ -45,6 +49,22 @@ func NewConfig(addr string, dbName string, dbUser string, dbPass string) Config 
 		DBUser: dbUser,
 		DBPass: dbPass,
 	}
+}
+
+func (c Config) GetAddr() string {
+	return c.Addr
+}
+
+func (c Config) GetDBName() string {
+	return c.DBName
+}
+
+func (c Config) GetDBUser() string {
+	return c.DBUser
+}
+
+func (c Config) GetDBPass() string {
+	return c.DBPass
 }
 
 type Conn struct {
@@ -196,7 +216,7 @@ func (conn *Conn) GetReplicationRole() (role ReplicationRole, err error) {
 		return constant.EmptyString, err
 	}
 
-	if result.RowNumber() != 0 {
+	if result.RowNumber() > constant.ZeroInt {
 		role = ReplicationReplica
 	}
 
@@ -205,9 +225,99 @@ func (conn *Conn) GetReplicationRole() (role ReplicationRole, err error) {
 		return constant.EmptyString, err
 	}
 
-	if len(slaveList) != 0 && role == ReplicationReplica {
+	if len(slaveList) > constant.ZeroInt && role == ReplicationReplica {
 		role = ReplicationRelay
 	}
 
 	return role, nil
+}
+
+func (conn *Conn) IsMaster() (bool, error) {
+	role, err := conn.GetReplicationRole()
+	if err != nil {
+		return false, err
+	}
+
+	if role == ReplicationRelay || role == ReplicationReplica {
+		return false, nil
+	}
+
+	isMGR, err := conn.IsMGR()
+	if err != nil {
+		return false, err
+	}
+	if isMGR {
+		mysqlVersion, err := conn.GetVersion()
+		if err != nil {
+			return false, err
+		}
+
+		addrSlice := strings.Split(conn.GetAddr(), constant.ColonString)
+		if len(addrSlice) != DefaultAddrSliceLen {
+			return false, errors.Errorf("connection address must be formatted as ip:port, %s is not valid", conn.GetAddr())
+		}
+		hostIP := addrSlice[constant.ZeroInt]
+		portNum := addrSlice[constant.OneInt]
+
+		var sql string
+
+		if mysqlVersion.IsMySQL8() {
+			// mysql 8.0
+			sql = "SELECT member_role FROM performance_schema.replication_group_members WHERE member_host = ? AND member_port = ? AND member_role = 'SECONDARY';"
+			result, err := conn.Execute(sql, hostIP, portNum)
+			if err != nil {
+				return false, err
+			}
+			if result.RowNumber() > constant.ZeroInt {
+				return false, nil
+			}
+		} else {
+			// mysql 5.7
+			// check if single primary mode
+			sql = "SHOW STATUS LIKE 'group_replication_primary_member' ;"
+			result, err := conn.Execute(sql)
+			if err != nil {
+				return false, err
+			}
+
+			if result.RowNumber() == constant.ZeroInt {
+				// multiple primary mode
+				return true, nil
+			}
+
+			// single primary mode
+			primaryMemberUUID, err := result.GetString(constant.ZeroInt, constant.OneInt)
+			if err != nil {
+				return false, err
+			}
+			sql = "SELECT member_id FROM performance_schema.replication_group_members WHERE member_id = ? AND member_host = ? AND member_port = ? ;"
+			result, err = conn.Execute(sql, primaryMemberUUID, hostIP, portNum)
+			if err != nil {
+				return false, err
+			}
+
+			return result.RowNumber() > constant.ZeroInt, nil
+		}
+	}
+
+	return true, nil
+}
+
+func (conn *Conn) IsMGR() (bool, error) {
+	sql := "SELECT COUNT(*) FROM performance_schema.replication_group_members ;"
+	result, err := conn.Execute(sql)
+	if err != nil {
+		return false, err
+	}
+
+	count, err := result.GetInt(constant.ZeroInt, constant.ZeroInt)
+	if err != nil {
+		return false, err
+	}
+
+	if count > constant.ZeroInt {
+		return true, nil
+	}
+
+	return false, nil
 }

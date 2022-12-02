@@ -16,6 +16,8 @@ type ReplicationRole string
 const (
 	DefaultAddrSliceLen = 2
 	ValueStr            = "Value"
+	VariableOn          = "ON"
+	VariableOFF         = "OFF"
 
 	DefaultCharSet                = "utf8mb4"
 	HostString                    = "host"
@@ -281,8 +283,13 @@ func (conn *Conn) IsMaster() (bool, error) {
 			}
 
 			if result.RowNumber() == constant.ZeroInt {
-				// multiple primary mode
-				return true, nil
+				// maybe multiple primary mode or no primary node exists
+				readOnly, err := conn.IsReadOnly()
+				if err != nil {
+					return false, err
+				}
+
+				return !readOnly, nil
 			}
 
 			// single primary mode
@@ -320,4 +327,32 @@ func (conn *Conn) IsMGR() (bool, error) {
 	}
 
 	return false, nil
+}
+
+func (conn *Conn) IsReadOnly() (bool, error) {
+	sql := "SHOW VARIABLES LIKE 'read_only';"
+	result, err := conn.Execute(sql)
+	if err != nil {
+		return false, err
+	}
+	status, err := result.GetString(constant.ZeroInt, constant.OneInt)
+	if err != nil {
+		return false, err
+	}
+
+	return status == VariableOn, nil
+}
+
+func (conn *Conn) IsSuperReadOnly() (bool, error) {
+	sql := "SHOW VARIABLES LIKE 'super_read_only';"
+	result, err := conn.Execute(sql)
+	if err != nil {
+		return false, err
+	}
+	status, err := result.GetString(constant.ZeroInt, constant.OneInt)
+	if err != nil {
+		return false, err
+	}
+
+	return status == VariableOn, nil
 }

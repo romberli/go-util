@@ -343,8 +343,23 @@ func (p *Pool) addToFreeChan(pc *PoolConn) {
 
 // Get is an exported alias of get() function with routine safe
 func (p *Pool) Get() (middleware.PoolConn, error) {
+	return p.getFromPool()
+}
+
+// Transaction is used to implement the interface, but it is not supported in prometheus, never call this function
+func (p *Pool) Transaction() (middleware.Transaction, error) {
+	return nil, errors.New("clickhouse does not support transaction, never call this function")
+}
+
+// getFromPool gets a connection from the pool
+func (p *Pool) getFromPool() (*PoolConn, error) {
 	startTime := time.Now()
-	endTime := startTime.Add(time.Duration(p.MaxWaitTime) * time.Second)
+	maxWaitTime := p.MaxWaitTime
+	if maxWaitTime < constant.ZeroInt {
+		maxWaitTime = int(constant.Century.Seconds())
+	}
+	endTime := startTime.Add(time.Duration(maxWaitTime) * time.Second)
+
 	var i int
 
 	for {
@@ -354,8 +369,9 @@ func (p *Pool) Get() (middleware.PoolConn, error) {
 		p.Unlock()
 
 		if err != nil {
-			waitTime := int(time.Now().Sub(startTime).Milliseconds())
-			if time.Now().After(endTime) || i >= p.MaxRetryCount {
+			now := time.Now()
+			waitTime := int(now.Sub(startTime).Milliseconds())
+			if now.After(endTime) || (p.MaxRetryCount >= constant.ZeroInt && i >= p.MaxRetryCount) {
 				log.Debugf("get connection from pool failed, and maximum wait time or retry count exceeded, will not try again. retry count: %d, wait time: %d milliseconds", i, waitTime)
 				return nil, err
 			}
@@ -406,11 +422,6 @@ func (p *Pool) get() (*PoolConn, error) {
 
 	p.usedConnections++
 	return pc, nil
-}
-
-// Transaction simply returns *PoolConn, because it had implemented Transaction interface
-func (p *Pool) Transaction() (middleware.Transaction, error) {
-	return p.get()
 }
 
 // maintainFreeChan maintains free connection channel, if there are insufficient connection in the free connection channel,

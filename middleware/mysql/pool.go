@@ -427,7 +427,7 @@ func (p *Pool) getFromPool() (*PoolConn, error) {
 // get gets a connection from the pool and validate it,
 // if there is no valid connection in the pool, it will create a new connection
 func (p *Pool) get() (*PoolConn, error) {
-	if !p.IsClosed() {
+	if p.IsClosed() {
 		return nil, errors.New("pool had been closed")
 	}
 

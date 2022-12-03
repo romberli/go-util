@@ -23,7 +23,7 @@ func TestPool(t *testing.T) {
 
 	// create pool
 	config := NewConfigWithBasicAuth(defaultAddr, defaultUser, defaultPass)
-	pool, err = NewPoolWithConfig(config, DefaultMaxConnections, DefaultInitConnections, DefaultMaxIdleConnections, DefaultMaxIdleTime, DefaultKeepAliveInterval)
+	pool, err = NewPoolWithConfig(config, DefaultMaxConnections, DefaultInitConnections, DefaultMaxIdleConnections, DefaultMaxIdleTime, DefaultMaxWaitTime, DefaultMaxRetryCount, DefaultKeepAliveInterval)
 	asst.Nil(err, "create pool failed. addr: %s, user: %s, pass: %s", defaultAddr, defaultAddr, defaultAddr)
 
 	// get connection from the pool

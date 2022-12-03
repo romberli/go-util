@@ -20,7 +20,8 @@ func TestGlobalPool(t *testing.T) {
 
 	// create pool
 	config := NewConfigWithBasicAuth(defaultAddr, defaultUser, defaultPass)
-	err = InitGlobalPoolWithConfig(config, DefaultMaxConnections, DefaultInitConnections, DefaultMaxIdleConnections, DefaultMaxIdleTime, DefaultKeepAliveInterval)
+	err = InitGlobalPoolWithConfig(config, DefaultMaxConnections, DefaultInitConnections, DefaultMaxIdleConnections,
+		DefaultMaxIdleTime, DefaultMaxWaitTime, DefaultMaxRetryCount, DefaultKeepAliveInterval)
 	asst.Nil(err, "create pool failed. addr: %s, user: %s, pass: %s", defaultAddr, defaultUser, defaultPass)
 
 	// get connection from the pool

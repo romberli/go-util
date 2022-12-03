@@ -17,10 +17,16 @@ const (
 	DefaultInitConnections     = 5
 	DefaultMaxIdleConnections  = 10
 	DefaultMaxIdleTime         = 1800 // seconds
-	DefaultKeepAliveInterval   = 300  // seconds
+	DefaultMaxWaitTime         = 1    // seconds
+	DefaultMaxRetryCount       = -1
+	DefaultKeepAliveInterval   = 300 // seconds
 	DefaultKeepAliveChunkSize  = 5
 	DefaultSleepTime           = 1 // seconds
 	DefaultFreeChanLengthTimes = 2
+
+	DefaultUnlimitedWaitTime   = -1 // seconds
+	DefaultUnlimitedRetryCount = -1
+	DefaultWaitInterval        = 5 // milliseconds
 )
 
 var _ middleware.PoolConn = (*PoolConn)(nil)
@@ -32,12 +38,14 @@ type PoolConfig struct {
 	InitConnections    int
 	MaxIdleConnections int
 	MaxIdleTime        int
+	MaxWaitTime        int
+	MaxRetryCount      int
 	KeepAliveInterval  int
 }
 
 // NewPoolConfig returns a new PoolConfig
 func NewPoolConfig(addr, dbName, dbUser, dbPass string,
-	maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval int) PoolConfig {
+	maxConnections, initConnections, maxIdleConnections, maxIdleTime, maxWaitTime, maxRetryCount, keepAliveInterval int) PoolConfig {
 	config := NewConfig(addr, dbName, dbUser, dbPass)
 
 	return PoolConfig{
@@ -46,50 +54,65 @@ func NewPoolConfig(addr, dbName, dbUser, dbPass string,
 		InitConnections:    initConnections,
 		MaxIdleConnections: maxIdleConnections,
 		MaxIdleTime:        maxIdleTime,
+		MaxWaitTime:        maxWaitTime,
+		MaxRetryCount:      maxRetryCount,
 		KeepAliveInterval:  keepAliveInterval,
 	}
 }
 
 // NewPoolConfigWithConfig returns a new PoolConfig
 func NewPoolConfigWithConfig(config Config, maxConnections, initConnections, maxIdleConnections,
-	maxIdleTime, keepAliveInterval int) PoolConfig {
+	maxIdleTime, maxWaitTime, maxRetryCount, keepAliveInterval int) PoolConfig {
 	return PoolConfig{
 		Config:             config,
 		MaxConnections:     maxConnections,
 		InitConnections:    initConnections,
 		MaxIdleConnections: maxIdleConnections,
 		MaxIdleTime:        maxIdleTime,
+		MaxWaitTime:        maxWaitTime,
+		MaxRetryCount:      maxRetryCount,
 		KeepAliveInterval:  keepAliveInterval,
 	}
 }
 
 // Validate validates pool config
-func (cfg *PoolConfig) Validate() (bool, error) {
+func (cfg *PoolConfig) Validate() error {
 	// validate MaxConnections
 	if cfg.MaxConnections <= constant.ZeroInt {
-		return false, errors.New("maximum connection argument should larger than 0")
+		return errors.New("maximum connection argument should larger than 0")
 	}
 	// validate InitConnections
 	if cfg.InitConnections < constant.ZeroInt {
-		return false, errors.New("init connection argument should not be smaller than 0")
+		return errors.New("init connection argument should not be smaller than 0")
+	}
+	if cfg.InitConnections > cfg.MaxConnections {
+		return errors.Errorf("init connections should be less or equal than maximum connections. init_connections: %d, max_connections: %d", cfg.InitConnections, cfg.MaxConnections)
 	}
 	// validate MaxIdleConnections
 	if cfg.MaxIdleConnections < constant.ZeroInt {
-		return false, errors.New("maximum idle connection argument should not be smaller than 0")
+		return errors.New("maximum idle connection argument should not be smaller than 0")
 	}
 	if cfg.MaxIdleConnections > cfg.MaxConnections {
-		return false, errors.New("maximum idle connection argument should not be larger than maximum connection argument")
+		return errors.New("maximum idle connection argument should not be larger than maximum connection argument")
 	}
 	// validate MaxIdleTime
 	if cfg.MaxIdleTime <= constant.ZeroInt {
-		return false, errors.New("maximum idle time argument should be larger than 0")
+		return errors.New("maximum idle time argument should be larger than 0")
+	}
+	// validate MaxWaitTime
+	if cfg.MaxWaitTime < DefaultUnlimitedWaitTime {
+		return errors.New("maximum wait time argument should not be smaller than -1")
+	}
+	// validate MaxRetryCount
+	if cfg.MaxRetryCount < DefaultUnlimitedRetryCount {
+		return errors.New("maximum retry count argument should not be smaller than -1")
 	}
 	// validate KeepAliveInterval
 	if cfg.KeepAliveInterval <= constant.ZeroInt {
-		return false, errors.New("keep alive interval argument should be larger than 0")
+		return errors.New("keep alive interval argument should be larger than 0")
 	}
 
-	return true, nil
+	return nil
 }
 
 type PoolConn struct {
@@ -221,8 +244,9 @@ type Pool struct {
 
 // NewPool returns a new *Pool
 func NewPool(addr, dbName, dbUser, dbPass string,
-	maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval int) (*Pool, error) {
-	cfg := NewPoolConfig(addr, dbName, dbUser, dbPass, maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval)
+	maxConnections, initConnections, maxIdleConnections, maxIdleTime, maxWaitTime, maxRetryCount, keepAliveInterval int) (*Pool, error) {
+	cfg := NewPoolConfig(addr, dbName, dbUser, dbPass, maxConnections, initConnections, maxIdleConnections,
+		maxIdleTime, maxWaitTime, maxRetryCount, keepAliveInterval)
 
 	return NewPoolWithPoolConfig(cfg)
 }
@@ -230,19 +254,25 @@ func NewPool(addr, dbName, dbUser, dbPass string,
 // NewPoolWithDefault returns a new *Pool with default configuration
 func NewPoolWithDefault(addr, dbName, dbUser, dbPass string) (*Pool, error) {
 	return NewPool(addr, dbName, dbUser, dbPass,
-		DefaultMaxConnections, DefaultInitConnections, DefaultMaxIdleConnections, DefaultMaxIdleTime, DefaultKeepAliveInterval)
+		DefaultMaxConnections, DefaultInitConnections, DefaultMaxIdleConnections,
+		DefaultMaxIdleTime, DefaultMaxWaitTime, DefaultMaxRetryCount, DefaultKeepAliveInterval)
 }
 
 // NewPoolWithConfig returns a new *Pool with a Config object
-func NewPoolWithConfig(config Config, maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval int) (*Pool, error) {
-	cfg := NewPoolConfigWithConfig(config, maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval)
+func NewPoolWithConfig(config Config, maxConnections, initConnections,
+	maxIdleConnections, maxIdleTime, maxWaitTime, maxRetryCount, keepAliveInterval int) (*Pool, error) {
+	cfg := NewPoolConfigWithConfig(config, maxConnections, initConnections,
+		maxIdleConnections, maxIdleTime, maxWaitTime, maxRetryCount, keepAliveInterval)
+
 	return NewPoolWithPoolConfig(cfg)
 }
 
 // NewPoolWithPoolConfig returns a new *Pool with a PoolConfig object
 func NewPoolWithPoolConfig(config PoolConfig) (*Pool, error) {
-	if config.InitConnections > config.MaxConnections {
-		return nil, errors.Errorf("init connections should not be less or equal than max connections. init connections: %d, max connections: %d", config.InitConnections, config.MaxConnections)
+	// validate config
+	err := config.Validate()
+	if err != nil {
+		return nil, err
 	}
 
 	p := &Pool{
@@ -254,7 +284,7 @@ func NewPoolWithPoolConfig(config PoolConfig) (*Pool, error) {
 		isClosed:        false,
 	}
 
-	err := p.init()
+	err = p.init()
 	if err != nil {
 		return nil, err
 	}
@@ -350,10 +380,32 @@ func (p *Pool) addToFreeChan(pc *PoolConn) {
 
 // Get is an exported alias of get() function with routine safe
 func (p *Pool) Get() (middleware.PoolConn, error) {
-	p.Lock()
-	defer p.Unlock()
+	startTime := time.Now()
+	endTime := startTime.Add(time.Duration(p.MaxWaitTime) * time.Second)
+	var i int
 
-	return p.get()
+	for {
+		p.Lock()
+
+		pc, err := p.get()
+		p.Unlock()
+
+		if err != nil {
+			waitTime := int(time.Now().Sub(startTime).Milliseconds())
+			if time.Now().After(endTime) || i >= p.MaxRetryCount {
+				log.Debugf("get connection from pool failed, and maximum wait time or retry count exceeded, will not try again. retry count: %d, wait time: %d milliseconds", i, waitTime)
+				return nil, err
+			}
+
+			log.Debugf("get connection from pool failed, will try again later. retry count: %d, wait time: %d milliseconds, error:\n%+v", i, waitTime, err)
+			i++
+			// TODO: maybe we should use a better way to wait
+			time.Sleep(time.Duration(DefaultWaitInterval) * time.Millisecond)
+			continue
+		}
+
+		return pc, nil
+	}
 }
 
 // get gets a connection from the pool and validate it,
@@ -364,12 +416,12 @@ func (p *Pool) get() (*PoolConn, error) {
 	}
 
 	if p.usedConnections >= p.MaxConnections {
-		return nil, errors.Errorf("used connection(%d) had reached maximum connection(%d)", p.usedConnections, p.MaxConnections)
+		return nil, errors.Errorf("used connections had reached maximum connections. used_connections: %d, max_connections: %d", p.usedConnections, p.MaxConnections)
 	}
 
 	freeChanLen := len(p.freeConnChan)
 	// try to get connection from free connection channel
-	for i := 0; i < freeChanLen; i++ {
+	for i := constant.ZeroInt; i < freeChanLen; i++ {
 		pc, ok := p.getFromFreeChan()
 		// check if connection is still valid
 		if ok && pc.IsValid() {

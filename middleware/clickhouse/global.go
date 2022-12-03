@@ -11,9 +11,9 @@ var _globalPool *Pool
 
 // InitGlobalPool returns a new *Pool and replaces it as global pool
 func InitGlobalPool(addr, dbName, dbUser, dbPass string, debug bool, readTimeout, writeTimeout int,
-	maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval int, altHosts ...string) error {
+	maxConnections, initConnections, maxIdleConnections, maxIdleTime, maxWaitTime, maxRetryCount, keepAliveInterval int, altHosts ...string) error {
 	cfg := NewPoolConfig(addr, dbName, dbUser, dbPass, debug, readTimeout, writeTimeout, maxConnections, initConnections,
-		maxIdleConnections, maxIdleTime, keepAliveInterval, altHosts...)
+		maxIdleConnections, maxIdleTime, maxWaitTime, maxRetryCount, keepAliveInterval, altHosts...)
 
 	return InitGlobalPoolWithPoolConfig(cfg)
 }
@@ -21,12 +21,15 @@ func InitGlobalPool(addr, dbName, dbUser, dbPass string, debug bool, readTimeout
 // InitGlobalPoolWithDefault returns a new *Pool with default configuration and replaces it as global pool
 func InitGlobalPoolWithDefault(addr, dbName, dbUser, dbPass string) error {
 	return InitGlobalPool(addr, dbName, dbUser, dbPass, false, DefaultReadTimeout, DefaultWriteTimeout,
-		DefaultMaxConnections, DefaultInitConnections, DefaultMaxIdleConnections, DefaultMaxIdleTime, DefaultKeepAliveInterval)
+		DefaultMaxConnections, DefaultInitConnections, DefaultMaxIdleConnections, DefaultMaxIdleTime,
+		DefaultMaxWaitTime, DefaultMaxRetryCount, DefaultKeepAliveInterval)
 }
 
 // InitGlobalPoolWithConfig returns a new *Pool with a Config object and replaces it as global pool
-func InitGlobalPoolWithConfig(config Config, maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval int) error {
-	cfg := NewPoolConfigWithConfig(config, maxConnections, initConnections, maxIdleConnections, maxIdleTime, keepAliveInterval)
+func InitGlobalPoolWithConfig(config Config, maxConnections, initConnections, maxIdleConnections, maxIdleTime,
+	maxWaitTime, maxRetryCount, keepAliveInterval int) error {
+	cfg := NewPoolConfigWithConfig(config, maxConnections, initConnections, maxIdleConnections, maxIdleTime,
+		maxWaitTime, maxRetryCount, keepAliveInterval)
 
 	return InitGlobalPoolWithPoolConfig(cfg)
 }

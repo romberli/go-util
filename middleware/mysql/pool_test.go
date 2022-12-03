@@ -82,7 +82,7 @@ func TestPool_Transaction(t *testing.T) {
 	dbPass := "root"
 
 	// create pool
-	pool, err = NewPool(addr, dbName, dbUser, dbPass, 1, 1, 1, 10000, 1000)
+	pool, err = NewPool(addr, dbName, dbUser, dbPass, 1, 1, 1, 10000, 1000, -1, 1000)
 	asst.Nil(err, "create pool failed. addr: %s, dbName: %s, dbUser: %s, dbPass: %s", addr, dbName, dbUser, dbPass)
 
 	// get transaction from the pool

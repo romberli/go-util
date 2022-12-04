@@ -79,7 +79,12 @@ func (c *Client) Post(url string, body []byte) (*http.Response, error) {
 }
 
 func (c *Client) postJSON(url string, body []byte) (*http.Response, error) {
-	return c.client.Post(PrepareURL(url), defaultContentType, bytes.NewBuffer(body))
+	resp, err := c.client.Post(PrepareURL(url), defaultContentType, bytes.NewBuffer(body))
+	if err != nil {
+		return nil, errors.Errorf("http Client.postJSON(): http post failed. url: %s, body: %s, error:\n%+v", url, string(body), err)
+	}
+
+	return resp, nil
 }
 
 func (c *Client) PostDAS(url string, body []byte) ([]byte, error) {
@@ -90,12 +95,12 @@ func (c *Client) PostDAS(url string, body []byte) ([]byte, error) {
 	// read response body
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 	defer func() {
 		err = resp.Body.Close()
 		if err != nil {
-			log.Errorf("http Client.PostAndParse(): http response body failed. error:\n%+v", err)
+			log.Errorf("http Client.PostAndParse(): http response body failed. error:\n%+v", errors.Trace(err))
 		}
 	}()
 	// check http status code
@@ -105,7 +110,7 @@ func (c *Client) PostDAS(url string, body []byte) ([]byte, error) {
 
 	code, err := jsonparser.GetInt(respBody, defaultResponseCodeJSON)
 	if err != nil && !errs.As(err, &jsonparser.KeyPathNotFoundError) {
-		return nil, errors.Errorf("got error when getting code field from response body. error:\n%+v", err)
+		return nil, errors.Errorf("got error when getting code field from response body. error:\n%+v", errors.Trace(err))
 	}
 	if code != constant.ZeroInt {
 		return nil, errors.Errorf("code field in response body is not 0. code: %d, body: %s", code, respBody)

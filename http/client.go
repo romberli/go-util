@@ -105,7 +105,7 @@ func (c *Client) PostDAS(url string, body []byte) ([]byte, error) {
 	}()
 	// check http status code
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.Errorf("got wrong http response status code. status code: %d, body: %s", resp.StatusCode, respBody)
+		return nil, errors.Errorf("got wrong http response status code. status code: %d, body: %s", resp.StatusCode, string(respBody))
 	}
 
 	code, err := jsonparser.GetInt(respBody, defaultResponseCodeJSON)
@@ -113,7 +113,7 @@ func (c *Client) PostDAS(url string, body []byte) ([]byte, error) {
 		return nil, errors.Errorf("got error when getting code field from response body. error:\n%+v", errors.Trace(err))
 	}
 	if code != constant.ZeroInt {
-		return nil, errors.Errorf("code field in response body is not 0. code: %d, body: %s", code, respBody)
+		return nil, errors.Errorf("code field in response body is not 0. code: %d, body: %s", code, string(respBody))
 	}
 
 	return respBody, nil

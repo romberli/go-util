@@ -2,7 +2,6 @@ package http
 
 import (
 	"bytes"
-	errs "errors"
 	"io"
 	"net"
 	"net/http"
@@ -29,6 +28,13 @@ const (
 	defaultIdleConnTimeout       = 90 * time.Second
 	defaultExpectContinueTimeout = 1 * time.Second
 	defaultMaxIdleConnsPerHost   = 20
+
+	DefaultMaxWaitTime   = 60 // seconds
+	DefaultMaxRetryCount = 3
+	DefaultDelay         = 10 // milliseconds
+
+	DefaultUnlimitedWaitTime   = -1 // seconds
+	DefaultUnlimitedRetryCount = -1
 )
 
 var (
@@ -62,9 +68,11 @@ func NewClientWithDefault() *Client {
 }
 
 func newClient(client *http.Client) *Client {
-	return &Client{
+	c := &Client{
 		client: client,
 	}
+
+	return c
 }
 
 func (c *Client) GetClient() *http.Client {
@@ -91,21 +99,101 @@ func (c *Client) Get(url string) (*http.Response, error) {
 	return c.client.Get(PrepareURL(url))
 }
 
+func (c *Client) GetWithRetry(url string, maxWaitTime, maxRetryCount, delay int) (*http.Response, error) {
+	// validate retry options
+	err := c.validate(maxWaitTime, maxRetryCount, delay)
+	if err != nil {
+		return nil, err
+	}
+
+	maxWait := maxWaitTime
+	if maxWait < constant.ZeroInt {
+		maxWait = int(constant.Century.Seconds())
+	}
+	timeoutChan := time.After(time.Duration(maxWait) * time.Second)
+
+	var (
+		i    int
+		resp *http.Response
+	)
+
+	for {
+		resp, err = c.Get(url)
+		if err != nil {
+			if maxRetryCount >= constant.ZeroInt && i >= maxRetryCount {
+				return resp, err
+			}
+
+			i++
+			// check for timeout
+			select {
+			case <-timeoutChan:
+				return resp, err
+			default:
+				time.Sleep(time.Duration(delay) * time.Millisecond)
+			}
+			continue
+		}
+
+		return resp, nil
+	}
+}
+
 func (c *Client) Post(url string, body []byte) (*http.Response, error) {
 	return c.postJSON(url, body)
+}
+
+func (c *Client) PostWithRetry(url string, body []byte, maxWaitTime, maxRetryCount, delay int) (*http.Response, error) {
+	// validate retry options
+	err := c.validate(maxWaitTime, maxRetryCount, delay)
+	if err != nil {
+		return nil, err
+	}
+
+	maxWait := maxWaitTime
+	if maxWait < constant.ZeroInt {
+		maxWait = int(constant.Century.Seconds())
+	}
+	timeoutChan := time.After(time.Duration(maxWait) * time.Second)
+
+	var (
+		i    int
+		resp *http.Response
+	)
+
+	for {
+		resp, err = c.Post(url, body)
+		if err != nil {
+			if maxRetryCount >= constant.ZeroInt && i >= maxRetryCount {
+				return resp, err
+			}
+
+			i++
+			// check for timeout
+			select {
+			case <-timeoutChan:
+				return resp, err
+			default:
+				time.Sleep(time.Duration(delay) * time.Millisecond)
+			}
+			continue
+		}
+
+		return resp, nil
+	}
 }
 
 func (c *Client) postJSON(url string, body []byte) (*http.Response, error) {
 	resp, err := c.client.Post(PrepareURL(url), defaultContentType, bytes.NewBuffer(body))
 	if err != nil {
-		return nil, errors.Errorf("http Client.postJSON(): http post failed. url: %s, body: %s, error:\n%+v", url, string(body), err)
+		return resp, errors.Errorf("http Client.postJSON(): http post failed. url: %s, body: %s, error:\n%+v", url, string(body), err)
 	}
 
 	return resp, nil
 }
 
-func (c *Client) PostDAS(url string, body []byte) ([]byte, error) {
-	resp, err := c.Post(url, body)
+func (c *Client) PostDAS(url string, body []byte, maxWaitTime, maxRetryCount, delay int) ([]byte, error) {
+	resp, err := c.PostWithRetry(url, body, maxWaitTime, maxRetryCount, delay)
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +214,7 @@ func (c *Client) PostDAS(url string, body []byte) ([]byte, error) {
 	}
 
 	code, err := jsonparser.GetInt(respBody, defaultResponseCodeJSON)
-	if err != nil && !errs.As(err, &jsonparser.KeyPathNotFoundError) {
+	if err != nil && err != jsonparser.KeyPathNotFoundError {
 		return nil, errors.Errorf("got error when getting code field from response body. error:\n%+v", errors.Trace(err))
 	}
 	if code != constant.ZeroInt {
@@ -134,4 +222,21 @@ func (c *Client) PostDAS(url string, body []byte) ([]byte, error) {
 	}
 
 	return respBody, nil
+}
+
+func (c *Client) validate(maxWaitTime, maxRetryCount, delay int) error {
+	// validate maxWaitTime
+	if maxWaitTime < DefaultUnlimitedWaitTime {
+		return errors.New("maximum wait time argument should not be smaller than -1")
+	}
+	// validate maxRetryCount
+	if maxRetryCount < DefaultUnlimitedRetryCount {
+		return errors.New("maximum retry count argument should not be smaller than -1")
+	}
+	// validate delay
+	if delay < constant.ZeroInt {
+		return errors.New("maximum delay argument should not be smaller than 0")
+	}
+
+	return nil
 }

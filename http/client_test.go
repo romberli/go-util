@@ -11,7 +11,7 @@ import (
 
 const (
 	testHTTPClientHostInfo   = "http://localhost:6090"
-	testHTTPClientGetURL     = testHTTPClientHostInfo + "/api/v1/health/status"
+	testHTTPClientGetURL     = testHTTPClientHostInfo + "/status"
 	testHTTPClientPostURL    = testHTTPClientHostInfo + "/api/v1/health/ping"
 	testHTTPClientDoURL      = testHTTPClientHostInfo + "/api/v1/metadata/mysql-server/is-master/host-info"
 	testHTTPClientReqBodyStr = `{"token":"f3171bd9-beec-11ec-acc0-000c291d6734", "host_ip": "192.168.137.11", "port_num": 3306}`
@@ -20,7 +20,11 @@ const (
 var testClient *Client
 
 func init() {
-	testClient = NewClientWithDefault()
+	testClient = testInitClient()
+}
+
+func testInitClient() *Client {
+	return NewClientWithDefault()
 }
 
 func TestClient_All(t *testing.T) {
@@ -64,6 +68,20 @@ func TestClient_Get(t *testing.T) {
 	t.Log(string(respBody))
 }
 
+func TestClient_GetWithRetry(t *testing.T) {
+	asst := assert.New(t)
+
+	resp, err := testClient.GetWithRetry(testHTTPClientGetURL, DefaultMaxWaitTime, DefaultMaxRetryCount, DefaultDelay)
+	asst.Nil(err, "test GetWithRetry() failed")
+	// read response body
+	respBody, err := io.ReadAll(resp.Body)
+	defer func() { _ = resp.Body.Close() }()
+
+	asst.Nil(err, "test GetWithRetry() failed")
+	asst.Equal(http.StatusOK, resp.StatusCode, "test GetWithRetry() failed. statusCode: %s", resp.StatusCode)
+	t.Log(string(respBody))
+}
+
 func TestClient_Post(t *testing.T) {
 	asst := assert.New(t)
 
@@ -76,4 +94,26 @@ func TestClient_Post(t *testing.T) {
 	asst.Nil(err, "test Post() failed")
 	asst.Equal(http.StatusOK, resp.StatusCode, "test Post() failed. statusCode: %s", resp.StatusCode)
 	t.Log(string(respBody))
+}
+
+func TestClient_PostWithRetry(t *testing.T) {
+	asst := assert.New(t)
+
+	resp, err := testClient.PostWithRetry(testHTTPClientPostURL, nil, DefaultMaxWaitTime, DefaultMaxRetryCount, DefaultDelay)
+	asst.Nil(err, "test GetWithRetry() failed")
+	// read response body
+	respBody, err := io.ReadAll(resp.Body)
+	defer func() { _ = resp.Body.Close() }()
+
+	asst.Nil(err, "test GetWithRetry() failed")
+	asst.Equal(http.StatusOK, resp.StatusCode, "test GetWithRetry() failed. statusCode: %d", resp.StatusCode)
+	t.Log(string(respBody))
+}
+
+func TestClient_PostDAS(t *testing.T) {
+	asst := assert.New(t)
+
+	resp, err := testClient.PostDAS(testHTTPClientPostURL, nil, DefaultMaxWaitTime, DefaultMaxRetryCount, DefaultDelay)
+	asst.Nil(err, "test PostDAS() failed")
+	t.Log(string(resp))
 }

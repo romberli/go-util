@@ -26,7 +26,7 @@ const (
 
 	DefaultUnlimitedWaitTime   = -1 // seconds
 	DefaultUnlimitedRetryCount = -1
-	DefaultWaitInterval        = 5 // milliseconds
+	DefaultDelayTime           = 5 // milliseconds
 )
 
 var _ middleware.PoolConn = (*PoolConn)(nil)
@@ -360,12 +360,11 @@ func (p *Pool) Transaction() (middleware.Transaction, error) {
 
 // getFromPool gets a connection from the pool
 func (p *Pool) getFromPool() (*PoolConn, error) {
-	startTime := time.Now()
 	maxWaitTime := p.MaxWaitTime
 	if maxWaitTime < constant.ZeroInt {
 		maxWaitTime = int(constant.Century.Seconds())
 	}
-	endTime := startTime.Add(time.Duration(maxWaitTime) * time.Second)
+	timeoutChan := time.After(time.Duration(maxWaitTime) * time.Second)
 
 	var i int
 
@@ -376,17 +375,18 @@ func (p *Pool) getFromPool() (*PoolConn, error) {
 		p.Unlock()
 
 		if err != nil {
-			now := time.Now()
-			waitTime := int(now.Sub(startTime).Milliseconds())
-			if now.After(endTime) || (p.MaxRetryCount >= constant.ZeroInt && i >= p.MaxRetryCount) {
-				log.Debugf("get connection from pool failed, and maximum wait time or retry count exceeded, will not try again. retry count: %d, wait time: %d milliseconds", i, waitTime)
+			if p.MaxRetryCount >= constant.ZeroInt && i >= p.MaxRetryCount {
 				return nil, err
 			}
 
-			log.Debugf("get connection from pool failed, will try again later. retry count: %d, wait time: %d milliseconds, error:\n%+v", i, waitTime, err)
 			i++
-			// TODO: maybe we should use a better way to wait
-			time.Sleep(time.Duration(DefaultWaitInterval) * time.Millisecond)
+			// check for timeout
+			select {
+			case <-timeoutChan:
+				return nil, err
+			default:
+				time.Sleep(time.Duration(DefaultDelayTime) * time.Millisecond)
+			}
 			continue
 		}
 

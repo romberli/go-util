@@ -20,18 +20,27 @@ const (
 
 	defaultResponseCodeJSON = "code"
 
-	defaultClientTimeout       = 60 * time.Second
-	defaultDialTimeout         = 30 * time.Second
-	defaultKeepAlive           = 30 * time.Second
-	defaultTLSHandshakeTimeout = 10 * time.Second
-	defaultContentType         = "application/json"
+	defaultClientTimeout         = 60 * time.Second
+	defaultDialTimeout           = 30 * time.Second
+	defaultKeepAlive             = 30 * time.Second
+	defaultTLSHandshakeTimeout   = 10 * time.Second
+	defaultContentType           = "application/json"
+	defaultMaxIdleConns          = 100
+	defaultIdleConnTimeout       = 90 * time.Second
+	defaultExpectContinueTimeout = 1 * time.Second
+	defaultMaxIdleConnsPerHost   = 20
 )
 
 var (
 	DefaultTransport = &http.Transport{
-		Proxy:               http.ProxyFromEnvironment,
-		DialContext:         (&net.Dialer{Timeout: defaultDialTimeout, KeepAlive: defaultKeepAlive}).DialContext,
-		TLSHandshakeTimeout: defaultTLSHandshakeTimeout,
+		Proxy:                 http.ProxyFromEnvironment,
+		DialContext:           (&net.Dialer{Timeout: defaultDialTimeout, KeepAlive: defaultKeepAlive}).DialContext,
+		TLSHandshakeTimeout:   defaultTLSHandshakeTimeout,
+		ForceAttemptHTTP2:     true,
+		MaxIdleConns:          defaultMaxIdleConns,
+		IdleConnTimeout:       defaultIdleConnTimeout,
+		ExpectContinueTimeout: defaultExpectContinueTimeout,
+		MaxIdleConnsPerHost:   defaultMaxIdleConnsPerHost,
 	}
 )
 
@@ -68,6 +77,14 @@ func (c *Client) Close() {
 
 func (c *Client) Do(req *http.Request) (*http.Response, error) {
 	return c.client.Do(req)
+}
+
+func (c *Client) SetMaxIdleConns(maxIdleConns int) {
+	c.client.Transport.(*http.Transport).MaxIdleConns = maxIdleConns
+}
+
+func (c *Client) SetMaxIdleConnsPerHost(maxIdleConnsPerHost int) {
+	c.client.Transport.(*http.Transport).MaxIdleConnsPerHost = maxIdleConnsPerHost
 }
 
 func (c *Client) Get(url string) (*http.Response, error) {

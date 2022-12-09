@@ -1,11 +1,13 @@
 package http
 
 import (
-	"bytes"
 	"io"
 	"net/http"
+	"os"
 	"testing"
 
+	"github.com/romberli/go-util/constant"
+	"github.com/romberli/log"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -24,34 +26,19 @@ func init() {
 }
 
 func testInitClient() *Client {
-	return NewClientWithDefault()
+	c, err := NewClientWithRetry()
+	if err != nil {
+		log.Errorf("testInitClient() failed. err:\n%+v", err)
+		os.Exit(constant.DefaultAbnormalExitCode)
+	}
+
+	return c
 }
 
 func TestClient_All(t *testing.T) {
-	TestClient_Close(t)
-	TestClient_Do(t)
 	TestClient_Get(t)
 	TestClient_Post(t)
-}
-
-func TestClient_Close(t *testing.T) {
-	testClient.Close()
-}
-
-func TestClient_Do(t *testing.T) {
-	asst := assert.New(t)
-	body := []byte(testHTTPClientReqBodyStr)
-	req, err := http.NewRequest(http.MethodPost, testHTTPClientDoURL, bytes.NewBuffer(body))
-	asst.Nil(err, "test Do() failed")
-	resp, err := testClient.Do(req)
-	asst.Nil(err, "test Do() failed")
-	// read response body
-	respBody, err := io.ReadAll(resp.Body)
-	defer func() { _ = resp.Body.Close() }()
-
-	asst.Nil(err, "test Do() failed")
-	asst.Equal(http.StatusOK, resp.StatusCode, "test Do() failed. statusCode: %s", resp.StatusCode)
-	t.Log(string(respBody))
+	TestClient_PostDAS(t)
 }
 
 func TestClient_Get(t *testing.T) {
@@ -65,20 +52,6 @@ func TestClient_Get(t *testing.T) {
 
 	asst.Nil(err, "test Get() failed")
 	asst.Equal(http.StatusOK, resp.StatusCode, "test Get() failed. statusCode: %s", resp.StatusCode)
-	t.Log(string(respBody))
-}
-
-func TestClient_GetWithRetry(t *testing.T) {
-	asst := assert.New(t)
-
-	resp, err := testClient.GetWithRetry(testHTTPClientGetURL, DefaultMaxWaitTime, DefaultMaxRetryCount, DefaultDelay)
-	asst.Nil(err, "test GetWithRetry() failed")
-	// read response body
-	respBody, err := io.ReadAll(resp.Body)
-	defer func() { _ = resp.Body.Close() }()
-
-	asst.Nil(err, "test GetWithRetry() failed")
-	asst.Equal(http.StatusOK, resp.StatusCode, "test GetWithRetry() failed. statusCode: %s", resp.StatusCode)
 	t.Log(string(respBody))
 }
 
@@ -96,24 +69,10 @@ func TestClient_Post(t *testing.T) {
 	t.Log(string(respBody))
 }
 
-func TestClient_PostWithRetry(t *testing.T) {
-	asst := assert.New(t)
-
-	resp, err := testClient.PostWithRetry(testHTTPClientPostURL, nil, DefaultMaxWaitTime, DefaultMaxRetryCount, DefaultDelay)
-	asst.Nil(err, "test GetWithRetry() failed")
-	// read response body
-	respBody, err := io.ReadAll(resp.Body)
-	defer func() { _ = resp.Body.Close() }()
-
-	asst.Nil(err, "test GetWithRetry() failed")
-	asst.Equal(http.StatusOK, resp.StatusCode, "test GetWithRetry() failed. statusCode: %d", resp.StatusCode)
-	t.Log(string(respBody))
-}
-
 func TestClient_PostDAS(t *testing.T) {
 	asst := assert.New(t)
 
-	resp, err := testClient.PostDAS(testHTTPClientPostURL, nil, DefaultMaxWaitTime, DefaultMaxRetryCount, DefaultDelay)
+	resp, err := testClient.PostDAS(testHTTPClientPostURL, nil)
 	asst.Nil(err, "test PostDAS() failed")
 	t.Log(string(resp))
 }

@@ -405,18 +405,20 @@ func (p *Pool) getFromPool() (*PoolConn, error) {
 		p.Unlock()
 
 		if err != nil {
+			// check retry count
 			if p.MaxRetryCount >= constant.ZeroInt && i >= p.MaxRetryCount {
 				return nil, err
 			}
 
-			i++
-			// check for timeout
+			// check wait time
 			select {
 			case <-timeoutChan:
 				return nil, err
 			default:
 				time.Sleep(time.Duration(DefaultDelayTime) * time.Millisecond)
 			}
+
+			i++
 			continue
 		}
 

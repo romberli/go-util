@@ -138,28 +138,29 @@ func HandleSignals(pidFile string, stopFuncs ...func() error) {
 
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGHUP, syscall.SIGKILL, syscall.SIGTERM)
 
+	var exitCode int
+
 	for {
 		sig := <-signals
 		switch sig {
 		case syscall.SIGINT, syscall.SIGHUP, syscall.SIGKILL, syscall.SIGTERM:
-			if len(stopFuncs) > constant.ZeroInt {
-				// run stop function
-				for i, stopFunc := range stopFuncs {
-					err := stopFunc()
-					if err != nil {
-						log.Errorf("run stop function failed. function index: %d, error:\n%+v", i, errors.Trace(err))
-					}
+			// run stop function
+			for i, stopFunc := range stopFuncs {
+				err := stopFunc()
+				if err != nil {
+					exitCode = constant.OneInt
+					log.Errorf("run stop function failed. function index: %d, error:\n%+v", i, errors.Trace(err))
 				}
 			}
 
 			log.Warnf("got operating system signal %d, this process will exit soon.", sig)
 			err := os.Remove(pidFile)
 			if err != nil {
+				exitCode = constant.OneInt
 				log.Errorf("got wrong when removing pid file. pid file: %s. error:\n%+v", pidFile, errors.Trace(err))
-				os.Exit(constant.DefaultAbnormalExitCode)
 			}
 
-			os.Exit(constant.DefaultNormalExitCode)
+			os.Exit(exitCode)
 		default:
 			log.Errorf("got wrong signal %d, only accept %d, %d, %d, %d",
 				sig, syscall.SIGINT, syscall.SIGHUP, syscall.SIGKILL, syscall.SIGTERM)

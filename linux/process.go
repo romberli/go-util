@@ -132,8 +132,8 @@ func ShutdownServer(pid int, opts ...string) (err error) {
 	return SendSignal(pid, syscall.SIGTERM, opts...)
 }
 
-// HandleSignalsWithPidFile handles operating system signals
-func HandleSignalsWithPidFile(pidFile string) {
+// HandleSignals handles operating system signals
+func HandleSignals(pidFile string, stopFuncs ...func() error) {
 	signals := make(chan os.Signal)
 
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGHUP, syscall.SIGKILL, syscall.SIGTERM)
@@ -142,11 +142,20 @@ func HandleSignalsWithPidFile(pidFile string) {
 		sig := <-signals
 		switch sig {
 		case syscall.SIGINT, syscall.SIGHUP, syscall.SIGKILL, syscall.SIGTERM:
-			log.Infof("got operating system signal %d, this process will exit soon.", sig)
+			if len(stopFuncs) > constant.ZeroInt {
+				// run stop function
+				for i, stopFunc := range stopFuncs {
+					err := stopFunc()
+					if err != nil {
+						log.Errorf("run stop function failed. function index: %d, error:\n%+v", i, errors.Trace(err))
+					}
+				}
+			}
 
+			log.Warnf("got operating system signal %d, this process will exit soon.", sig)
 			err := os.Remove(pidFile)
 			if err != nil {
-				log.Errorf("got wrong when removing pid file. pid file: %s. error:\n%+v", pidFile, err)
+				log.Errorf("got wrong when removing pid file. pid file: %s. error:\n%+v", pidFile, errors.Trace(err))
 				os.Exit(constant.DefaultAbnormalExitCode)
 			}
 

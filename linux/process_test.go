@@ -92,7 +92,7 @@ func TestProcess(t *testing.T) {
 	t.Log("==========HandleSignalsWithPidFile started.==========")
 	go killProcess(pid, sleep)
 	time.Sleep(sleep * time.Second)
-	HandleSignalsWithPidFile(pidFile)
+	HandleSignals(pidFile)
 	asst.Nil(err, "HandleSignalsWithPidFile failed.")
 	t.Log("==========HandleSignalsWithPidFile completed.==========")
 }

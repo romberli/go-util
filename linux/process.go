@@ -164,7 +164,6 @@ func HandleSignals(pidFile string, stopFuncs ...func() error) {
 		default:
 			log.Errorf("got wrong signal %d, only accept %d, %d, %d, %d",
 				sig, syscall.SIGINT, syscall.SIGHUP, syscall.SIGKILL, syscall.SIGTERM)
-			os.Exit(constant.DefaultAbnormalExitCode)
 		}
 	}
 }

@@ -19,7 +19,7 @@ require (
 	github.com/rabbitmq/amqp091-go v1.3.4
 	github.com/romberli/dynamic-struct v1.2.1
 	github.com/romberli/go-multierror v1.1.2-0.20220118054508-60f25a547317
-	github.com/romberli/log v1.0.24
+	github.com/romberli/log v1.0.25
 	github.com/satori/go.uuid v1.2.0
 	github.com/shirou/gopsutil/v3 v3.20.11
 	github.com/siddontang/go v0.0.0-20180604090527-bdc77568d726

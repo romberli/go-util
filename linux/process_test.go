@@ -6,11 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/romberli/go-util/constant"
-
+	"github.com/romberli/log"
 	"github.com/shirou/gopsutil/v3/process"
+	"github.com/stretchr/testify/assert"
 )
 
 func StartSandbox(cmd string) {
@@ -18,14 +17,22 @@ func StartSandbox(cmd string) {
 	if err != nil {
 		fmt.Println(fmt.Sprintf("error: %s", err.Error()))
 	}
+
 }
 
-func killProcess(pid int, sleep time.Duration) {
+func killProcess(pid int, sleep int) {
 	p, err := process.NewProcess(int32(pid))
 	if err != nil {
 		fmt.Println(fmt.Sprintf("error: %s", err.Error()))
 	} else {
 		_ = p.Kill()
+	}
+
+	time.Sleep(time.Duration(sleep) * time.Second)
+
+	err = p.Kill()
+	if err != nil {
+		log.Errorf("kill process failed: %s", err.Error())
 	}
 }
 
@@ -35,7 +42,7 @@ func TestProcess(t *testing.T) {
 		pid       int
 		pidFile   string
 		isRunning bool
-		sleep     time.Duration
+		sleep     int
 	)
 
 	asst := assert.New(t)
@@ -72,7 +79,7 @@ func TestProcess(t *testing.T) {
 	pidFileSandbox := "/tmp/go-sandbox.pid"
 	cmd := fmt.Sprintf("%s --count=%d --pid-file=%s", binPath, count, pidFileSandbox)
 	go StartSandbox(cmd)
-	time.Sleep(sleep * time.Second)
+	time.Sleep(time.Duration(sleep) * time.Second)
 	asst.Nil(err, "start go-sandbox failed.")
 	pidSandbox, err := GetPidFromPidFile(pidFileSandbox)
 	asst.Nil(err, "get pid of go-sandbox failed.")
@@ -82,17 +89,26 @@ func TestProcess(t *testing.T) {
 
 	t.Log("==========ShutdownServer started.==========")
 	go StartSandbox(cmd)
-	time.Sleep(sleep * time.Second)
+	time.Sleep(time.Duration(sleep) * time.Second)
 	pidSandbox, err = GetPidFromPidFile(pidFileSandbox)
 	asst.Nil(err, "get pid of go-sandbox failed.")
 	err = ShutdownServer(pidSandbox, pidFileSandbox)
 	asst.Nil(err, "ShutdownServer failed.\n%v", err)
 	t.Log("==========ShutdownServer completed.==========")
 
-	t.Log("==========HandleSignalsWithPidFile started.==========")
+	t.Log("==========HandleSignals started.==========")
 	go killProcess(pid, sleep)
-	time.Sleep(sleep * time.Second)
+	time.Sleep(time.Duration(sleep) * time.Second)
 	HandleSignals(pidFile)
-	asst.Nil(err, "HandleSignalsWithPidFile failed.")
+	asst.Nil(err, "HandleSignals failed.")
 	t.Log("==========HandleSignalsWithPidFile completed.==========")
+}
+
+func TestHandleSignals(t *testing.T) {
+	pid := os.Getpid()
+	pidFile := "go-util.pid"
+	sleep := 10
+
+	go killProcess(pid, sleep)
+	HandleSignals(pidFile)
 }

@@ -357,7 +357,9 @@ func (p *Pool) getFromPool() (*PoolConn, error) {
 	if maxWaitTime < constant.ZeroInt {
 		maxWaitTime = int(constant.Century.Seconds())
 	}
-	timeoutChan := time.After(time.Duration(maxWaitTime) * time.Second)
+
+	timer := time.NewTimer(time.Duration(maxWaitTime) * time.Second)
+	defer timer.Stop()
 
 	var i int
 
@@ -374,7 +376,7 @@ func (p *Pool) getFromPool() (*PoolConn, error) {
 			}
 			// check wait time
 			select {
-			case <-timeoutChan:
+			case <-timer.C:
 				return nil, err
 			default:
 				time.Sleep(time.Duration(DefaultDelayTime) * time.Millisecond)

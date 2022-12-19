@@ -6,11 +6,9 @@ import (
 	"strings"
 	"time"
 
+	json "github.com/json-iterator/go"
 	"github.com/pingcap/errors"
 	"github.com/romberli/dynamic-struct"
-
-	json "github.com/json-iterator/go"
-
 	"github.com/romberli/go-util/constant"
 )
 
@@ -551,14 +549,14 @@ func SetValueOfStructByKind(in interface{}, field string, value interface{}, kin
 
 // CopyStructWithFields returns a new struct with only specified fields
 // NOTE:
-// 1. tags and values of fields are exactly same
-// 2. only exported and addressable fields will be copied
-// 3. if any field in fields does not exist in the input struct, it returns error
-// 4. if values in input struct is a pointer, then value in the new struct will point to the same object
-// 5. returning struct is totally a new data type, so you could not use any (*type) assertion
-// 6. if fields argument is empty, a new struct which contains the whole fields of input struct will be returned
-// 7. technically, for convenience purpose, this function creates a new struct as same as input struct,
-//    then removes fields that do not exist in the given fields
+//  1. tags and values of fields are exactly same
+//  2. only exported and addressable fields will be copied
+//  3. if any field in fields does not exist in the input struct, it returns error
+//  4. if values in input struct is a pointer, then value in the new struct will point to the same object
+//  5. returning struct is totally a new data type, so you could not use any (*type) assertion
+//  6. if fields argument is empty, a new struct which contains the whole fields of input struct will be returned
+//  7. technically, for convenience purpose, this function creates a new struct as same as input struct,
+//     then removes fields that do not exist in the given fields
 func CopyStructWithFields(in interface{}, fields ...string) (interface{}, error) {
 	if len(fields) == constant.ZeroInt {
 		return CopyStructWithoutFields(in)

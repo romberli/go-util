@@ -14,7 +14,7 @@ require (
 	github.com/pingcap/errors v0.11.5-0.20211224045212-9687c2b0f87c
 	github.com/pingcap/parser v0.0.0-20211004012448-687005894c4e
 	github.com/pkg/sftp v1.12.0
-	github.com/prometheus/client_golang v1.11.0
+	github.com/prometheus/client_golang v1.11.1
 	github.com/prometheus/common v0.26.0
 	github.com/rabbitmq/amqp091-go v1.3.4
 	github.com/romberli/dynamic-struct v1.2.1

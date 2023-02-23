@@ -26,7 +26,7 @@ func ExecuteCommandAndWait(command string) (output string, err error) {
 }
 
 // ExecuteCommandNoWait executes shell command and does not wait for it to complete
-func c(command string) (output string, err error) {
+func ExecuteCommandNoWait(command string) (output string, err error) {
 	var stdoutBuffer bytes.Buffer
 
 	cmd := exec.Command("sh", "-c", command)

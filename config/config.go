@@ -92,9 +92,9 @@ func WriteToBuffer(in interface{}, buffer *bytes.Buffer, tagType ...string) (err
 
 // ConvertToString convert struct to string
 func ConvertToString(in interface{}, tagType ...string) (s string, err error) {
-	var buffer *bytes.Buffer
+	var buffer bytes.Buffer
 
-	err = WriteToBuffer(in, buffer, tagType...)
+	err = WriteToBuffer(in, &buffer, tagType...)
 	if err != nil {
 		return constant.EmptyString, err
 	}

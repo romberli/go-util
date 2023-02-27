@@ -97,3 +97,62 @@ func CompareIP(ip1, ip2 string) (int, error) {
 
 	return constant.ZeroInt, nil
 }
+
+// CompareAddr compares two addresses,
+// if addr1 is equal to addr2, it returns 0
+// if addr1 is less than addr2, it returns -1
+// if addr1 is greater than addr2, it returns 1
+func CompareAddr(addr1, addr2 string) (int, error) {
+	ip1, port1, err := net.SplitHostPort(addr1)
+	if err != nil {
+		return constant.ZeroInt, errors.Trace(err)
+	}
+	ip2, port2, err := net.SplitHostPort(addr2)
+	if err != nil {
+		return constant.ZeroInt, errors.Trace(err)
+	}
+
+	port1Int, err := strconv.Atoi(port1)
+	if err != nil {
+		return constant.ZeroInt, errors.Trace(err)
+	}
+	port2Int, err := strconv.Atoi(port2)
+	if err != nil {
+		return constant.ZeroInt, errors.Trace(err)
+	}
+
+	result, err := CompareIP(ip1, ip2)
+	if err != nil {
+		return constant.ZeroInt, err
+	}
+	if result == constant.ZeroInt {
+		if port1Int < port2Int {
+			return -1, nil
+		}
+		if port1Int > port2Int {
+			return 1, nil
+		}
+	}
+
+	return result, nil
+}
+
+// GetMinAddr gets the minimum address from the addr list
+func GetMinAddr(addrs []string) (string, error) {
+	if len(addrs) == constant.ZeroInt {
+		return constant.EmptyString, errors.New("addr list is empty")
+	}
+
+	minAddr := addrs[constant.ZeroInt]
+	for _, addr := range addrs {
+		result, err := CompareAddr(addr, minAddr)
+		if err != nil {
+			return constant.EmptyString, err
+		}
+		if result == -1 {
+			minAddr = addr
+		}
+	}
+
+	return minAddr, nil
+}

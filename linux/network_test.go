@@ -12,6 +12,7 @@ const (
 	testInvalidIP = "127.0.0.256"
 	testAddr1     = "127.0.0.1:3306"
 	testAddr2     = "127.0.0.1:3307"
+	testAddr3     = "127.0.0.1:3305"
 )
 
 func TestNetwork_All(t *testing.T) {
@@ -20,6 +21,7 @@ func TestNetwork_All(t *testing.T) {
 	TestNetwork_CompareIP(t)
 	TestNetwork_CompareAddr(t)
 	TestNetwork_GetMinAddr(t)
+	TestNetwork_SortAddrs(t)
 }
 
 func TestNetwork_GetDefaultIP(t *testing.T) {
@@ -59,4 +61,12 @@ func TestNetwork_GetMinAddr(t *testing.T) {
 	result, err := GetMinAddr([]string{testAddr1, testAddr2})
 	asst.Nil(err, "test GetMinAddr() failed")
 	asst.Equal(testAddr1, result, "test GetMinAddr() failed")
+}
+
+func TestNetwork_SortAddrs(t *testing.T) {
+	asst := assert.New(t)
+
+	result, err := SortAddrs([]string{testAddr1, testAddr2, testAddr3})
+	asst.Nil(err, "test SortAddrs() failed")
+	asst.Equal([]string{testAddr3, testAddr1, testAddr2}, result, "test SortAddrs() failed")
 }

@@ -104,6 +104,7 @@ const (
 	DefaultLocalHostName = "localhost"
 	DefaultLocalHostIP   = "127.0.0.1"
 	DefaultMySQLPort     = 3306
+	DefaultMySQLAddr     = "127.0.0.1:3306"
 	DefaultRootUserName  = "root"
 	DefaultRootUserPass  = "root"
 	DefaultRabbitmqPort  = 5672

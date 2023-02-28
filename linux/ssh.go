@@ -13,11 +13,9 @@ import (
 	"time"
 
 	"github.com/pingcap/errors"
-
 	"github.com/pkg/sftp"
-	"golang.org/x/crypto/ssh"
-
 	"github.com/romberli/go-util/constant"
+	"golang.org/x/crypto/ssh"
 )
 
 const (

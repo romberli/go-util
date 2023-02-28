@@ -14,8 +14,8 @@ require (
 	github.com/pingcap/errors v0.11.5-0.20211224045212-9687c2b0f87c
 	github.com/pingcap/parser v0.0.0-20211004012448-687005894c4e
 	github.com/pkg/sftp v1.12.0
-	github.com/prometheus/client_golang v1.11.0
-	github.com/prometheus/common v0.26.0
+	github.com/prometheus/client_golang v1.14.0
+	github.com/prometheus/common v0.39.0
 	github.com/rabbitmq/amqp091-go v1.3.4
 	github.com/romberli/dynamic-struct v1.2.1
 	github.com/romberli/go-multierror v1.1.2-0.20220118054508-60f25a547317
@@ -23,7 +23,7 @@ require (
 	github.com/satori/go.uuid v1.2.0
 	github.com/shirou/gopsutil/v3 v3.20.11
 	github.com/siddontang/go v0.0.0-20180604090527-bdc77568d726
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.8.0
 	go.etcd.io/etcd/client/v3 v3.5.1
 	go.uber.org/zap v1.19.1
 	golang.org/x/crypto v0.6.0

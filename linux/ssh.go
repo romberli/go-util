@@ -31,15 +31,15 @@ const (
 	DefaultByteBufferSize     = 1024 * 1024 // 1MB
 )
 
-type MyConn struct {
+type SSHConfig struct {
 	HostIp   string
 	PortNum  int
 	UserName string
 	UserPass string
 }
 
-func NewMyConn(hostIP string, portNum int, userName string, userPass string) *MyConn {
-	return &MyConn{
+func NewSSHConfig(hostIP string, portNum int, userName string, userPass string) *SSHConfig {
+	return &SSHConfig{
 		hostIP,
 		portNum,
 		userName,
@@ -47,8 +47,8 @@ func NewMyConn(hostIP string, portNum int, userName string, userPass string) *My
 	}
 }
 
-func NewMyConnWithDefaultValue(hostIP string) *MyConn {
-	return &MyConn{
+func NewSSHConfigWithDefault(hostIP string) *SSHConfig {
+	return &SSHConfig{
 		hostIP,
 		DefaultSSHPortNum,
 		DefaultSSHUserName,
@@ -56,22 +56,22 @@ func NewMyConnWithDefaultValue(hostIP string) *MyConn {
 	}
 }
 
-type MySSHConn struct {
-	MyConn
+type SSHConn struct {
+	SSHConfig
 	SSHClient *ssh.Client
 	*sftp.Client
 }
 
-// NewMySSHConn returns *MySSHConn and error
-func NewMySSHConn(hostIP string, portNum int, userName, userPass string) (*MySSHConn, error) {
-	return NewMySSHConnWithOptionalArgs(hostIP, portNum, userName, userPass)
+// NewSSHConn returns a new *SSHConn
+func NewSSHConn(hostIP string, portNum int, userName, userPass string) (*SSHConn, error) {
+	return NewSSHConnWithOptionalArgs(hostIP, portNum, userName, userPass)
 }
 
-// NewMySSHConnWithOptionalArgs returns *MySSHConn and error, first argument is mandatory which presents host ip,
-// and the 3 flowing optional arguments which should be in exact order of port number, user name and user password
-func NewMySSHConnWithOptionalArgs(hostIP string, in ...interface{}) (*MySSHConn, error) {
+// NewSSHConnWithOptionalArgs returns *SSHConn, first argument is mandatory which presents host ip,
+// and the 3 flowing optional arguments which should be in exact order of port number, username and password
+func NewSSHConnWithOptionalArgs(hostIP string, in ...interface{}) (*SSHConn, error) {
 	var (
-		myConn       *MyConn
+		myConn       *SSHConfig
 		auth         []ssh.AuthMethod
 		addr         string
 		clientConfig *ssh.ClientConfig
@@ -87,7 +87,7 @@ func NewMySSHConnWithOptionalArgs(hostIP string, in ...interface{}) (*MySSHConn,
 			return nil, errors.New("host ip could not be empty")
 		}
 
-		myConn = NewMyConnWithDefaultValue(hostIP)
+		myConn = NewSSHConfigWithDefault(hostIP)
 	case 3:
 		var (
 			portNumValue  int
@@ -138,7 +138,7 @@ func NewMySSHConnWithOptionalArgs(hostIP string, in ...interface{}) (*MySSHConn,
 					reflect.TypeOf(portNum).Name()))
 		}
 
-		myConn = NewMyConn(hostIP, portNumValue, userNameValue, userPassValue)
+		myConn = NewSSHConfig(hostIP, portNumValue, userNameValue, userPassValue)
 	default:
 		return nil, errors.New(fmt.Sprintf("optional argument number must be 0 or 3 instead of %d", argLen))
 	}
@@ -170,7 +170,7 @@ func NewMySSHConnWithOptionalArgs(hostIP string, in ...interface{}) (*MySSHConn,
 		return nil, errors.Trace(err)
 	}
 
-	sshConn := &MySSHConn{
+	sshConn := &SSHConn{
 		*myConn,
 		sshClient,
 		sftpClient,
@@ -180,7 +180,7 @@ func NewMySSHConnWithOptionalArgs(hostIP string, in ...interface{}) (*MySSHConn,
 }
 
 // Close closes connections with the remote host
-func (conn *MySSHConn) Close() error {
+func (conn *SSHConn) Close() error {
 	err := conn.Client.Close()
 	if err != nil {
 		return errors.Trace(err)
@@ -190,7 +190,7 @@ func (conn *MySSHConn) Close() error {
 }
 
 // ExecuteCommand executes shell command on the remote host
-func (conn *MySSHConn) ExecuteCommand(cmd string) (string, error) {
+func (conn *SSHConn) ExecuteCommand(cmd string) (string, error) {
 	var (
 		stdOutBuffer bytes.Buffer
 		stdErrBuffer bytes.Buffer
@@ -219,14 +219,14 @@ func (conn *MySSHConn) ExecuteCommand(cmd string) (string, error) {
 }
 
 // GetHostName returns hostname of remote host
-func (conn *MySSHConn) GetHostName() (string, error) {
+func (conn *SSHConn) GetHostName() (string, error) {
 	hostName, err := conn.ExecuteCommand(HostNameCommand)
 
 	return hostName, err
 }
 
 // PathExists returns if given path exists
-func (conn *MySSHConn) PathExists(path string) (bool, error) {
+func (conn *SSHConn) PathExists(path string) (bool, error) {
 	_, err := conn.Stat(path)
 	if err == nil {
 		return true, nil
@@ -240,7 +240,7 @@ func (conn *MySSHConn) PathExists(path string) (bool, error) {
 }
 
 // IsDir returns if given path on the remote host is a directory or not
-func (conn *MySSHConn) IsDir(path string) (bool, error) {
+func (conn *SSHConn) IsDir(path string) (bool, error) {
 	path = strings.TrimSpace(path)
 
 	info, err := conn.Stat(path)
@@ -252,7 +252,7 @@ func (conn *MySSHConn) IsDir(path string) (bool, error) {
 }
 
 // ListPath returns subdirectories and files of given path on the remote host, it returns a slice of sub paths
-func (conn *MySSHConn) ListPath(path string) ([]string, error) {
+func (conn *SSHConn) ListPath(path string) ([]string, error) {
 	var subPathList []string
 
 	cmd := fmt.Sprintf("%s %s", LsCommand, strings.TrimSpace(path))
@@ -270,7 +270,7 @@ func (conn *MySSHConn) ListPath(path string) ([]string, error) {
 }
 
 // ReadDir returns subdirectories and files of given directory on the remote host, it returns a slice of os.FileInfo
-func (conn *MySSHConn) ReadDir(dirName string) ([]os.FileInfo, error) {
+func (conn *SSHConn) ReadDir(dirName string) ([]os.FileInfo, error) {
 	var fileInfoList []os.FileInfo
 
 	dirName = strings.TrimSpace(dirName)
@@ -303,7 +303,7 @@ func (conn *MySSHConn) ReadDir(dirName string) ([]os.FileInfo, error) {
 
 // RemoveAll removes given path on the remote host, it will act like shell command "rm -rf $path",
 // except that it will raise an error when something goes wrong.
-func (conn *MySSHConn) RemoveAll(path string) error {
+func (conn *SSHConn) RemoveAll(path string) error {
 	path = strings.TrimSpace(path)
 	isDir, err := conn.IsDir(path)
 	if err != nil {
@@ -345,7 +345,7 @@ func (conn *MySSHConn) RemoveAll(path string) error {
 }
 
 // IsEmptyDir returns if  given directory is empty or not
-func (conn *MySSHConn) IsEmptyDir(dirName string) (bool, error) {
+func (conn *SSHConn) IsEmptyDir(dirName string) (bool, error) {
 	dirName = strings.TrimSpace(dirName)
 	fileInfoList, err := conn.ReadDir(dirName)
 	if err != nil {
@@ -356,7 +356,7 @@ func (conn *MySSHConn) IsEmptyDir(dirName string) (bool, error) {
 }
 
 // CopyFile copy file content from source to destination, it doesn't care about which one is local or remote
-func (conn *MySSHConn) CopyFile(fileSource io.Reader, fileDest io.Writer, bufferSize int) error {
+func (conn *SSHConn) CopyFile(fileSource io.Reader, fileDest io.Writer, bufferSize int) error {
 	if bufferSize <= constant.ZeroInt {
 		bufferSize = DefaultByteBufferSize
 	}
@@ -383,7 +383,7 @@ func (conn *MySSHConn) CopyFile(fileSource io.Reader, fileDest io.Writer, buffer
 }
 
 // CopySingleFileFromRemote copies one single file from remote to local
-func (conn *MySSHConn) CopySingleFileFromRemote(fileNameSource string, fileNameDest string) error {
+func (conn *SSHConn) CopySingleFileFromRemote(fileNameSource string, fileNameDest string) error {
 	var (
 		fileDest   *os.File
 		fileSource *sftp.File
@@ -452,7 +452,7 @@ func (conn *MySSHConn) CopySingleFileFromRemote(fileNameSource string, fileNameD
 }
 
 // CopySingleFileToRemote copies one single file from local to remote
-func (conn *MySSHConn) CopySingleFileToRemote(fileNameSource string, fileNameDest string) error {
+func (conn *SSHConn) CopySingleFileToRemote(fileNameSource string, fileNameDest string) error {
 	var (
 		fileSource *os.File
 		fileDest   *sftp.File
@@ -521,7 +521,7 @@ func (conn *MySSHConn) CopySingleFileToRemote(fileNameSource string, fileNameDes
 }
 
 // CopyFileListFromRemote copies given files from remote to local
-func (conn *MySSHConn) CopyFileListFromRemote(fileListSource []string, FileDirDest string) error {
+func (conn *SSHConn) CopyFileListFromRemote(fileListSource []string, FileDirDest string) error {
 	FileDirDest = strings.TrimSpace(FileDirDest)
 	if FileDirDest == constant.EmptyString {
 		return errors.New("file destination directory should not an empty string")
@@ -554,7 +554,7 @@ func (conn *MySSHConn) CopyFileListFromRemote(fileListSource []string, FileDirDe
 
 // CopyFileListFromRemoteWithNewName copies file from remote to local,
 // it copies file contents and rename files to given file names
-func (conn *MySSHConn) CopyFileListFromRemoteWithNewName(fileListSource []string, fileListDest []string) (err error) {
+func (conn *SSHConn) CopyFileListFromRemoteWithNewName(fileListSource []string, fileListDest []string) (err error) {
 	if len(fileListSource) != len(fileListDest) {
 		return errors.New(fmt.Sprintf(
 			"the length of source and destination file list must be exactly same. source length: %d, destination length: %d",
@@ -581,7 +581,7 @@ func (conn *MySSHConn) CopyFileListFromRemoteWithNewName(fileListSource []string
 // GetPathDirMapRemote reads all subdirectories and files of given directory on the remote host
 // and calculate the relative path of rootPath,
 // then map the absolute path of subdirectory names and file names as keys, relative paths as values to fileDirMap
-func (conn *MySSHConn) GetPathDirMapRemote(dirName, rootPath string) (map[string]string, error) {
+func (conn *SSHConn) GetPathDirMapRemote(dirName, rootPath string) (map[string]string, error) {
 	fileDirMap := make(map[string]string)
 
 	err := conn.getPathDirMapRemote(fileDirMap, dirName, rootPath)
@@ -592,7 +592,7 @@ func (conn *MySSHConn) GetPathDirMapRemote(dirName, rootPath string) (map[string
 	return fileDirMap, nil
 }
 
-func (conn *MySSHConn) getPathDirMapRemote(fileDirMap map[string]string, dirName, rootPath string) error {
+func (conn *SSHConn) getPathDirMapRemote(fileDirMap map[string]string, dirName, rootPath string) error {
 	dirName = strings.TrimSpace(dirName)
 	rootPath = strings.TrimSpace(rootPath)
 
@@ -631,7 +631,7 @@ func (conn *MySSHConn) getPathDirMapRemote(fileDirMap map[string]string, dirName
 }
 
 // CopyDirFromRemote copies a directory with all subdirectories and files from remote to local
-func (conn *MySSHConn) CopyDirFromRemote(dirNameSource, dirNameDest string) error {
+func (conn *SSHConn) CopyDirFromRemote(dirNameSource, dirNameDest string) error {
 	dirNameSource = strings.TrimSpace(dirNameSource)
 	dirNameDest = strings.TrimSpace(dirNameDest)
 
@@ -717,7 +717,7 @@ func (conn *MySSHConn) CopyDirFromRemote(dirNameSource, dirNameDest string) erro
 }
 
 // CopyDirToRemote copies a directory with all subdirectories and files from local to remote
-func (conn *MySSHConn) CopyDirToRemote(dirNameSource, dirNameDest string) error {
+func (conn *SSHConn) CopyDirToRemote(dirNameSource, dirNameDest string) error {
 	dirNameSource = strings.TrimSpace(dirNameSource)
 	dirNameDest = strings.TrimSpace(dirNameDest)
 
@@ -803,7 +803,7 @@ func (conn *MySSHConn) CopyDirToRemote(dirNameSource, dirNameDest string) error 
 }
 
 // CopyFromRemote copies no matter a directory or a file from remote to local
-func (conn *MySSHConn) CopyFromRemote(pathSource, pathDest string) (err error) {
+func (conn *SSHConn) CopyFromRemote(pathSource, pathDest string) (err error) {
 	pathSource = strings.TrimSpace(pathSource)
 	pathDest = strings.TrimSpace(pathDest)
 
@@ -820,7 +820,7 @@ func (conn *MySSHConn) CopyFromRemote(pathSource, pathDest string) (err error) {
 }
 
 // CopyToRemote copies no matter a directory or a file from local to remote
-func (conn *MySSHConn) CopyToRemote(pathSource, pathDest string) (err error) {
+func (conn *SSHConn) CopyToRemote(pathSource, pathDest string) (err error) {
 	pathSource = strings.TrimSpace(pathSource)
 	pathDest = strings.TrimSpace(pathDest)
 

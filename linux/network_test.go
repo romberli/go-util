@@ -66,7 +66,8 @@ func TestNetwork_GetMinAddr(t *testing.T) {
 func TestNetwork_SortAddrs(t *testing.T) {
 	asst := assert.New(t)
 
-	result, err := SortAddrs([]string{testAddr1, testAddr2, testAddr3})
+	addrs := []string{testAddr1, testAddr2, testAddr3}
+	err := SortAddrs(addrs)
 	asst.Nil(err, "test SortAddrs() failed")
-	asst.Equal([]string{testAddr3, testAddr1, testAddr2}, result, "test SortAddrs() failed")
+	asst.Equal([]string{testAddr3, testAddr1, testAddr2}, addrs, "test SortAddrs() failed")
 }

@@ -158,24 +158,23 @@ func GetMinAddr(addrs []string) (string, error) {
 }
 
 // SortAddrs sorts the addr list with quick sort algorithm
-func SortAddrs(addrs []string) ([]string, error) {
+func SortAddrs(addrs []string) error {
 	if len(addrs) == constant.ZeroInt {
-		return addrs, nil
+		return nil
 	}
 
-	var err error
-	addrs, err = quickSortAddrs(addrs, constant.ZeroInt, len(addrs)-1)
+	err := quickSortAddrs(addrs, constant.ZeroInt, len(addrs)-1)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return addrs, nil
+	return nil
 }
 
 // quickSortAddrs sorts the addr list with quick sort algorithm
-func quickSortAddrs(addrs []string, left, right int) ([]string, error) {
+func quickSortAddrs(addrs []string, left, right int) error {
 	if left >= right {
-		return addrs, nil
+		return nil
 	}
 
 	var err error
@@ -185,7 +184,7 @@ func quickSortAddrs(addrs []string, left, right int) ([]string, error) {
 	for i <= right {
 		result, err := CompareAddr(addrs[i], addrs[pivot])
 		if err != nil {
-			return nil, err
+			return err
 		}
 		if result == -1 {
 			addrs[i], addrs[index] = addrs[index], addrs[i]
@@ -196,14 +195,14 @@ func quickSortAddrs(addrs []string, left, right int) ([]string, error) {
 	addrs[pivot], addrs[index-1] = addrs[index-1], addrs[pivot]
 	pivot = index - 1
 
-	addrs, err = quickSortAddrs(addrs, left, pivot-1)
+	err = quickSortAddrs(addrs, left, pivot-1)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	addrs, err = quickSortAddrs(addrs, pivot+1, right)
+	err = quickSortAddrs(addrs, pivot+1, right)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return addrs, nil
+	return nil
 }

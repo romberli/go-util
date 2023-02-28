@@ -24,7 +24,7 @@ require (
 	github.com/shirou/gopsutil/v3 v3.20.11
 	github.com/siddontang/go v0.0.0-20180604090527-bdc77568d726
 	github.com/stretchr/testify v1.8.0
-	go.etcd.io/etcd/client/v3 v3.5.1
+	go.etcd.io/etcd/client/v3 v3.5.7
 	go.uber.org/zap v1.19.1
 	golang.org/x/crypto v0.6.0
 )

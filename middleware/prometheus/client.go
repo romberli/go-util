@@ -133,15 +133,24 @@ func (conn *Conn) ExecuteContext(ctx context.Context, command string, args ...in
 
 // executeContext executes given command with arguments and returns a result.
 // if args length is 0:
-// 		it uses time.Now() as the time series
+//
+//	it uses time.Now() as the time series
+//
 // if args length is 1:
-// 		argument type must be either time.Time, TimeRange or apiv1.Range
+//
+//	argument type must be either time.Time, TimeRange or apiv1.Range
+//
 // if args length is 2:
-// 		argument types must be time.Time and time.Time, represent start time and end time, it uses 1 minute as step
+//
+//	argument types must be time.Time and time.Time, represent start time and end time, it uses 1 minute as step
+//
 // if args length is 3:
-//		argument types muse be in order of time.Time, time.Time and time.Duration, represent start time, end time and step
+//
+//	argument types muse be in order of time.Time, time.Time and time.Duration, represent start time, end time and step
+//
 // if args length is larger than 3:
-// 		it returns error
+//
+//	it returns error
 func (conn *Conn) executeContext(ctx context.Context, command string, args ...interface{}) (*Result, error) {
 	var (
 		arg      interface{}

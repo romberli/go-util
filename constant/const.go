@@ -103,10 +103,17 @@ const (
 	DefaultListenIP      = "0.0.0.0"
 	DefaultLocalHostName = "localhost"
 	DefaultLocalHostIP   = "127.0.0.1"
-	DefaultMySQLPort     = 3306
-	DefaultMySQLAddr     = "127.0.0.1:3306"
-	DefaultRootUserName  = "root"
-	DefaultRootUserPass  = "root"
+
+	DefaultRootUserName = "root"
+	DefaultRootUserPass = "root"
+
+	DefaultSSHPort = 22
+
+	DefaultMySQLPort = 3306
+	DefaultMySQLAddr = "127.0.0.1:3306"
+
+	DefaultRedisPort = 6379
+
 	DefaultRabbitmqPort  = 5672
 	DefaultGuestUserName = "guest"
 	DefaultGuestUserPass = "guest"

@@ -14,19 +14,14 @@ import (
 )
 
 const (
-	DefaultDatabase     = "default"
-	MaxExecutionTimeStr = "max_execution_time"
+	DefaultDatabase         = "default"
+	MaxExecutionTimeStr     = "max_execution_time"
+	DefaultMaxExecutionTime = 60
 
-	DefaultDialTimeout = 30 * time.Second
-	DefaultKeepAlive   = 30 * time.Second
-
-	DefaultReadTimeout  = 60
-	DefaultWriteTimeout = 60
-
+	DefaultDialTimeout               = 30 * time.Second
 	DefaultMaxConnectionsPerConn     = 2
 	DefaultMaxIdleConnectionsPerConn = 1
 	DefaultMaxLifetime               = time.Hour
-	DefaultMaxExecutionTime          = time.Minute
 	DefaultBlockBufferSize           = 10
 
 	DefaultCheckInstanceStatusSQL = "select 1 as ok;"

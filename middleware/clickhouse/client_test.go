@@ -46,7 +46,7 @@ func createTable() error {
 			type             Enum8('a'=0, 'b'=1, 'c'=2),
 			del_flag         Int8,
 			create_time      Nullable(Datetime),
-			last_update_time Datetime
+			last_update_time Datetime64
 		)
 			engine = MergeTree PARTITION BY toYYYYMMDD(last_update_time)
 			ORDER BY (id, last_update_time) SETTINGS index_granularity = 8192
@@ -77,10 +77,10 @@ func TestConn_Execute(t *testing.T) {
 	// insert data
 	asst.Nil(err, "test Execute() failed")
 	sql := `insert into t01(id, name, group, type, del_flag, create_time, last_update_time) values (?, ?, ?, ?, ?, ?, ?)`
-	_, err = testConn.Execute(sql, 1, constant.DefaultRandomString, clickhouse.ArraySet{"group1", "group2", "group3"}, "a", 0, constant.DefaultRandomTime, time.Now())
+	_, err = testConn.Execute(sql, 1, constant.DefaultRandomString, clickhouse.ArraySet{"group1", "group2", "group3"}, "a", 0, testDateTime, time.Now())
 	asst.Nil(err, "test Execute() failed")
 	sql = `insert into t01(id, name, group, type, del_flag, create_time, last_update_time) values(?, ?, ?, ?, ?, ?, ?)`
-	_, err = testConn.Execute(sql, 2, constant.DefaultRandomString, clickhouse.ArraySet{}, "a", 0, constant.DefaultRandomTime, time.Now())
+	_, err = testConn.Execute(sql, 2, constant.DefaultRandomString, clickhouse.ArraySet{}, "a", 0, testDateTime, time.Now())
 	asst.Nil(err, "test Execute() failed")
 	// select data
 	sql = `select id, name, group, type, del_flag, create_time, last_update_time from t01 where last_update_time > ? order by id asc limit ?, ?`
@@ -156,10 +156,10 @@ func TestConn_GetTimeZone(t *testing.T) {
 	`
 	tz, err := testConn.GetTimeZone()
 	asst.Nil(err, "test GetTimeZone() failed")
-	startTime, err := time.ParseInLocation(constant.TimeLayoutSecond, "2022-03-03 10:00:00", time.Local)
+	startTime, err := time.ParseInLocation(constant.TimeLayoutSecond, "2022-03-03 00:00:00", time.Local)
 	asst.Nil(err, "test GetTimeZone() failed")
 	startTime = startTime.In(tz)
-	endTime, err := time.ParseInLocation(constant.TimeLayoutSecond, "2022-03-04 18:00:00", time.Local)
+	endTime, err := time.ParseInLocation(constant.TimeLayoutSecond, "2022-03-04 00:00:00", time.Local)
 	asst.Nil(err, "test GetTimeZone() failed")
 	endTime = endTime.In(tz)
 

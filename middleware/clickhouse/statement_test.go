@@ -39,7 +39,7 @@ func TestStatement_Execute(t *testing.T) {
 	asst.Nil(err, "test Execute() failed")
 	// select data
 	sql = `select id, name, group, type, del_flag, create_time, last_update_time from t01 where id = ?`
-	result, err := testConn.Execute(sql, 1)
+	result, err := testConn.Execute(sql, int64(1))
 	asst.Nil(err, "test Execute() failed")
 	asst.Equal(1, result.RowNumber(), "test Execute() failed")
 	// drop table

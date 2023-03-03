@@ -30,12 +30,19 @@ type Config struct {
 	client.Config
 }
 
-// DefaultRoundTripper is used if no RoundTripper is set in Config,
-var DefaultRoundTripper http.RoundTripper = &http.Transport{
-	Proxy:               http.ProxyFromEnvironment,
-	DialContext:         (&net.Dialer{Timeout: DefaultDialTimeout, KeepAlive: DefaultKeepAlive}).DialContext,
-	TLSHandshakeTimeout: DefaultTLSHandshakeTimeout,
-}
+var (
+	DefaultDialer = &net.Dialer{
+		Timeout:   DefaultDialTimeout,
+		KeepAlive: DefaultKeepAlive,
+	}
+
+	// DefaultRoundTripper is used if no RoundTripper is set in Config,
+	DefaultRoundTripper http.RoundTripper = &http.Transport{
+		Proxy:               http.ProxyFromEnvironment,
+		DialContext:         DefaultDialer.DialContext,
+		TLSHandshakeTimeout: DefaultTLSHandshakeTimeout,
+	}
+)
 
 // NewConfig returns a new client.Config with given address and round tripper
 func NewConfig(addr string, rt http.RoundTripper) Config {

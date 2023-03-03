@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ClickHouse/clickhouse-go"
+	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -37,12 +37,8 @@ func TestResult(t *testing.T) {
 	_, err = conn.Execute(sql)
 	asst.Nil(err, "test Execute() failed")
 	// insert data
-	err = conn.Begin()
-	asst.Nil(err, "test Execute() failed")
 	sql = `insert into t01(id, name, group, type, del_flag, create_time, last_update_time) values(?, ?, ?, ?, ?, ?, ?)`
-	_, err = conn.Execute(sql, 1, "aaa", clickhouse.Array([]string{"group1", "group2", "group3"}), "a", 0, time.Now(), time.Now())
-	asst.Nil(err, "test Execute() failed")
-	err = conn.Commit()
+	_, err = conn.Execute(sql, 1, "aaa", clickhouse.ArraySet{"group1", "group2", "group3"}, "a", 0, time.Now(), time.Now())
 	asst.Nil(err, "test Execute() failed")
 	// select data
 	sql = `select id, name, group, type, del_flag, create_time, last_update_time from t01`

@@ -17,7 +17,6 @@ func equal(v1, v2 Version) bool {
 		v1.GetMinor() == v2.GetMinor() &&
 		v1.GetRelease() == v2.GetRelease() &&
 		v1.String() == v2.String()
-
 }
 
 func TestParse(t *testing.T) {

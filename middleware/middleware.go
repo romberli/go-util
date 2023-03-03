@@ -19,10 +19,16 @@ type Result interface {
 }
 
 type Statement interface {
+	// Close closes the statement
+	Close() error
 	// Execute executes given command and placeholders on the middleware
 	Execute(args ...interface{}) (Result, error)
 	// ExecuteContext executes given command and placeholders with context on the middleware
 	ExecuteContext(ctx context.Context, args ...interface{}) (Result, error)
+	// Commit commits the transaction
+	Commit() error
+	// Rollback rollbacks the transaction
+	Rollback() error
 }
 
 type PoolConn interface {

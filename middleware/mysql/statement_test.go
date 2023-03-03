@@ -20,13 +20,13 @@ func TestStatement_Execute(t *testing.T) {
 	err := createTable()
 	asst.Nil(err, "test Execute() failed")
 	// insert data
-	sql := `insert into t10(id, name, col1, col2) values(?, ?, ?, ?);`
+	sql := `insert into t05(id, name, col1, col2) values(?, ?, ?, ?);`
 	stmt, err := conn.Prepare(sql)
 	asst.Nil(err, "test Execute() failed")
 	_, err = stmt.Execute(1, constant.DefaultRandomString, 100, 3.14)
 	asst.Nil(err, "test Execute() failed")
 	// select data
-	sql = `select id, name, col1, col2 from t10 where id = ?;`
+	sql = `select id, name, col1, col2 from t05 where id = ?;`
 	stmt, err = conn.Prepare(sql)
 	asst.Nil(err, "test Execute() failed")
 	result, err := stmt.Execute(1)
@@ -47,7 +47,7 @@ func TestStatement_ExecuteContext(t *testing.T) {
 	// insert data
 	err = conn.Begin()
 	asst.Nil(err, "test ExecuteContext() failed")
-	sql := `insert into t10(id, name, col1, col2) values(?, ?, ?, ?);`
+	sql := `insert into t05(id, name, col1, col2) values(?, ?, ?, ?);`
 	stmt, err := conn.PrepareContext(ctx, sql)
 	asst.Nil(err, "test ExecuteContext() failed")
 	_, err = stmt.ExecuteContext(ctx, 1, constant.DefaultRandomString, 100, 3.14)
@@ -55,7 +55,7 @@ func TestStatement_ExecuteContext(t *testing.T) {
 	err = conn.Commit()
 	asst.Nil(err, "test ExecuteContext() failed")
 	// select data
-	sql = `select id, name, col1, col2 from t10 where id = ?;`
+	sql = `select id, name, col1, col2 from t05 where id = ?;`
 	stmt, err = conn.PrepareContext(ctx, sql)
 	asst.Nil(err, "test ExecuteContext() failed")
 	result, err := stmt.ExecuteContext(ctx, 1)

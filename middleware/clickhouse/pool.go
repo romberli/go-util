@@ -43,9 +43,9 @@ type PoolConfig struct {
 }
 
 // NewPoolConfig returns a new PoolConfig
-func NewPoolConfig(addr, dbName, dbUser, dbPass string, debug bool, readTimeout, writeTimeout int, maxConnections,
+func NewPoolConfig(addr, dbName, dbUser, dbPass string, debug bool, maxConnections,
 	initConnections, maxIdleConnections, maxIdleTime, maxWaitTime, maxRetryCount, keepAliveInterval int, altHosts ...string) PoolConfig {
-	config := NewConfig(addr, dbName, dbUser, dbPass, debug, readTimeout, writeTimeout, altHosts...)
+	config := NewConfig(addr, dbName, dbUser, dbPass, debug, altHosts...)
 
 	return PoolConfig{
 		Config:             config,
@@ -120,8 +120,8 @@ type PoolConn struct {
 }
 
 // NewPoolConn returns a new *PoolConn
-func NewPoolConn(addr, dbName, dbUser, dbPass string, debug bool, readTimeout, writeTimeout int, alterHosts ...string) (*PoolConn, error) {
-	conn, err := NewConn(addr, dbName, dbUser, dbPass, debug, readTimeout, writeTimeout, alterHosts...)
+func NewPoolConn(addr, dbName, dbUser, dbPass string, debug bool, alterHosts ...string) (*PoolConn, error) {
+	conn, err := NewConn(addr, dbName, dbUser, dbPass, debug, alterHosts...)
 	if err != nil {
 		return nil, err
 	}
@@ -133,8 +133,8 @@ func NewPoolConn(addr, dbName, dbUser, dbPass string, debug bool, readTimeout, w
 }
 
 // NewPoolConnWithPool returns a new *PoolConn
-func NewPoolConnWithPool(pool *Pool, addr, dbName, dbUser, dbPass string, debug bool, readTimeout, writeTimeout int, alterHosts ...string) (*PoolConn, error) {
-	pc, err := NewPoolConn(addr, dbName, dbUser, dbPass, debug, readTimeout, writeTimeout, alterHosts...)
+func NewPoolConnWithPool(pool *Pool, addr, dbName, dbUser, dbPass string, debug bool, alterHosts ...string) (*PoolConn, error) {
+	pc, err := NewPoolConn(addr, dbName, dbUser, dbPass, debug, alterHosts...)
 	if err != nil {
 		return nil, err
 	}
@@ -212,18 +212,18 @@ type Pool struct {
 }
 
 // NewPool returns a new *Pool
-func NewPool(addr, dbName, dbUser, dbPass string, debug bool, readTimeout, writeTimeout int,
+func NewPool(addr, dbName, dbUser, dbPass string, debug bool,
 	maxConnections, initConnections, maxIdleConnections, maxIdleTime, maxWaitTime, maxRetryCount, keepAliveInterval int, altHosts ...string) (*Pool, error) {
-	cfg := NewPoolConfig(addr, dbName, dbUser, dbPass, debug, readTimeout, writeTimeout,
-		maxConnections, initConnections, maxIdleConnections, maxIdleTime, maxWaitTime, maxRetryCount, keepAliveInterval, altHosts...)
+	cfg := NewPoolConfig(addr, dbName, dbUser, dbPass, debug, maxConnections, initConnections, maxIdleConnections,
+		maxIdleTime, maxWaitTime, maxRetryCount, keepAliveInterval, altHosts...)
 
 	return NewPoolWithPoolConfig(cfg)
 }
 
 // NewPoolWithDefault returns a new *Pool with default configuration
 func NewPoolWithDefault(addr, dbName, dbUser, dbPass string) (*Pool, error) {
-	return NewPool(addr, dbName, dbUser, dbPass, false, DefaultReadTimeout, DefaultWriteTimeout, DefaultMaxConnections,
-		DefaultInitConnections, DefaultMaxIdleConnections, DefaultMaxIdleTime, DefaultMaxWaitTime, DefaultMaxRetryCount, DefaultKeepAliveInterval)
+	return NewPool(addr, dbName, dbUser, dbPass, false, DefaultMaxConnections, DefaultInitConnections,
+		DefaultMaxIdleConnections, DefaultMaxIdleTime, DefaultMaxWaitTime, DefaultMaxRetryCount, DefaultKeepAliveInterval)
 }
 
 // NewPoolWithConfig returns a new *Pool with a Config object
@@ -302,7 +302,7 @@ func (p *Pool) supply(num int) error {
 
 	for i := 0; i < num; i++ {
 		if len(p.freeConnChan)+p.usedConnections < p.MaxConnections {
-			pc, err := NewPoolConnWithPool(p, p.Addr, p.DBName, p.DBUser, p.DBPass, p.Debug, p.ReadTimeout, p.WriteTimeout, p.AltHosts...)
+			pc, err := NewPoolConnWithPool(p, p.Addr, p.DBName, p.DBUser, p.DBPass, p.Debug, p.AltHosts...)
 			if err != nil {
 				merr = multierror.Append(merr, err)
 				continue
@@ -418,7 +418,7 @@ func (p *Pool) get() (*PoolConn, error) {
 	}
 
 	// there is no valid connection in the free connection channel, therefore create a new one
-	pc, err := NewPoolConnWithPool(p, p.Addr, p.DBName, p.DBUser, p.DBPass, p.Debug, p.ReadTimeout, p.WriteTimeout, p.AltHosts...)
+	pc, err := NewPoolConnWithPool(p, p.Addr, p.DBName, p.DBUser, p.DBPass, p.Debug, p.AltHosts...)
 	if err != nil {
 		return nil, err
 	}

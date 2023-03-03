@@ -4,9 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/romberli/go-util/middleware"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGlobalPool(t *testing.T) {
@@ -38,7 +37,7 @@ func TestGlobalPool(t *testing.T) {
 	asst.Nil(err, "execute sql with global pool failed")
 	actual, err := result.(*Result).GetIntByName(0, "ok")
 	asst.Nil(err, "execute sql with global pool failed")
-	asst.Equal(int64(1), actual, "expected and actual values are not equal")
+	asst.Equal(1, actual, "expected and actual values are not equal")
 
 	// sleep to test maintain mechanism
 	time.Sleep(10 * time.Second)

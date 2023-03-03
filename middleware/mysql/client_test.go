@@ -97,10 +97,10 @@ func TestMySQLConnection(t *testing.T) {
 
 	asst := assert.New(t)
 
-	defer func() {
-		err = conn.Close()
-		asst.Nil(err, "close connection failed")
-	}()
+	//defer func() {
+	//	err = conn.Close()
+	//	asst.Nil(err, "close connection failed")
+	//}()
 
 	// drop table
 	err = dropTable()
@@ -148,12 +148,18 @@ func TestMySQLConnection(t *testing.T) {
 
 func TestConn_Execute(t *testing.T) {
 	asst := assert.New(t)
-
-	sql := "SELECT col2 FROM test.t01 WHERE id = 1;"
+	// create table
+	err := createTable()
+	asst.Nil(err, "execute create table sql failed")
+	// select data
+	sql := "SELECT col2 FROM test.t05 WHERE id = 1;"
 	result, err := conn.Execute(sql)
 	asst.Nil(err, "execute sql failed")
-	col2, err := result.GetString(0, 0)
-	asst.Equal(0, col2, "execute sql failed")
+	col2, err := result.GetFloat(0, 0)
+	asst.Equal(0.0, col2, "execute sql failed")
+	// drop table
+	err = dropTable()
+	asst.Nil(err, "execute drop table sql failed")
 }
 
 func TestConn_IsReplicationSlave(t *testing.T) {

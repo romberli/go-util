@@ -5,11 +5,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ClickHouse/clickhouse-go"
+	"github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/romberli/go-util/constant"
+	"github.com/romberli/go-util/middleware"
 	"github.com/romberli/log"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/romberli/go-util/constant"
 )
 
 const (
@@ -49,7 +49,7 @@ func createTable() error {
 			last_update_time Datetime
 		)
 			engine = MergeTree PARTITION BY toYYYYMMDD(last_update_time)
-			ORDER BY (id, last_update_time) SETTINGS index_granularity = 8192;
+			ORDER BY (id, last_update_time) SETTINGS index_granularity = 8192
 	`
 	_, err := testConn.Execute(sql)
 
@@ -75,27 +75,23 @@ func TestConn_Execute(t *testing.T) {
 	err := createTable()
 	asst.Nil(err, "test Execute() failed")
 	// insert data
-	err = testConn.Begin()
 	asst.Nil(err, "test Execute() failed")
-	sql := `insert into t01(id, name, group, type, del_flag, create_time, last_update_time) values(?, ?, ?, ?, ?, ?, ?)`
-	_, err = testConn.Execute(sql, 1, constant.DefaultRandomString, clickhouse.Array([]string{"group1", "group2", "group3"}), "a", 0, constant.DefaultRandomTime, time.Now())
-	asst.Nil(err, "test Execute() failed")
-	err = testConn.Commit()
-	asst.Nil(err, "test Execute() failed")
-	err = testConn.Begin()
+	sql := `insert into t01(id, name, group, type, del_flag, create_time, last_update_time) values (?, ?, ?, ?, ?, ?, ?)`
+	_, err = testConn.Execute(sql, 1, constant.DefaultRandomString, clickhouse.ArraySet{"group1", "group2", "group3"}, "a", 0, constant.DefaultRandomTime, time.Now())
 	asst.Nil(err, "test Execute() failed")
 	sql = `insert into t01(id, name, group, type, del_flag, create_time, last_update_time) values(?, ?, ?, ?, ?, ?, ?)`
-	_, err = testConn.Execute(sql, 2, constant.DefaultRandomString, clickhouse.Array([]string{}), "a", 0, constant.DefaultRandomTime, time.Now())
-	asst.Nil(err, "test Execute() failed")
-	err = testConn.Commit()
+	_, err = testConn.Execute(sql, 2, constant.DefaultRandomString, clickhouse.ArraySet{}, "a", 0, constant.DefaultRandomTime, time.Now())
 	asst.Nil(err, "test Execute() failed")
 	// select data
 	sql = `select id, name, group, type, del_flag, create_time, last_update_time from t01 where last_update_time > ? order by id asc limit ?, ?`
-	result, err := testConn.Execute(sql, time.Now().Add(-time.Hour), 1, 1)
+	result, err := testConn.Execute(sql, time.Now().Add(-time.Hour), 1, 10)
 	asst.Nil(err, "test Execute() failed")
 	id, err := result.GetInt(0, 0)
-	asst.Nil(err, "test execute failed")
-	asst.Equal(2, id, "test execute failed")
+	asst.Nil(err, "test Execute() failed")
+	asst.Equal(2, id, "test Execute() failed")
+	name, err := result.GetValue(0, 1)
+	asst.Nil(err, "test Execute() failed")
+	asst.Nil(name, "test Execute() failed")
 	// map to struct
 	r := &testRow{}
 	err = result.MapToStructByRowIndex(r, 0, "middleware")
@@ -110,7 +106,7 @@ func TestConn_GetTimeZone(t *testing.T) {
 	var (
 		err    error
 		sql    string
-		result *Result
+		result middleware.Result
 	)
 
 	// sql = `select toUnixTimestamp(now());`

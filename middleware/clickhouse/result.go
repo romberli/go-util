@@ -1,11 +1,10 @@
 package clickhouse
 
 import (
-	"database/sql/driver"
-
-	"github.com/romberli/go-util/middleware/result"
+	"database/sql"
 
 	"github.com/romberli/go-util/middleware"
+	"github.com/romberli/go-util/middleware/result"
 )
 
 const middlewareType = "clickhouse"
@@ -13,20 +12,25 @@ const middlewareType = "clickhouse"
 var _ middleware.Result = (*Result)(nil)
 
 type Result struct {
-	Raw driver.Rows
+	Raw *sql.Rows
 	*result.Rows
 	result.Metadata
 	result.Map
 }
 
 // NewResult returns *Result, it builds from given rows
-func NewResult(rows driver.Rows) *Result {
+func NewResult(rows *sql.Rows) (*Result, error) {
+	r, err := result.NewRowsWithSQLRows(rows)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Result{
 		rows,
-		result.NewRowsWithRows(rows),
+		r,
 		result.NewEmptyMetadata(middlewareType),
 		result.NewEmptyMap(middlewareType),
-	}
+	}, nil
 }
 
 // NewEmptyResult returns an empty *Result

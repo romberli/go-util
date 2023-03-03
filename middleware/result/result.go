@@ -1,6 +1,7 @@
 package result
 
 import (
+	"database/sql"
 	"database/sql/driver"
 	"reflect"
 
@@ -10,6 +11,16 @@ import (
 )
 
 const mapColumnNum = 2
+
+type Val struct {
+	driver.Value
+}
+
+func (v *Val) Scan(src any) error {
+	v.Value = src
+
+	return nil
+}
 
 type Rows struct {
 	FieldSlice []string
@@ -26,8 +37,8 @@ func NewRows(fieldSlice []string, fieldMap map[string]int, values [][]driver.Val
 	}
 }
 
-// NewRowsWithRows returns *Rows, it builds from given rows
-func NewRowsWithRows(rows driver.Rows) *Rows {
+// NewRowsWithDriverRows returns *Rows, it builds from driver.Rows
+func NewRowsWithDriverRows(rows driver.Rows) *Rows {
 	var values [][]driver.Value
 
 	columns := rows.Columns()
@@ -51,6 +62,51 @@ func NewRowsWithRows(rows driver.Rows) *Rows {
 		fieldMap,
 		values,
 	}
+}
+
+// NewRowsWithSQLRows returns *Rows, it builds from given *sql.Rows
+func NewRowsWithSQLRows(rows *sql.Rows) (*Rows, error) {
+	var values [][]driver.Value
+
+	columns, err := rows.Columns()
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
+
+	fieldMap := make(map[string]int)
+	for i, column := range columns {
+		fieldMap[column] = i
+	}
+
+	for rows.Next() {
+		row := make([]interface{}, len(columns))
+		for i := range row {
+			row[i] = &Val{}
+		}
+
+		err = rows.Scan(row...)
+		if err != nil {
+			return nil, errors.Trace(err)
+		}
+
+		r := make([]driver.Value, len(columns))
+		for i, v := range row {
+			if v == nil {
+				r[i] = nil
+				continue
+			}
+
+			r[i] = v.(*Val).Value
+		}
+
+		values = append(values, r)
+	}
+
+	return &Rows{
+		columns,
+		fieldMap,
+		values,
+	}, nil
 }
 
 // NewEmptyRows returns an empty *Rows

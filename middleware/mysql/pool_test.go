@@ -94,10 +94,14 @@ func TestPool_Transaction(t *testing.T) {
 		asst.Nil(err, "Close transaction failed")
 	}()
 
+	// create table
+	err = createTable()
+	asst.Nil(err, " execute create table sql failed")
+
 	err = trx.Begin()
 	asst.Nil(err, "Begin transaction failed")
 
-	sql := "INSERT INTO t01 (id, col1) VALUES (?, ?)"
+	sql := "INSERT INTO t05 (id, col1) VALUES (?, ?)"
 	_, err = trx.Execute(sql, 1, 1)
 	asst.Nil(err, "execute sql failed. sql: %s", sql)
 	result, err := trx.Execute("SELECT COUNT(*) FROM t01")
@@ -123,4 +127,8 @@ func TestPool_Transaction(t *testing.T) {
 
 	err = trx.Commit()
 	asst.Nil(err, "Begin transaction failed")
+
+	// drop table
+	err = dropTable()
+	asst.Nil(err, " execute drop table sql failed")
 }

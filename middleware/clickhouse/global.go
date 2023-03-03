@@ -10,9 +10,9 @@ import (
 var _globalPool *Pool
 
 // InitGlobalPool returns a new *Pool and replaces it as global pool
-func InitGlobalPool(addr, dbName, dbUser, dbPass string, debug bool, readTimeout, writeTimeout int,
+func InitGlobalPool(addr, dbName, dbUser, dbPass string, debug bool,
 	maxConnections, initConnections, maxIdleConnections, maxIdleTime, maxWaitTime, maxRetryCount, keepAliveInterval int, altHosts ...string) error {
-	cfg := NewPoolConfig(addr, dbName, dbUser, dbPass, debug, readTimeout, writeTimeout, maxConnections, initConnections,
+	cfg := NewPoolConfig(addr, dbName, dbUser, dbPass, debug, maxConnections, initConnections,
 		maxIdleConnections, maxIdleTime, maxWaitTime, maxRetryCount, keepAliveInterval, altHosts...)
 
 	return InitGlobalPoolWithPoolConfig(cfg)
@@ -20,7 +20,7 @@ func InitGlobalPool(addr, dbName, dbUser, dbPass string, debug bool, readTimeout
 
 // InitGlobalPoolWithDefault returns a new *Pool with default configuration and replaces it as global pool
 func InitGlobalPoolWithDefault(addr, dbName, dbUser, dbPass string) error {
-	return InitGlobalPool(addr, dbName, dbUser, dbPass, false, DefaultReadTimeout, DefaultWriteTimeout,
+	return InitGlobalPool(addr, dbName, dbUser, dbPass, false,
 		DefaultMaxConnections, DefaultInitConnections, DefaultMaxIdleConnections, DefaultMaxIdleTime,
 		DefaultMaxWaitTime, DefaultMaxRetryCount, DefaultKeepAliveInterval)
 }

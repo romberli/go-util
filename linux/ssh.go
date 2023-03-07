@@ -153,7 +153,7 @@ func (conn *SSHConn) ExecuteCommand(cmd string) (string, error) {
 	}
 
 	output := stdOutBuffer.String() + stdErrBuffer.String()
-	return output, errors.Trace(err)
+	return strings.TrimSpace(output), errors.Trace(err)
 }
 
 // GetHostName returns hostname of remote host

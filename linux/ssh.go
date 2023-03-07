@@ -8,7 +8,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"reflect"
 	"strings"
 	"time"
 
@@ -27,6 +26,8 @@ const (
 	DefaultSSHUserName        = "root"
 	DefaultSSHUserPass        = "root"
 	DefaultByteBufferSize     = 1024 * 1024 // 1MB
+
+	sudoPrefix = "sudo "
 )
 
 type SSHConfig struct {
@@ -34,14 +35,16 @@ type SSHConfig struct {
 	PortNum  int
 	UserName string
 	UserPass string
+	useSudo  bool
 }
 
-func NewSSHConfig(hostIP string, portNum int, userName string, userPass string) *SSHConfig {
+func NewSSHConfig(hostIP string, portNum int, userName string, userPass string, useSudo bool) *SSHConfig {
 	return &SSHConfig{
 		hostIP,
 		portNum,
 		userName,
 		userPass,
+		useSudo,
 	}
 }
 
@@ -51,25 +54,24 @@ func NewSSHConfigWithDefault(hostIP string) *SSHConfig {
 		DefaultSSHPortNum,
 		DefaultSSHUserName,
 		DefaultSSHUserPass,
+		false,
 	}
 }
 
 type SSHConn struct {
-	SSHConfig
+	Config    *SSHConfig
 	SSHClient *ssh.Client
 	*sftp.Client
 }
 
 // NewSSHConn returns a new *SSHConn
-func NewSSHConn(hostIP string, portNum int, userName, userPass string) (*SSHConn, error) {
-	return NewSSHConnWithOptionalArgs(hostIP, portNum, userName, userPass)
+func NewSSHConn(hostIP string, portNum int, userName, userPass string, useSudo bool) (*SSHConn, error) {
+	return newSSHConnWithConfig(NewSSHConfig(hostIP, portNum, userName, userPass, useSudo))
 }
 
-// NewSSHConnWithOptionalArgs returns *SSHConn, first argument is mandatory which presents host ip,
-// and the 3 flowing optional arguments which should be in exact order of port number, username and password
-func NewSSHConnWithOptionalArgs(hostIP string, in ...interface{}) (*SSHConn, error) {
+// newSSHConnWithConfig returns *SSHConn with given config
+func newSSHConnWithConfig(config *SSHConfig) (*SSHConn, error) {
 	var (
-		myConn       *SSHConfig
 		auth         []ssh.AuthMethod
 		addr         string
 		clientConfig *ssh.ClientConfig
@@ -77,81 +79,23 @@ func NewSSHConnWithOptionalArgs(hostIP string, in ...interface{}) (*SSHConn, err
 		sftpClient   *sftp.Client
 	)
 
-	argLen := len(in)
-	switch argLen {
-	case 0:
-		hostIP = strings.TrimSpace(hostIP)
-		if hostIP == constant.EmptyString {
-			return nil, errors.New("host ip could not be empty")
-		}
-
-		myConn = NewSSHConfigWithDefault(hostIP)
-	case 3:
-		var (
-			portNumValue  int
-			userNameValue string
-			userPassValue string
-		)
-
-		portNum := in[0]
-		userName := in[1]
-		userPass := in[2]
-
-		switch portNum.(type) {
-		case nil:
-			portNumValue = DefaultSSHPortNum
-		case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
-			portNumValue = portNum.(int)
-		default:
-			return nil, errors.Errorf("port number must be integer type instead of %s", reflect.TypeOf(portNum).Name())
-		}
-
-		switch userName.(type) {
-		case nil:
-			userNameValue = DefaultSSHUserName
-		case string:
-			userNameValue = strings.TrimSpace(userName.(string))
-			if userNameValue == constant.EmptyString {
-				userNameValue = DefaultSSHUserName
-			}
-		default:
-			return nil, errors.Errorf("user name must be string type instead of %s", reflect.TypeOf(portNum).Name())
-		}
-
-		switch userPass.(type) {
-		case nil:
-			userPassValue = DefaultSSHUserPass
-		case string:
-			userPassValue = strings.TrimSpace(userPass.(string))
-			if userPassValue == constant.EmptyString {
-				userPassValue = DefaultSSHUserPass
-			}
-		default:
-			return nil, errors.Errorf("user password must be string type instead of %s", reflect.TypeOf(portNum).Name())
-		}
-
-		myConn = NewSSHConfig(hostIP, portNumValue, userNameValue, userPassValue)
-	default:
-		return nil, errors.Errorf("optional argument number must be 0 or 3 instead of %d", argLen)
-	}
-
 	// get auth method
-	auth = append(auth, ssh.Password(myConn.UserPass))
+	auth = append(auth, ssh.Password(config.UserPass))
 
 	hostKeyCallBack := func(host string, remote net.Addr, key ssh.PublicKey) error {
 		return nil
 	}
 
 	clientConfig = &ssh.ClientConfig{
-		User:            myConn.UserName,
+		User:            config.UserName,
 		Auth:            auth,
 		Timeout:         DefaultSSHTimeout,
 		HostKeyCallback: hostKeyCallBack,
 	}
 
 	// connect to ssh
-	addr = fmt.Sprintf("%s:%d", myConn.HostIp, myConn.PortNum)
-	sshClient, err := ssh.Dial("tcp", addr, clientConfig)
+	addr = fmt.Sprintf("%s:%d", config.HostIp, config.PortNum)
+	sshClient, err := ssh.Dial(constant.TransportProtocolTCP, addr, clientConfig)
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
@@ -162,13 +106,11 @@ func NewSSHConnWithOptionalArgs(hostIP string, in ...interface{}) (*SSHConn, err
 		return nil, errors.Trace(err)
 	}
 
-	sshConn := &SSHConn{
-		*myConn,
+	return &SSHConn{
+		config,
 		sshClient,
 		sftpClient,
-	}
-
-	return sshConn, nil
+	}, nil
 }
 
 // Close closes connections with the remote host
@@ -198,6 +140,10 @@ func (conn *SSHConn) ExecuteCommand(cmd string) (string, error) {
 	sshSession.Stdout = &stdOutBuffer
 	sshSession.Stderr = &stdErrBuffer
 
+	// prepare command
+	if conn.Config.useSudo {
+		cmd = sudoPrefix + cmd
+	}
 	// run command
 	err = sshSession.Run(cmd)
 	if err != nil {

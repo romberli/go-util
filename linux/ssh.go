@@ -103,9 +103,7 @@ func NewSSHConnWithOptionalArgs(hostIP string, in ...interface{}) (*SSHConn, err
 		case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
 			portNumValue = portNum.(int)
 		default:
-			return nil, errors.New(
-				fmt.Sprintf("port number must be integer type instead of %s",
-					reflect.TypeOf(portNum).Name()))
+			return nil, errors.Errorf("port number must be integer type instead of %s", reflect.TypeOf(portNum).Name())
 		}
 
 		switch userName.(type) {
@@ -117,9 +115,7 @@ func NewSSHConnWithOptionalArgs(hostIP string, in ...interface{}) (*SSHConn, err
 				userNameValue = DefaultSSHUserName
 			}
 		default:
-			return nil, errors.New(
-				fmt.Sprintf("user name must be string type instead of %s",
-					reflect.TypeOf(portNum).Name()))
+			return nil, errors.Errorf("user name must be string type instead of %s", reflect.TypeOf(portNum).Name())
 		}
 
 		switch userPass.(type) {
@@ -131,14 +127,12 @@ func NewSSHConnWithOptionalArgs(hostIP string, in ...interface{}) (*SSHConn, err
 				userPassValue = DefaultSSHUserPass
 			}
 		default:
-			return nil, errors.New(
-				fmt.Sprintf("user password must be string type instead of %s",
-					reflect.TypeOf(portNum).Name()))
+			return nil, errors.Errorf("user password must be string type instead of %s", reflect.TypeOf(portNum).Name())
 		}
 
 		myConn = NewSSHConfig(hostIP, portNumValue, userNameValue, userPassValue)
 	default:
-		return nil, errors.New(fmt.Sprintf("optional argument number must be 0 or 3 instead of %d", argLen))
+		return nil, errors.Errorf("optional argument number must be 0 or 3 instead of %d", argLen)
 	}
 
 	// get auth method
@@ -208,7 +202,7 @@ func (conn *SSHConn) ExecuteCommand(cmd string) (string, error) {
 	err = sshSession.Run(cmd)
 	if err != nil {
 		if stdErrBuffer.String() != constant.EmptyString {
-			err = fmt.Errorf("%s%+v", stdErrBuffer.String(), errors.Trace(err))
+			err = errors.Errorf("%s%+v", stdErrBuffer.String(), errors.Trace(err))
 		}
 	}
 
@@ -277,7 +271,7 @@ func (conn *SSHConn) ReadDir(dirName string) ([]os.FileInfo, error) {
 		return nil, err
 	}
 	if !isDir {
-		return nil, errors.New(fmt.Sprintf("it's not a directory. dir name: %s", dirName))
+		return nil, errors.Errorf("it's not a directory. dir name: %s", dirName)
 	}
 
 	subPathList, err := conn.ListPath(dirName)
@@ -400,7 +394,7 @@ func (conn *SSHConn) CopySingleFileFromRemote(fileNameSource string, fileNameDes
 		return err
 	}
 	if isDir {
-		return errors.New(fmt.Sprintf("it's not a file. file name: %s", fileNameSource))
+		return errors.Errorf("it's not a file. file name: %s", fileNameSource)
 	}
 
 	// check if parent path of destination exists
@@ -410,7 +404,7 @@ func (conn *SSHConn) CopySingleFileFromRemote(fileNameSource string, fileNameDes
 		return err
 	}
 	if !pathExists {
-		return errors.New(fmt.Sprintf("parent path of destination does not exist. path: %s", fileNameDest))
+		return errors.Errorf("parent path of destination does not exist. path: %s", fileNameDest)
 	}
 
 	// check if destination path is a directory
@@ -469,7 +463,7 @@ func (conn *SSHConn) CopySingleFileToRemote(fileNameSource string, fileNameDest 
 		return err
 	}
 	if isDir {
-		return errors.New(fmt.Sprintf("it's not a file. file name: %s", fileNameSource))
+		return errors.Errorf("it's not a file. file name: %s", fileNameSource)
 	}
 
 	// check if parent path of destination exists
@@ -479,7 +473,7 @@ func (conn *SSHConn) CopySingleFileToRemote(fileNameSource string, fileNameDest 
 		return nil
 	}
 	if !pathExists {
-		return errors.New(fmt.Sprintf("parent path of destination does not exist. path: %s", fileNameDest))
+		return errors.Errorf("parent path of destination does not exist. path: %s", fileNameDest)
 	}
 
 	// check if destination path is a directory
@@ -554,9 +548,8 @@ func (conn *SSHConn) CopyFileListFromRemote(fileListSource []string, FileDirDest
 // it copies file contents and rename files to given file names
 func (conn *SSHConn) CopyFileListFromRemoteWithNewName(fileListSource []string, fileListDest []string) (err error) {
 	if len(fileListSource) != len(fileListDest) {
-		return errors.New(fmt.Sprintf(
-			"the length of source and destination file list must be exactly same. source length: %d, destination length: %d",
-			len(fileListSource), len(fileListDest)))
+		return errors.Errorf("the length of source and destination file list must be exactly same. source length: %d, destination length: %d",
+			len(fileListSource), len(fileListDest))
 	}
 
 	for i, fileNameSource := range fileListSource {
@@ -639,7 +632,7 @@ func (conn *SSHConn) CopyDirFromRemote(dirNameSource, dirNameDest string) error 
 		return err
 	}
 	if !isDir {
-		return errors.New(fmt.Sprintf("it's not a directory. dir name: %s", dirNameSource))
+		return errors.Errorf("it's not a directory. dir name: %s", dirNameSource)
 	}
 
 	// check if parent path of destination exists
@@ -649,7 +642,7 @@ func (conn *SSHConn) CopyDirFromRemote(dirNameSource, dirNameDest string) error 
 		return nil
 	}
 	if !pathExists {
-		return errors.New(fmt.Sprintf("parent path of destination does not exists. path: %s", dirNameDest))
+		return errors.Errorf("parent path of destination does not exists. path: %s", dirNameDest)
 	}
 
 	pathSourceBase := filepath.Base(dirNameSource)
@@ -667,7 +660,7 @@ func (conn *SSHConn) CopyDirFromRemote(dirNameSource, dirNameDest string) error 
 				return err
 			}
 			if !isDir {
-				return errors.New(fmt.Sprintf("it's not a directory. path: %s", dirNameDest))
+				return errors.Errorf("it's not a directory. path: %s", dirNameDest)
 			}
 
 			dirNameDest = filepath.Join(dirNameDest, pathSourceBase)
@@ -725,7 +718,7 @@ func (conn *SSHConn) CopyDirToRemote(dirNameSource, dirNameDest string) error {
 		return err
 	}
 	if !isDir {
-		return errors.New(fmt.Sprintf("it's not a directory. dir name: %s", dirNameSource))
+		return errors.Errorf("it's not a directory. dir name: %s", dirNameSource)
 	}
 
 	// check if parent path of destination exists
@@ -735,7 +728,7 @@ func (conn *SSHConn) CopyDirToRemote(dirNameSource, dirNameDest string) error {
 		return err
 	}
 	if !pathExists {
-		return errors.New(fmt.Sprintf("parent path of destination does not exsists. path: %s", dirNameDest))
+		return errors.Errorf("parent path of destination does not exsists. path: %s", dirNameDest)
 	}
 
 	pathSourceBase := filepath.Base(dirNameSource)
@@ -753,7 +746,7 @@ func (conn *SSHConn) CopyDirToRemote(dirNameSource, dirNameDest string) error {
 				return err
 			}
 			if !isDir {
-				return errors.New(fmt.Sprintf("it's not a directory. dir name: %s", dirNameDest))
+				return errors.Errorf("it's not a directory. dir name: %s", dirNameDest)
 			}
 
 			dirNameDest = filepath.Join(dirNameDest, pathSourceBase)

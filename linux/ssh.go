@@ -27,16 +27,17 @@ const (
 	DefaultSSHUserPass        = "root"
 	DefaultByteBufferSize     = 1024 * 1024 // 1MB
 
-	hostNameCommand   = "hostname"
-	pathExistsCommand = "test -e %s && echo 0 || echo 1"
-	isDirCommand      = "test -d %s && echo 0 || echo 1"
-	lsCommand         = "ls %s"
-	mkdirCommand      = "mkdir -p %s"
-	rmCommand         = "rm -rf %s"
-	touchCommand      = "touch %s"
-	cpCommand         = "cp -r %s %s"
-	chownCommand      = "chown -R %s:%s %s"
-	chmodCommand      = "chmod -R %s %s"
+	hostNameCommand   = "/usr/bin/hostname"
+	pathExistsCommand = "/usr/bin/test -e %s && echo 0 || echo 1"
+	isDirCommand      = "/usr/bin/test -d %s && echo 0 || echo 1"
+	lsCommand         = "/usr/bin/ls %s"
+	mkdirCommand      = "/usr/bin/mkdir -p %s"
+	rmCommand         = "/usr/bin/rm -rf %s"
+	touchCommand      = "/usr/bin/touch %s"
+	cpCommand         = "/usr/bin/cp -r %s %s"
+	mvCommand         = "/usr/bin/mv %s %s"
+	chownCommand      = "/usr/bin/chown -R %s:%s %s"
+	chmodCommand      = "/usr/bin/chmod -R %s %s"
 
 	sudoPrefix = "sudo "
 )
@@ -280,6 +281,11 @@ func (conn *SSHConn) Touch(path string) error {
 // Copy copies a file or directory on the remote host, it will act like shell command "copy -r $src $dest"
 func (conn *SSHConn) Copy(src, dest string) error {
 	return conn.ExecuteCommandWithoutOutput(fmt.Sprintf(cpCommand, strings.TrimSpace(src), strings.TrimSpace(dest)))
+}
+
+// Move moves a file or directory on the remote host, it will act like shell command "mv $src $dest"
+func (conn *SSHConn) Move(src, dest string) error {
+	return conn.ExecuteCommandWithoutOutput(fmt.Sprintf(mvCommand, strings.TrimSpace(src), strings.TrimSpace(dest)))
 }
 
 // Chown changes the owner and group of the given path on the remote host, it will act like shell command "chown -R $user:$group $path"

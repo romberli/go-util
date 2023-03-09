@@ -57,6 +57,10 @@ const (
 	GOOSWindows                         = "windows"
 	DefaultFileMode         os.FileMode = 0644
 	DefaultExecFileMode     os.FileMode = 0755
+	DefaultAllFileMode      os.FileMode = 0777
+	DefaultFileModeStr                  = "0644"
+	DefaultExecFileModeStr              = "0755"
+	DefaultAllFileModeStr               = "0777"
 	DefaultKillSignal                   = 15
 	DefaultNormalExitCode               = 0
 	DefaultAbnormalExitCode             = 1
@@ -82,6 +86,7 @@ const (
 
 	RootDir                         = "/"
 	CurrentDir                      = "./"
+	DefaultTmpDir                   = "/tmp"
 	DefaultRandomString             = "sadfio3mj23gsk9lj8ou"
 	DefaultRandomInt                = 2053167498
 	DefaultRandomFloat      float64 = DefaultRandomInt

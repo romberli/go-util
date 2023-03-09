@@ -6,8 +6,8 @@ import (
 	"io"
 	"net"
 	"os"
-	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -26,6 +26,17 @@ const (
 	DefaultSSHUserName        = "root"
 	DefaultSSHUserPass        = "root"
 	DefaultByteBufferSize     = 1024 * 1024 // 1MB
+
+	hostNameCommand   = "hostname"
+	pathExistsCommand = "test -e %s && echo 0 || echo 1"
+	isDirCommand      = "test -d %s && echo 0 || echo 1"
+	lsCommand         = "ls %s"
+	mkdirCommand      = "mkdir -p %s"
+	rmCommand         = "rm -rf %s"
+	touchCommand      = "touch %s"
+	cpCommand         = "cp -r %s %s"
+	chownCommand      = "chown -R %s:%s %s"
+	chmodCommand      = "chmod -R %s %s"
 
 	sudoPrefix = "sudo "
 )
@@ -59,9 +70,9 @@ func NewSSHConfigWithDefault(hostIP string) *SSHConfig {
 }
 
 type SSHConn struct {
-	Config    *SSHConfig
-	SSHClient *ssh.Client
-	*sftp.Client
+	Config     *SSHConfig
+	SSHClient  *ssh.Client
+	SFTPClient *sftp.Client
 }
 
 // NewSSHConn returns a new *SSHConn
@@ -115,7 +126,7 @@ func newSSHConnWithConfig(config *SSHConfig) (*SSHConn, error) {
 
 // Close closes connections with the remote host
 func (conn *SSHConn) Close() error {
-	err := conn.Client.Close()
+	err := conn.SFTPClient.Close()
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -123,8 +134,24 @@ func (conn *SSHConn) Close() error {
 	return errors.Trace(conn.SSHClient.Close())
 }
 
+// SetUseSudo sets if use sudo or not
+func (conn *SSHConn) SetUseSudo(useSudo bool) {
+	conn.Config.useSudo = useSudo
+}
+
 // ExecuteCommand executes shell command on the remote host
 func (conn *SSHConn) ExecuteCommand(cmd string) (string, error) {
+	return conn.executeCommand(cmd)
+}
+
+// ExecuteCommandWithoutOutput executes a command without output
+func (conn *SSHConn) ExecuteCommandWithoutOutput(cmd string) error {
+	_, err := conn.executeCommand(cmd)
+
+	return err
+}
+
+func (conn *SSHConn) executeCommand(cmd string) (string, error) {
 	var (
 		stdOutBuffer bytes.Buffer
 		stdErrBuffer bytes.Buffer
@@ -141,7 +168,7 @@ func (conn *SSHConn) ExecuteCommand(cmd string) (string, error) {
 	sshSession.Stderr = &stdErrBuffer
 
 	// prepare command
-	if conn.Config.useSudo {
+	if conn.Config.useSudo && !strings.HasPrefix(cmd, sudoPrefix) {
 		cmd = sudoPrefix + cmd
 	}
 	// run command
@@ -158,42 +185,36 @@ func (conn *SSHConn) ExecuteCommand(cmd string) (string, error) {
 
 // GetHostName returns hostname of remote host
 func (conn *SSHConn) GetHostName() (string, error) {
-	hostName, err := conn.ExecuteCommand(HostNameCommand)
-
-	return hostName, err
+	return conn.ExecuteCommand(hostNameCommand)
 }
 
 // PathExists returns if given path exists
 func (conn *SSHConn) PathExists(path string) (bool, error) {
-	_, err := conn.Stat(path)
-	if err == nil {
-		return true, nil
+	cmd := fmt.Sprintf(pathExistsCommand, strings.TrimSpace(path))
+	output, err := conn.ExecuteCommand(cmd)
+	if err != nil {
+		return false, err
 	}
 
-	if os.IsNotExist(err) {
-		return false, nil
-	}
-
-	return false, errors.Trace(err)
+	return output == strconv.Itoa(constant.ZeroInt), nil
 }
 
 // IsDir returns if given path on the remote host is a directory or not
 func (conn *SSHConn) IsDir(path string) (bool, error) {
-	path = strings.TrimSpace(path)
-
-	info, err := conn.Stat(path)
+	cmd := fmt.Sprintf(isDirCommand, strings.TrimSpace(path))
+	output, err := conn.ExecuteCommand(cmd)
 	if err != nil {
-		return false, errors.Trace(err)
+		return false, err
 	}
 
-	return info.IsDir(), nil
+	return output == strconv.Itoa(constant.ZeroInt), nil
 }
 
 // ListPath returns subdirectories and files of given path on the remote host, it returns a slice of sub paths
 func (conn *SSHConn) ListPath(path string) ([]string, error) {
 	var subPathList []string
 
-	cmd := fmt.Sprintf("%s %s", LsCommand, strings.TrimSpace(path))
+	cmd := fmt.Sprintf(lsCommand, strings.TrimSpace(path))
 	subPathStr, err := conn.ExecuteCommand(cmd)
 	if err != nil {
 		return nil, err
@@ -227,7 +248,7 @@ func (conn *SSHConn) ReadDir(dirName string) ([]os.FileInfo, error) {
 	for _, subPath := range subPathList {
 		if subPath != constant.EmptyString {
 			fileNameAbs := filepath.Join(dirName, subPath)
-			fileInfo, err := conn.Stat(fileNameAbs)
+			fileInfo, err := conn.SFTPClient.Stat(fileNameAbs)
 			if err != nil {
 				return nil, errors.Trace(err)
 			}
@@ -239,58 +260,46 @@ func (conn *SSHConn) ReadDir(dirName string) ([]os.FileInfo, error) {
 	return fileInfoList, nil
 }
 
-// RemoveAll removes given path on the remote host, it will act like shell command "rm -rf $path",
-// except that it will raise an error when something goes wrong.
-func (conn *SSHConn) RemoveAll(path string) error {
-	path = strings.TrimSpace(path)
-	isDir, err := conn.IsDir(path)
-	if err != nil {
-		return err
-	}
+// GetFileInfo
 
-	if isDir {
-		isEmpty, err := conn.IsEmptyDir(path)
-		if err != nil {
-			return err
-		}
-
-		if !isEmpty {
-			subPathList, err := conn.ListPath(path)
-			if err != nil {
-				return err
-			}
-			for _, subPath := range subPathList {
-				subPathAbs := filepath.Join(path, subPath)
-				err = conn.RemoveAll(subPathAbs)
-				if err != nil {
-					return err
-				}
-			}
-		}
-
-		err = conn.RemoveDirectory(path)
-		if err != nil {
-			return errors.Trace(err)
-		}
-	} else {
-		err = conn.Remove(path)
-		if err != nil {
-			return errors.Trace(err)
-		}
-	}
-
-	return nil
+// MkdirAll creates a directory named path, along with any necessary parents, on the remote host, it will act like shell command "mkdir -p $path"
+func (conn *SSHConn) MkdirAll(path string) error {
+	return conn.ExecuteCommandWithoutOutput(fmt.Sprintf(mkdirCommand, strings.TrimSpace(path)))
 }
 
-// IsEmptyDir returns if  given directory is empty or not
+// RemoveAll removes given path on the remote host, it will act like shell command "rm -rf $path",
+func (conn *SSHConn) RemoveAll(path string) error {
+	return conn.ExecuteCommandWithoutOutput(fmt.Sprintf(rmCommand, strings.TrimSpace(path)))
+}
+
+// Touch touches the given path on the remote host, it will act like shell command "touch $path"
+func (conn *SSHConn) Touch(path string) error {
+	return conn.ExecuteCommandWithoutOutput(fmt.Sprintf(touchCommand, strings.TrimSpace(path)))
+}
+
+// Copy copies a file or directory on the remote host, it will act like shell command "copy -r $src $dest"
+func (conn *SSHConn) Copy(src, dest string) error {
+	return conn.ExecuteCommandWithoutOutput(fmt.Sprintf(cpCommand, strings.TrimSpace(src), strings.TrimSpace(dest)))
+}
+
+// Chown changes the owner and group of the given path on the remote host, it will act like shell command "chown -R $user:$group $path"
+func (conn *SSHConn) Chown(path, user, group string) error {
+	return conn.ExecuteCommandWithoutOutput(fmt.Sprintf(chownCommand, user, group, strings.TrimSpace(path)))
+}
+
+// Chmod changes the mode of the given path on the remote host, it will act like shell command "chmod -R $mode $path"
+func (conn *SSHConn) Chmod(path string, mode string) error {
+	return conn.ExecuteCommandWithoutOutput(fmt.Sprintf(chmodCommand, mode, strings.TrimSpace(path)))
+}
+
+// IsEmptyDir returns if  given directory is empty or not on the remote host
 func (conn *SSHConn) IsEmptyDir(dirName string) (bool, error) {
-	dirName = strings.TrimSpace(dirName)
-	fileInfoList, err := conn.ReadDir(dirName)
+	subPathList, err := conn.ListPath(strings.TrimSpace(dirName))
 	if err != nil {
 		return false, err
 	}
 
-	return fileInfoList == nil, nil
+	return len(subPathList) == constant.ZeroInt, nil
 }
 
 // CopyFile copy file content from source to destination, it doesn't care about which one is local or remote
@@ -320,8 +329,15 @@ func (conn *SSHConn) CopyFile(fileSource io.Reader, fileDest io.Writer, bufferSi
 	return nil
 }
 
-// CopySingleFileFromRemote copies one single file from remote to local
-func (conn *SSHConn) CopySingleFileFromRemote(fileNameSource string, fileNameDest string) error {
+// CopySingleFileFromRemote copies one single file from remote to local.
+// if tmpDir is not empty and is different with the parent directory of fileNameSource,
+// it will copy the file to tmpDir on the remote host first, then transfer it to the local host,
+// after that, it will remove the temporary file on the remote host automatically.
+// it is your responsibility to assure that tmpDir exists and is a directory,
+// the connection should have enough privilege to the tmpDir
+// and the tmpDir has enough space to hold the file temporarily,
+// note that only the first tmpDir will be used.
+func (conn *SSHConn) CopySingleFileFromRemote(fileNameSource string, fileNameDest string, tmpDir ...string) error {
 	var (
 		fileDest   *os.File
 		fileSource *sftp.File
@@ -350,9 +366,11 @@ func (conn *SSHConn) CopySingleFileFromRemote(fileNameSource string, fileNameDes
 		return err
 	}
 	if !pathExists {
-		return errors.Errorf("parent path of destination does not exist. path: %s", fileNameDest)
+		return errors.Errorf("parent path of destination does not exist nor have privilege. path: %s", fileNameDest)
 	}
 
+	fileNameSourceParent := filepath.Dir(fileNameSource)
+	fileNameSourceBase := filepath.Base(fileNameSource)
 	// check if destination path is a directory
 	pathExists, err = PathExists(fileNameDest)
 	if err != nil {
@@ -364,12 +382,40 @@ func (conn *SSHConn) CopySingleFileFromRemote(fileNameSource string, fileNameDes
 			return err
 		}
 		if isDir {
-			fileNameSourceBase := filepath.Base(fileNameSource)
 			fileNameDest = filepath.Join(fileNameDest, fileNameSourceBase)
 		}
 	}
 
-	fileSource, err = conn.Open(fileNameSource)
+	var td string
+	if len(tmpDir) > constant.ZeroInt {
+		// only use the first one
+		td = tmpDir[constant.ZeroInt]
+	}
+
+	tmpFile := fileNameSource
+	if td != constant.EmptyString && td != fileNameSourceParent {
+		isDir, err = conn.IsDir(td)
+		if err != nil {
+			return err
+		}
+		if !isDir {
+			return errors.Errorf("tmpDir is not a directory. path: %s", td)
+		}
+		tmpFile = filepath.Join(td, fileNameSourceBase)
+		err = conn.Copy(fileNameSource, tmpFile)
+		if err != nil {
+			return err
+		}
+		// remove tmp file
+		defer func() { _ = conn.RemoveAll(tmpFile) }()
+		// chmod
+		err = conn.Chmod(tmpFile, constant.DefaultAllFileModeStr)
+		if err != nil {
+			return err
+		}
+	}
+
+	fileSource, err = conn.SFTPClient.Open(tmpFile)
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -390,7 +436,14 @@ func (conn *SSHConn) CopySingleFileFromRemote(fileNameSource string, fileNameDes
 }
 
 // CopySingleFileToRemote copies one single file from local to remote
-func (conn *SSHConn) CopySingleFileToRemote(fileNameSource string, fileNameDest string) error {
+// if tmpDir is not empty and is different with the parent directory of fileNameDest,
+// it will transfer the file to tmpDir on the remote host first, then copy it to fileNameDest,
+// after that, it will remove the temporary file on the remote host automatically.
+// it is your responsibility to assure that tmpDir exists and is a directory,
+// the connection should have enough privilege to the tmpDir
+// and the tmpDir has enough space to hold the file temporarily,
+// note that only the first tmpDir will be used.
+func (conn *SSHConn) CopySingleFileToRemote(fileNameSource string, fileNameDest string, tmpDir ...string) error {
 	var (
 		fileSource *os.File
 		fileDest   *sftp.File
@@ -414,6 +467,7 @@ func (conn *SSHConn) CopySingleFileToRemote(fileNameSource string, fileNameDest 
 
 	// check if parent path of destination exists
 	fileNameDestParent := filepath.Dir(fileNameDest)
+	fileNameDestBase := filepath.Base(fileNameDest)
 	pathExists, err := conn.PathExists(fileNameDestParent)
 	if err != nil {
 		return nil
@@ -444,72 +498,47 @@ func (conn *SSHConn) CopySingleFileToRemote(fileNameSource string, fileNameDest 
 	}
 	defer func() { _ = fileSource.Close() }()
 
-	fileDest, err = conn.Create(fileNameDest)
+	var (
+		td          string
+		usedTmpFlag bool
+	)
+	if len(tmpDir) > constant.ZeroInt {
+		// only use the first one
+		td = tmpDir[constant.ZeroInt]
+	}
+
+	tmpFile := fileNameDest
+	if td != constant.EmptyString && td != fileNameDestParent {
+		isDir, err = conn.IsDir(td)
+		if err != nil {
+			return err
+		}
+		if !isDir {
+			return errors.Errorf("tmpDir is not a directory. path: %s", td)
+		}
+		tmpFile = filepath.Join(td, fileNameDestBase)
+		usedTmpFlag = true
+	}
+
+	fileDest, err = conn.SFTPClient.Create(tmpFile)
 	if err != nil {
 		return errors.Trace(err)
 	}
 	defer func() { _ = fileDest.Close() }()
-
+	// transfer data to the temporary file
 	err = conn.CopyFile(fileSource, fileDest, DefaultByteBufferSize)
 	if err != nil {
 		return err
 	}
 
-	return nil
-}
-
-// CopyFileListFromRemote copies given files from remote to local
-func (conn *SSHConn) CopyFileListFromRemote(fileListSource []string, FileDirDest string) error {
-	FileDirDest = strings.TrimSpace(FileDirDest)
-	if FileDirDest == constant.EmptyString {
-		return errors.New("file destination directory should not an empty string")
-	}
-
-	pathExists, err := PathExists(FileDirDest)
-	if err != nil {
-		return err
-	}
-
-	if !pathExists {
-		_, err = os.Create(FileDirDest)
-		if err != nil {
-			return errors.Trace(err)
-		}
-	}
-
-	for _, fileNameSource := range fileListSource {
-		fileNameSource = strings.TrimSpace(fileNameSource)
-		fileNameDest := path.Base(fileNameSource)
-
-		err = conn.CopySingleFileFromRemote(fileNameSource, path.Join(FileDirDest, fileNameDest))
+	if usedTmpFlag {
+		// copy temporary file to the file dest
+		err = conn.Copy(tmpFile, fileNameDest)
 		if err != nil {
 			return err
 		}
-	}
-
-	return nil
-}
-
-// CopyFileListFromRemoteWithNewName copies file from remote to local,
-// it copies file contents and rename files to given file names
-func (conn *SSHConn) CopyFileListFromRemoteWithNewName(fileListSource []string, fileListDest []string) (err error) {
-	if len(fileListSource) != len(fileListDest) {
-		return errors.Errorf("the length of source and destination file list must be exactly same. source length: %d, destination length: %d",
-			len(fileListSource), len(fileListDest))
-	}
-
-	for i, fileNameSource := range fileListSource {
-		fileNameDest := fileListDest[i]
-		fileNameDest = strings.TrimSpace(fileNameDest)
-
-		if fileNameDest == constant.EmptyString {
-			return errors.New("destination file name should not be empty")
-		}
-
-		err = conn.CopySingleFileFromRemote(strings.TrimSpace(fileNameSource), fileNameDest)
-		if err != nil {
-			return err
-		}
+		// remove tmp file
+		return conn.RemoveAll(tmpFile)
 	}
 
 	return nil
@@ -533,34 +562,38 @@ func (conn *SSHConn) getPathDirMapRemote(fileDirMap map[string]string, dirName, 
 	dirName = strings.TrimSpace(dirName)
 	rootPath = strings.TrimSpace(rootPath)
 
-	fileInfoList, err := conn.ReadDir(dirName)
+	subPaths, err := conn.ListPath(dirName)
 	if err != nil {
 		return err
 	}
 
-	if fileInfoList == nil {
+	if subPaths == nil {
 		// it's an empty directory
 		fileDirMap[dirName] = constant.EmptyString
 	}
 
-	for _, fileInfo := range fileInfoList {
-		fileName := fileInfo.Name()
-		fileNameAbs := filepath.Join(dirName, fileName)
+	for _, subPath := range subPaths {
+		subPathAbs := filepath.Join(dirName, subPath)
 
-		if fileInfo.IsDir() {
+		isDir, err := conn.IsDir(subPathAbs)
+		if err != nil {
+			return err
+		}
+
+		if isDir {
 			// call recursively
-			err = conn.getPathDirMapRemote(fileDirMap, fileNameAbs, rootPath)
+			err = conn.getPathDirMapRemote(fileDirMap, subPathAbs, rootPath)
 			if err != nil {
 				return err
 			}
 		} else {
 			// get relative path with root path
-			fileNameRel, err := filepath.Rel(rootPath, fileNameAbs)
+			fileNameRel, err := filepath.Rel(rootPath, subPathAbs)
 			if err != nil {
 				return errors.Trace(err)
 			}
 
-			fileDirMap[fileNameAbs] = fileNameRel
+			fileDirMap[subPathAbs] = fileNameRel
 		}
 	}
 
@@ -568,7 +601,7 @@ func (conn *SSHConn) getPathDirMapRemote(fileDirMap map[string]string, dirName, 
 }
 
 // CopyDirFromRemote copies a directory with all subdirectories and files from remote to local
-func (conn *SSHConn) CopyDirFromRemote(dirNameSource, dirNameDest string) error {
+func (conn *SSHConn) CopyDirFromRemote(dirNameSource, dirNameDest string, tmpDir ...string) error {
 	dirNameSource = strings.TrimSpace(dirNameSource)
 	dirNameDest = strings.TrimSpace(dirNameDest)
 
@@ -644,7 +677,7 @@ func (conn *SSHConn) CopyDirFromRemote(dirNameSource, dirNameDest string) error 
 
 		fileNameDest := GetFileNameDest(pathName, DirDestAbs)
 		// copy file from remote
-		err = conn.CopySingleFileFromRemote(pathName, fileNameDest)
+		err = conn.CopySingleFileFromRemote(pathName, fileNameDest, tmpDir...)
 		if err != nil {
 			return err
 		}
@@ -654,7 +687,7 @@ func (conn *SSHConn) CopyDirFromRemote(dirNameSource, dirNameDest string) error 
 }
 
 // CopyDirToRemote copies a directory with all subdirectories and files from local to remote
-func (conn *SSHConn) CopyDirToRemote(dirNameSource, dirNameDest string) error {
+func (conn *SSHConn) CopyDirToRemote(dirNameSource, dirNameDest string, tmpDir ...string) error {
 	dirNameSource = strings.TrimSpace(dirNameSource)
 	dirNameDest = strings.TrimSpace(dirNameDest)
 
@@ -730,7 +763,7 @@ func (conn *SSHConn) CopyDirToRemote(dirNameSource, dirNameDest string) error {
 		}
 
 		fileNameDest := GetFileNameDest(pathName, DirDestAbs)
-		err = conn.CopySingleFileToRemote(pathName, fileNameDest)
+		err = conn.CopySingleFileToRemote(pathName, fileNameDest, tmpDir...)
 		if err != nil {
 			return err
 		}
@@ -740,7 +773,7 @@ func (conn *SSHConn) CopyDirToRemote(dirNameSource, dirNameDest string) error {
 }
 
 // CopyFromRemote copies no matter a directory or a file from remote to local
-func (conn *SSHConn) CopyFromRemote(pathSource, pathDest string) (err error) {
+func (conn *SSHConn) CopyFromRemote(pathSource, pathDest string, tmpDir ...string) (err error) {
 	pathSource = strings.TrimSpace(pathSource)
 	pathDest = strings.TrimSpace(pathDest)
 
@@ -750,14 +783,14 @@ func (conn *SSHConn) CopyFromRemote(pathSource, pathDest string) (err error) {
 		return err
 	}
 	if isDir {
-		return conn.CopyDirFromRemote(pathSource, pathDest)
+		return conn.CopyDirFromRemote(pathSource, pathDest, tmpDir...)
 	}
 
-	return conn.CopySingleFileFromRemote(pathSource, pathDest)
+	return conn.CopySingleFileFromRemote(pathSource, pathDest, tmpDir...)
 }
 
 // CopyToRemote copies no matter a directory or a file from local to remote
-func (conn *SSHConn) CopyToRemote(pathSource, pathDest string) (err error) {
+func (conn *SSHConn) CopyToRemote(pathSource, pathDest string, tmpDir ...string) (err error) {
 	pathSource = strings.TrimSpace(pathSource)
 	pathDest = strings.TrimSpace(pathDest)
 
@@ -766,8 +799,8 @@ func (conn *SSHConn) CopyToRemote(pathSource, pathDest string) (err error) {
 		return err
 	}
 	if isDir {
-		return conn.CopyDirToRemote(pathSource, pathDest)
+		return conn.CopyDirToRemote(pathSource, pathDest, tmpDir...)
 	}
 
-	return conn.CopySingleFileToRemote(pathSource, pathDest)
+	return conn.CopySingleFileToRemote(pathSource, pathDest, tmpDir...)
 }

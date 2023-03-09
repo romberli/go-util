@@ -19,14 +19,15 @@ const (
 	testRootHomeDir    = "/root"
 	testLocalPath      = "/Users/romber/test_local"
 	testLocalFileName  = "test_local.txt"
-	testRemotePath     = "/tmp"
-	testRemoteSubPath  = "/tmp/test_remote"
+	testRemotePath     = "/data"
+	testRemoteSubPath  = "/data/test_remote"
 	testRemoteFileName = "test_remote.txt"
+	testTmpDir         = "/tmp"
 
 	testDateCommand             = "date"
 	testCreateLocalDirCommand   = "mkdir -p " + testLocalPath
 	testRemoveLocalDirCommand   = "rm -rf " + testLocalPath
-	testCreateRemoteFileCommand = "touch /tmp/test_remote/test.txt"
+	testCreateRemoteFileCommand = "touch /data/test_remote/test.txt"
 )
 
 var testSSHConn *SSHConn
@@ -49,8 +50,9 @@ func TestSSHConn_All(t *testing.T) {
 	TestSSHConn_GetHostName(t)
 	TestSSHConn_PathExists(t)
 	TestSSHConn_IsDir(t)
-	TestNewSSHConn_ListPath(t)
+	TestSSHConn_ListPath(t)
 	TestSSHConn_ReadDir(t)
+	TestSSHConn_MkdirAll(t)
 	TestSSHConn_RemoveAll(t)
 	TestSSHConn_IsEmptyDir(t)
 	TestSSHConn_CopyFile(t)
@@ -91,7 +93,7 @@ func TestSSHConn_IsDir(t *testing.T) {
 	asst.True(isDir, "test IsDir() failed")
 }
 
-func TestNewSSHConn_ListPath(t *testing.T) {
+func TestSSHConn_ListPath(t *testing.T) {
 	asst := assert.New(t)
 
 	output, err := testSSHConn.ListPath(testRootHomeDir)
@@ -114,6 +116,16 @@ func TestSSHConn_ReadDir(t *testing.T) {
 	for _, fileInfo := range fileInfos {
 		t.Log("file name: ", fileInfo.Name())
 	}
+}
+
+func TestSSHConn_MkdirAll(t *testing.T) {
+	asst := assert.New(t)
+
+	err := testSSHConn.MkdirAll(testRemoteSubPath)
+	asst.Nil(err, "test MkdirAll() failed")
+	exists, err := testSSHConn.PathExists(testRemoteSubPath)
+	asst.Nil(err, "test MkdirAll() failed")
+	asst.True(exists, "test MkdirAll() failed")
 }
 
 func TestSSHConn_RemoveAll(t *testing.T) {
@@ -166,7 +178,7 @@ func TestSSHConn_CopyFile(t *testing.T) {
 	defer func() { _ = fileSource.Close() }()
 
 	fileNameDest := filepath.Join(testRemotePath, testRemoteFileName)
-	fileDest, err := testSSHConn.Create(fileNameDest)
+	fileDest, err := testSSHConn.SFTPClient.Create(fileNameDest)
 	asst.Nil(err, "test CopyFile() failed")
 	defer func() { _ = fileDest.Close() }()
 
@@ -191,9 +203,13 @@ func TestSSHConn_CopyFromRemote(t *testing.T) {
 
 	// prepare remote
 	fileNameSource := filepath.Join(testRemotePath, testRemoteFileName)
-	fileInfo, err := testSSHConn.Create(fileNameSource)
+	err := testSSHConn.Touch(fileNameSource)
 	asst.Nil(err, "test CopyFromRemote() failed")
-	asst.Equal(fileNameSource, fileInfo.Name(), "test CopyFromRemote() failed")
+	pathExists, err := testSSHConn.PathExists(fileNameSource)
+	asst.Nil(err, "test CopyFromRemote() failed")
+	asst.True(pathExists, "test CopyFromRemote() failed")
+	err = testSSHConn.Chmod(fileNameSource, "0600")
+	asst.Nil(err, "test CopyFromRemote() failed")
 	// prepare local
 	output, err := ExecuteCommand(testCreateLocalDirCommand)
 	asst.Nil(err, "test CopyFromRemote() failed")
@@ -201,6 +217,8 @@ func TestSSHConn_CopyFromRemote(t *testing.T) {
 	fileNameDest := filepath.Join(testLocalPath, testLocalFileName)
 	// copy from remote
 	err = testSSHConn.CopyFromRemote(fileNameSource, fileNameDest)
+	asst.NotNil(err, "test CopyFromRemote() failed")
+	err = testSSHConn.CopyFromRemote(fileNameSource, fileNameDest, testTmpDir)
 	asst.Nil(err, "test CopyFromRemote() failed")
 	exists, err := PathExists(fileNameDest)
 	asst.Nil(err, "test CopyFromRemote() failed")
@@ -231,7 +249,7 @@ func TestSSHConn_CopyToRemote(t *testing.T) {
 	// prepare remote
 	fileNameDest := filepath.Join(testRemotePath, testRemoteFileName)
 	// copy to remote
-	err = testSSHConn.CopyToRemote(fileNameSource, fileNameDest)
+	err = testSSHConn.CopyToRemote(fileNameSource, fileNameDest, testTmpDir)
 	asst.Nil(err, "test CopyToRemote() failed")
 	exists, err := testSSHConn.PathExists(fileNameDest)
 	asst.Nil(err, "test CopyToRemote() failed")
@@ -247,4 +265,21 @@ func TestSSHConn_CopyToRemote(t *testing.T) {
 	exists, err = testSSHConn.PathExists(fileNameDest)
 	asst.Nil(err, "test CopyToRemote() failed")
 	asst.False(exists, "test CopyToRemote() failed")
+}
+
+func TestSSHConn_Common(t *testing.T) {
+	asst := assert.New(t)
+
+	path := "/data/containers/storage"
+
+	_, err := testSSHConn.SFTPClient.Stat(path)
+	asst.Nil(err, "test Stat() failed")
+	exists, err := testSSHConn.PathExists(path)
+	asst.Nil(err, "test PathExists() failed")
+	asst.True(exists, "test PathExists() failed")
+
+	subDir, err := testSSHConn.ListPath(path)
+	asst.Nil(err, "test PathExists() failed")
+	asst.NotZero(subDir, "test PathExists() failed")
+	t.Log(subDir)
 }

@@ -13,8 +13,6 @@ import (
 )
 
 const (
-	HostNameCommand         = "hostname"
-	LsCommand               = "ls"
 	DefaultEstimateLineSize = 1024
 	MinStartPosition        = 0
 )
@@ -149,7 +147,7 @@ func GetFileNameDest(fileNameSource, dirDest string) string {
 	return filepath.Join(dirDest, fileNameBase)
 }
 
-// TailN try get the latest n line of the file.
+// TailN try to get the latest n line of the file.
 func TailN(fileName string, n int) (lines []string, err error) {
 	file, err := os.Open(fileName)
 	if err != nil {

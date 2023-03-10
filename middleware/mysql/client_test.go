@@ -12,6 +12,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	testGlobalVariableName  = "read_only"
+	testGlobalVariableValue = "OFF"
+)
+
 type testStruct struct {
 	Name string
 	Col1 int
@@ -200,4 +205,42 @@ func TestConn_IsSuperReadOnly(t *testing.T) {
 	status, err := conn.IsSuperReadOnly()
 	asst.Nil(err, "test IsSuperReadOnly() failed")
 	asst.False(status, "test IsSuperReadOnly() failed")
+}
+
+func TestConn_SetReadOnly(t *testing.T) {
+	asst := assert.New(t)
+
+	err := conn.SetReadOnly(true)
+	asst.Nil(err, "test SetReadOnly() failed")
+	status, err := conn.IsReadOnly()
+	asst.Nil(err, "test SetReadOnly() failed")
+	asst.True(status, "test SetReadOnly() failed")
+	err = conn.SetReadOnly(false)
+	asst.Nil(err, "test SetReadOnly() failed")
+	status, err = conn.IsReadOnly()
+	asst.Nil(err, "test SetReadOnly() failed")
+	asst.False(status, "test SetReadOnly() failed")
+}
+
+func TestConn_SetSuperReadOnly(t *testing.T) {
+	asst := assert.New(t)
+
+	err := conn.SetSuperReadOnly(true)
+	asst.Nil(err, "test SetSuperReadOnly() failed")
+	status, err := conn.IsSuperReadOnly()
+	asst.Nil(err, "test SetSuperReadOnly() failed")
+	asst.True(status, "test SetSuperReadOnly() failed")
+	err = conn.SetSuperReadOnly(false)
+	asst.Nil(err, "test SetSuperReadOnly() failed")
+	status, err = conn.IsSuperReadOnly()
+	asst.Nil(err, "test SetSuperReadOnly() failed")
+	asst.False(status, "test SetSuperReadOnly() failed")
+}
+
+func TestConn_ShowGlobalVariable(t *testing.T) {
+	asst := assert.New(t)
+
+	value, err := conn.ShowGlobalVariable(testGlobalVariableName)
+	asst.Nil(err, "test ShowGlobalVariable() failed")
+	asst.Equal(testGlobalVariableValue, value, "test ShowGlobalVariable() failed")
 }

@@ -234,6 +234,7 @@ func (conn *Conn) GetReplicationRole() (role ReplicationRole, err error) {
 	return role, nil
 }
 
+// IsMaster checks if this server is master
 func (conn *Conn) IsMaster() (bool, error) {
 	isSlave, err := conn.IsReplicationSlave()
 	if err != nil {
@@ -310,6 +311,7 @@ func (conn *Conn) IsMaster() (bool, error) {
 	return true, nil
 }
 
+// IsReplicationSlave checks if this server is slave
 func (conn *Conn) IsReplicationSlave() (bool, error) {
 	result, err := conn.Execute(ShowSlaveStatusSQL)
 	if err != nil {
@@ -319,6 +321,7 @@ func (conn *Conn) IsReplicationSlave() (bool, error) {
 	return result.RowNumber() > constant.ZeroInt, nil
 }
 
+// IsMGR checks if this server is a member of MGR cluster
 func (conn *Conn) IsMGR() (bool, error) {
 	sql := "SELECT COUNT(*) FROM performance_schema.replication_group_members ;"
 	result, err := conn.Execute(sql)
@@ -338,6 +341,7 @@ func (conn *Conn) IsMGR() (bool, error) {
 	return false, nil
 }
 
+// IsReadOnly checks if this server is read only
 func (conn *Conn) IsReadOnly() (bool, error) {
 	sql := "SHOW VARIABLES LIKE 'read_only';"
 	result, err := conn.Execute(sql)
@@ -352,6 +356,7 @@ func (conn *Conn) IsReadOnly() (bool, error) {
 	return status == VariableOn, nil
 }
 
+// IsSuperReadOnly checks if this server is super read only
 func (conn *Conn) IsSuperReadOnly() (bool, error) {
 	sql := "SHOW VARIABLES LIKE 'super_read_only';"
 	result, err := conn.Execute(sql)
@@ -364,4 +369,61 @@ func (conn *Conn) IsSuperReadOnly() (bool, error) {
 	}
 
 	return status == VariableOn, nil
+}
+
+// ShowGlobalVariable returns the value of the given variable
+func (conn *Conn) ShowGlobalVariable(variable string) (string, error) {
+	sql := fmt.Sprintf("SHOW GLOBAL VARIABLES LIKE '%s';", variable)
+	result, err := conn.Execute(sql)
+	if err != nil {
+		return constant.EmptyString, err
+	}
+
+	return result.GetString(constant.ZeroInt, constant.OneInt)
+}
+
+// SetReadOnly sets read only
+func (conn *Conn) SetReadOnly(readOnly bool) error {
+	var value int
+
+	if readOnly {
+		value = constant.OneInt
+	}
+	sql := fmt.Sprintf("SET GLOBAL read_only = %d;", value)
+	_, err := conn.Execute(sql)
+
+	return err
+}
+
+// SetSuperReadOnly sets super read only
+func (conn *Conn) SetSuperReadOnly(superReadOnly bool) error {
+	var value int
+
+	if superReadOnly {
+		value = constant.OneInt
+	}
+	sql := fmt.Sprintf("SET GLOBAL super_read_only = %d;", value)
+	_, err := conn.Execute(sql)
+
+	return err
+}
+
+// SetGlobalVariable sets global variable
+func (conn *Conn) SetGlobalVariable(variable, value string) error {
+	sql := fmt.Sprintf("SET GLOBAL %s = '%s';", variable, value)
+	_, err := conn.Execute(sql)
+
+	return err
+}
+
+// SetGlobalVariables sets global variables
+func (conn *Conn) SetGlobalVariables(variables map[string]string) error {
+	for variable, value := range variables {
+		err := conn.SetGlobalVariable(variable, value)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

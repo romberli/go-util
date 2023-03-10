@@ -83,11 +83,16 @@ func dropTable() error {
 func TestConn_All(t *testing.T) {
 	TestMySQLConnection(t)
 	TestConn_Execute(t)
-	TestConn_IsMater(t)
 	TestConn_IsReplicationSlave(t)
+	TestConn_IsMater(t)
 	TestConn_IsMGR(t)
 	TestConn_IsReadOnly(t)
 	TestConn_IsSuperReadOnly(t)
+	TestConn_SetReadOnly(t)
+	TestConn_SetSuperReadOnly(t)
+	TestConn_ShowGlobalVariable(t)
+	TestConn_SetGlobalVariable(t)
+	TestConn_SetGlobalVariables(t)
 }
 
 func TestMySQLConnection(t *testing.T) {
@@ -243,4 +248,27 @@ func TestConn_ShowGlobalVariable(t *testing.T) {
 	value, err := conn.ShowGlobalVariable(testGlobalVariableName)
 	asst.Nil(err, "test ShowGlobalVariable() failed")
 	asst.Equal(testGlobalVariableValue, value, "test ShowGlobalVariable() failed")
+}
+
+func TestConn_SetGlobalVariable(t *testing.T) {
+	asst := assert.New(t)
+
+	err := conn.SetGlobalVariable(testGlobalVariableName, testGlobalVariableValue)
+	asst.Nil(err, "test SetGlobalVariable() failed")
+	value, err := conn.ShowGlobalVariable(testGlobalVariableName)
+	asst.Nil(err, "test SetGlobalVariable() failed")
+	asst.Equal(testGlobalVariableValue, value, "test SetGlobalVariable() failed")
+}
+
+func TestConn_SetGlobalVariables(t *testing.T) {
+	asst := assert.New(t)
+
+	variables := map[string]string{
+		testGlobalVariableName: testGlobalVariableValue,
+	}
+	err := conn.SetGlobalVariables(variables)
+	asst.Nil(err, "test SetGlobalVariables() failed")
+	value, err := conn.ShowGlobalVariable(testGlobalVariableName)
+	asst.Nil(err, "test SetGlobalVariables() failed")
+	asst.Equal(testGlobalVariableValue, value, "test SetGlobalVariables() failed")
 }

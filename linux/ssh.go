@@ -33,6 +33,7 @@ const (
 	lsCommand         = "/usr/bin/ls %s"
 	mkdirCommand      = "/usr/bin/mkdir -p %s"
 	rmCommand         = "/usr/bin/rm -rf %s"
+	catCommand        = "/usr/bin/cat %s"
 	touchCommand      = "/usr/bin/touch %s"
 	cpCommand         = "/usr/bin/cp -r %s %s"
 	mvCommand         = "/usr/bin/mv %s %s"
@@ -271,6 +272,11 @@ func (conn *SSHConn) MkdirAll(path string) error {
 // RemoveAll removes given path on the remote host, it will act like shell command "rm -rf $path",
 func (conn *SSHConn) RemoveAll(path string) error {
 	return conn.ExecuteCommandWithoutOutput(fmt.Sprintf(rmCommand, strings.TrimSpace(path)))
+}
+
+// Cat returns the content of the given file on the remote host, it will act like shell command "cat $path"
+func (conn *SSHConn) Cat(path string) (string, error) {
+	return conn.ExecuteCommand(fmt.Sprintf(catCommand, strings.TrimSpace(path)))
 }
 
 // Touch touches the given path on the remote host, it will act like shell command "touch $path"

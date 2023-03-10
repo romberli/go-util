@@ -1,6 +1,7 @@
 package linux
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -23,8 +24,11 @@ const (
 	testRemoteSubPath  = "/data/test_remote"
 	testRemoteFileName = "test_remote.txt"
 	testTmpDir         = "/tmp"
+	testContent        = "test_content"
 
 	testDateCommand             = "date"
+	echoCommand                 = `sh -c 'echo "%s" > %s'`
+	echoAppendCommand           = `sh -c 'echo "%s" >> %s'`
 	testCreateLocalDirCommand   = "mkdir -p " + testLocalPath
 	testRemoveLocalDirCommand   = "rm -rf " + testLocalPath
 	testCreateRemoteFileCommand = "touch /data/test_remote/test.txt"
@@ -141,6 +145,25 @@ func TestSSHConn_RemoveAll(t *testing.T) {
 	exists, err := testSSHConn.PathExists(testRemoteSubPath)
 	asst.Nil(err, "test RemoveAll() failed")
 	asst.False(exists, "test RemoveAll() failed")
+}
+
+func TestSSHConn_Cat(t *testing.T) {
+	asst := assert.New(t)
+
+	err := testSSHConn.MkdirAll(testRemoteSubPath)
+	asst.Nil(err, "test Cat() failed")
+	output, err := testSSHConn.ExecuteCommand(testCreateRemoteFileCommand)
+	asst.Nil(err, "test Cat() failed")
+	asst.Empty(output, "test Cat() failed")
+	remoteFilePath := filepath.Join(testRemoteSubPath, testRemoteFileName)
+	err = testSSHConn.ExecuteCommandWithoutOutput(fmt.Sprintf(echoCommand, testContent, remoteFilePath))
+	asst.Nil(err, "test Cat() failed")
+	output, err = testSSHConn.Cat(remoteFilePath)
+	asst.Nil(err, "test Cat() failed")
+	asst.Equal(testContent, output, "test Cat() failed")
+	t.Log("cat output: ", output)
+	err = testSSHConn.RemoveAll(testRemoteSubPath)
+	asst.Nil(err, "test Cat() failed")
 }
 
 func TestSSHConn_IsEmptyDir(t *testing.T) {

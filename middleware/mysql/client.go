@@ -371,17 +371,6 @@ func (conn *Conn) IsSuperReadOnly() (bool, error) {
 	return status == VariableOn, nil
 }
 
-// ShowGlobalVariable returns the value of the given variable
-func (conn *Conn) ShowGlobalVariable(variable string) (string, error) {
-	sql := fmt.Sprintf("SHOW GLOBAL VARIABLES LIKE '%s';", variable)
-	result, err := conn.Execute(sql)
-	if err != nil {
-		return constant.EmptyString, err
-	}
-
-	return result.GetString(constant.ZeroInt, constant.OneInt)
-}
-
 // SetReadOnly sets read only
 func (conn *Conn) SetReadOnly(readOnly bool) error {
 	var value int
@@ -406,6 +395,17 @@ func (conn *Conn) SetSuperReadOnly(superReadOnly bool) error {
 	_, err := conn.Execute(sql)
 
 	return err
+}
+
+// ShowGlobalVariable returns the value of the given variable
+func (conn *Conn) ShowGlobalVariable(variable string) (string, error) {
+	sql := fmt.Sprintf("SHOW GLOBAL VARIABLES LIKE '%s';", variable)
+	result, err := conn.Execute(sql)
+	if err != nil {
+		return constant.EmptyString, err
+	}
+
+	return result.GetString(constant.ZeroInt, constant.OneInt)
 }
 
 // SetGlobalVariable sets global variable

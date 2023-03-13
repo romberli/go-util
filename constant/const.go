@@ -129,4 +129,7 @@ const (
 	DefaultHTTPPort        = 80
 	DefaultTextContentType = "text/plain"
 	DefaultJSONContentType = "application/json"
+
+	AArch64Arch = "aarch64"
+	X64Arch     = "x86_64"
 )

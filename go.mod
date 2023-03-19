@@ -3,7 +3,7 @@ module github.com/romberli/go-util
 go 1.18
 
 require (
-	github.com/ClickHouse/clickhouse-go/v2 v2.6.5
+	github.com/ClickHouse/clickhouse-go/v2 v2.7.0
 	github.com/Shopify/sarama v1.38.1
 	github.com/buger/jsonparser v1.1.1
 	github.com/go-mysql-org/go-mysql v1.7.0
@@ -13,7 +13,7 @@ require (
 	github.com/pingcap/parser v0.0.0-20211004012448-687005894c4e
 	github.com/pkg/sftp v1.13.5
 	github.com/prometheus/client_golang v1.14.0
-	github.com/prometheus/common v0.41.0
+	github.com/prometheus/common v0.42.0
 	github.com/rabbitmq/amqp091-go v1.7.0
 	github.com/romberli/dynamic-struct v1.2.1
 	github.com/romberli/go-multierror v1.1.2
@@ -25,11 +25,12 @@ require (
 	go.etcd.io/etcd/client/v3 v3.5.7
 	go.uber.org/zap v1.24.0
 	golang.org/x/crypto v0.7.0
+	k8s.io/apimachinery v0.26.3
 )
 
 require (
 	github.com/ClickHouse/ch-go v0.52.1 // indirect
-	github.com/andybalholm/brotli v1.0.4 // indirect
+	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20200819183940-29e1ff8eb0bb // indirect
 	github.com/benbjohnson/clock v1.1.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -64,7 +65,7 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // indirect
-	github.com/paulmach/orb v0.8.0 // indirect
+	github.com/paulmach/orb v0.9.0 // indirect
 	github.com/pierrec/lz4/v4 v4.1.17 // indirect
 	github.com/pingcap/log v0.0.0-20210625125904-98ed8e2eb1c7 // indirect
 	github.com/pkg/errors v0.9.1 // indirect

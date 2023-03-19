@@ -15,12 +15,16 @@ import (
 	"github.com/pkg/sftp"
 	"github.com/romberli/go-util/constant"
 	"golang.org/x/crypto/ssh"
+
+	utilrand "k8s.io/apimachinery/pkg/util/rand"
 )
 
 const (
-	DefaultSplitStr           = "\n"
-	DefaultSuccessReturnValue = 0
-	DefaultFailedReturnValue  = 1
+	defaultRandStringLength = 6
+
+	DefaultSplitStr           = constant.CRLFString
+	DefaultSuccessReturnValue = constant.ZeroInt
+	DefaultFailedReturnValue  = constant.OneInt
 	DefaultSSHTimeout         = 10 * time.Second
 	DefaultSSHPortNum         = 22
 	DefaultSSHUserName        = "root"
@@ -404,7 +408,7 @@ func (conn *SSHConn) CopySingleFileFromRemote(fileNameSource string, fileNameDes
 		td = tmpDir[constant.ZeroInt]
 	}
 
-	tmpFile := fileNameSource
+	tmpFile := fileNameSource + constant.DotString + utilrand.String(defaultRandStringLength)
 	if td != constant.EmptyString && td != fileNameSourceParent {
 		isDir, err = conn.IsDir(td)
 		if err != nil {
@@ -413,7 +417,7 @@ func (conn *SSHConn) CopySingleFileFromRemote(fileNameSource string, fileNameDes
 		if !isDir {
 			return errors.Errorf("tmpDir is not a directory. path: %s", td)
 		}
-		tmpFile = filepath.Join(td, fileNameSourceBase)
+		tmpFile = filepath.Join(td, fileNameSourceBase) + constant.DotString + utilrand.String(defaultRandStringLength)
 		err = conn.Copy(fileNameSource, tmpFile)
 		if err != nil {
 			return err
@@ -519,7 +523,7 @@ func (conn *SSHConn) CopySingleFileToRemote(fileNameSource string, fileNameDest 
 		td = tmpDir[constant.ZeroInt]
 	}
 
-	tmpFile := fileNameDest
+	tmpFile := fileNameDest + constant.DotString + utilrand.String(defaultRandStringLength)
 	if td != constant.EmptyString && td != fileNameDestParent {
 		isDir, err = conn.IsDir(td)
 		if err != nil {
@@ -528,7 +532,7 @@ func (conn *SSHConn) CopySingleFileToRemote(fileNameSource string, fileNameDest 
 		if !isDir {
 			return errors.Errorf("tmpDir is not a directory. path: %s", td)
 		}
-		tmpFile = filepath.Join(td, fileNameDestBase)
+		tmpFile = filepath.Join(td, fileNameDestBase) + constant.DotString + utilrand.String(defaultRandStringLength)
 		usedTmpFlag = true
 	}
 

@@ -415,6 +415,8 @@ func (conn *SSHConn) CopySingleFileFromRemote(fileNameSource string, fileNameDes
 			}
 
 			tmpFile = filepath.Join(td, fileNameSourceBase) + constant.DotString + utilrand.String(defaultRandStringLength)
+			defer func() { _ = conn.RemoveAll(tmpFile) }()
+			// copy source file to temporary file
 			err = conn.Copy(fileNameSource, tmpFile)
 			if err != nil {
 				return err
@@ -431,10 +433,7 @@ func (conn *SSHConn) CopySingleFileFromRemote(fileNameSource string, fileNameDes
 	if err != nil {
 		return errors.Trace(err)
 	}
-	defer func() {
-		_ = fileSource.Close()
-		_ = conn.RemoveAll(tmpFile)
-	}()
+	defer func() { _ = fileSource.Close() }()
 
 	fileDest, err = os.Create(fileNameDest)
 	if err != nil {
@@ -531,6 +530,8 @@ func (conn *SSHConn) CopySingleFileToRemote(fileNameSource string, fileNameDest 
 
 			tmpFile = filepath.Join(td, fileNameDestBase) + constant.DotString + utilrand.String(defaultRandStringLength)
 			usedTmpFlag = true
+
+			defer func() { _ = conn.RemoveAll(tmpFile) }()
 		}
 	}
 	// create remote file
@@ -538,10 +539,7 @@ func (conn *SSHConn) CopySingleFileToRemote(fileNameSource string, fileNameDest 
 	if err != nil {
 		return errors.Trace(err)
 	}
-	defer func() {
-		_ = fileDest.Close()
-		_ = conn.RemoveAll(tmpFile)
-	}()
+	defer func() { _ = fileDest.Close() }()
 	// transfer data to the temporary file
 	err = conn.CopyFile(fileSource, fileDest, DefaultByteBufferSize)
 	if err != nil {

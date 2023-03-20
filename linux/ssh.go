@@ -39,7 +39,7 @@ const (
 	rmCommand         = "/usr/bin/rm -rf %s"
 	catCommand        = "/usr/bin/cat %s"
 	touchCommand      = "/usr/bin/touch %s"
-	cpCommand         = "/usr/bin/cp -r %s %s"
+	cpCommand         = "/usr/bin/cp -a %s %s"
 	mvCommand         = "/usr/bin/mv %s %s"
 	chownCommand      = "/usr/bin/chown -R %s:%s %s"
 	chmodCommand      = "/usr/bin/chmod -R %s %s"

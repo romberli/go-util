@@ -39,7 +39,7 @@ const (
 	rmCommand         = "/usr/bin/rm -rf %s"
 	catCommand        = "/usr/bin/cat %s"
 	touchCommand      = "/usr/bin/touch %s"
-	cpCommand         = "/usr/bin/cp -a %s %s"
+	cpCommand         = "/usr/bin/cp -r %s %s"
 	mvCommand         = "/usr/bin/mv %s %s"
 	chownCommand      = "/usr/bin/chown -R %s:%s %s"
 	chmodCommand      = "/usr/bin/chmod -R %s %s"
@@ -385,7 +385,6 @@ func (conn *SSHConn) CopySingleFileFromRemote(fileNameSource string, fileNameDes
 		return errors.Errorf("parent path of destination does not exist nor have privilege. path: %s", fileNameDest)
 	}
 
-	fileNameSourceParent := filepath.Dir(fileNameSource)
 	fileNameSourceBase := filepath.Base(fileNameSource)
 	// check if destination path is a directory
 	pathExists, err = PathExists(fileNameDest)
@@ -402,32 +401,29 @@ func (conn *SSHConn) CopySingleFileFromRemote(fileNameSource string, fileNameDes
 		}
 	}
 
-	var td string
+	tmpFile := fileNameSource
 	if len(tmpDir) > constant.ZeroInt {
 		// only use the first one
-		td = tmpDir[constant.ZeroInt]
-	}
+		td := tmpDir[constant.ZeroInt]
+		if td != constant.EmptyString {
+			isDir, err = conn.IsDir(td)
+			if err != nil {
+				return err
+			}
+			if !isDir {
+				return errors.Errorf("tmpDir is not a directory. path: %s", td)
+			}
 
-	tmpFile := fileNameSource + constant.DotString + utilrand.String(defaultRandStringLength)
-	if td != constant.EmptyString && td != fileNameSourceParent {
-		isDir, err = conn.IsDir(td)
-		if err != nil {
-			return err
-		}
-		if !isDir {
-			return errors.Errorf("tmpDir is not a directory. path: %s", td)
-		}
-		tmpFile = filepath.Join(td, fileNameSourceBase) + constant.DotString + utilrand.String(defaultRandStringLength)
-		err = conn.Copy(fileNameSource, tmpFile)
-		if err != nil {
-			return err
-		}
-		// remove tmp file
-		defer func() { _ = conn.RemoveAll(tmpFile) }()
-		// chmod
-		err = conn.Chmod(tmpFile, constant.DefaultAllFileModeStr)
-		if err != nil {
-			return err
+			tmpFile = filepath.Join(td, fileNameSourceBase) + constant.DotString + utilrand.String(defaultRandStringLength)
+			err = conn.Copy(fileNameSource, tmpFile)
+			if err != nil {
+				return err
+			}
+			// chmod
+			err = conn.Chmod(tmpFile, constant.DefaultAllFileModeStr)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -435,7 +431,10 @@ func (conn *SSHConn) CopySingleFileFromRemote(fileNameSource string, fileNameDes
 	if err != nil {
 		return errors.Trace(err)
 	}
-	defer func() { _ = fileSource.Close() }()
+	defer func() {
+		_ = fileSource.Close()
+		_ = conn.RemoveAll(tmpFile)
+	}()
 
 	fileDest, err = os.Create(fileNameDest)
 	if err != nil {
@@ -507,40 +506,42 @@ func (conn *SSHConn) CopySingleFileToRemote(fileNameSource string, fileNameDest 
 			fileNameDest = filepath.Join(fileNameDest, fileNameSourceBase)
 		}
 	}
-
+	// open local file
 	fileSource, err = os.Open(fileNameSource)
 	if err != nil {
 		return errors.Trace(err)
 	}
 	defer func() { _ = fileSource.Close() }()
 
-	var (
-		td          string
-		usedTmpFlag bool
-	)
+	var usedTmpFlag bool
+
+	tmpFile := fileNameDest
+
 	if len(tmpDir) > constant.ZeroInt {
 		// only use the first one
-		td = tmpDir[constant.ZeroInt]
-	}
+		td := tmpDir[constant.ZeroInt]
+		if td != constant.EmptyString {
+			isDir, err = conn.IsDir(td)
+			if err != nil {
+				return err
+			}
+			if !isDir {
+				return errors.Errorf("tmpDir is not a directory. path: %s", td)
+			}
 
-	tmpFile := fileNameDest + constant.DotString + utilrand.String(defaultRandStringLength)
-	if td != constant.EmptyString && td != fileNameDestParent {
-		isDir, err = conn.IsDir(td)
-		if err != nil {
-			return err
+			tmpFile = filepath.Join(td, fileNameDestBase) + constant.DotString + utilrand.String(defaultRandStringLength)
+			usedTmpFlag = true
 		}
-		if !isDir {
-			return errors.Errorf("tmpDir is not a directory. path: %s", td)
-		}
-		tmpFile = filepath.Join(td, fileNameDestBase) + constant.DotString + utilrand.String(defaultRandStringLength)
-		usedTmpFlag = true
 	}
-
+	// create remote file
 	fileDest, err = conn.SFTPClient.Create(tmpFile)
 	if err != nil {
 		return errors.Trace(err)
 	}
-	defer func() { _ = fileDest.Close() }()
+	defer func() {
+		_ = fileDest.Close()
+		_ = conn.RemoveAll(tmpFile)
+	}()
 	// transfer data to the temporary file
 	err = conn.CopyFile(fileSource, fileDest, DefaultByteBufferSize)
 	if err != nil {
@@ -553,8 +554,6 @@ func (conn *SSHConn) CopySingleFileToRemote(fileNameSource string, fileNameDest 
 		if err != nil {
 			return err
 		}
-		// remove tmp file
-		return conn.RemoveAll(tmpFile)
 	}
 
 	return nil

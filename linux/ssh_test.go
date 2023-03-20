@@ -2,6 +2,7 @@ package linux
 
 import (
 	"fmt"
+	"github.com/romberli/go-util/constant"
 	"os"
 	"path/filepath"
 	"testing"
@@ -200,7 +201,7 @@ func TestSSHConn_CopyFile(t *testing.T) {
 	asst.Nil(err, "test CopyFile() failed")
 	defer func() { _ = fileSource.Close() }()
 
-	fileNameDest := filepath.Join(testRemotePath, testRemoteFileName)
+	fileNameDest := filepath.Join(constant.DefaultTmpDir, testRemoteFileName)
 	fileDest, err := testSSHConn.SFTPClient.Create(fileNameDest)
 	asst.Nil(err, "test CopyFile() failed")
 	defer func() { _ = fileDest.Close() }()

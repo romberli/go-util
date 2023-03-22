@@ -44,7 +44,7 @@ const (
 	chownCommand      = "/usr/bin/chown -R %s:%s %s"
 	chmodCommand      = "/usr/bin/chmod -R %s %s"
 
-	sudoPrefix = "sudo "
+	sudoPrefix = `sudo su -c "%s"`
 )
 
 type SSHConfig struct {
@@ -181,7 +181,7 @@ func (conn *SSHConn) executeCommand(cmd string) (string, error) {
 
 	// prepare command
 	if conn.Config.useSudo && !strings.HasPrefix(cmd, sudoPrefix) {
-		cmd = sudoPrefix + cmd
+		cmd = fmt.Sprintf(sudoPrefix, cmd)
 	}
 	// run command
 	err = sshSession.Run(cmd)

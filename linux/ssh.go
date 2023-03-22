@@ -55,7 +55,18 @@ type SSHConfig struct {
 	useSudo  bool
 }
 
+// NewSSHConfig returns a new *SSHConfig
 func NewSSHConfig(hostIP string, portNum int, userName string, userPass string, useSudo bool) *SSHConfig {
+	return newSSHConfig(hostIP, portNum, userName, userPass, useSudo)
+}
+
+// NewSSHConfigWithDefault returns a new *SSHConfig with default values
+func NewSSHConfigWithDefault(hostIP string) *SSHConfig {
+	return newSSHConfig(hostIP, DefaultSSHPortNum, DefaultSSHUserName, DefaultSSHUserPass, false)
+}
+
+// newSSHConfig return a new *SSHConfig
+func newSSHConfig(hostIP string, portNum int, userName string, userPass string, useSudo bool) *SSHConfig {
 	return &SSHConfig{
 		hostIP,
 		portNum,
@@ -65,14 +76,9 @@ func NewSSHConfig(hostIP string, portNum int, userName string, userPass string, 
 	}
 }
 
-func NewSSHConfigWithDefault(hostIP string) *SSHConfig {
-	return &SSHConfig{
-		hostIP,
-		DefaultSSHPortNum,
-		DefaultSSHUserName,
-		DefaultSSHUserPass,
-		false,
-	}
+// SetUseSudo sets useSudo
+func (c *SSHConfig) SetUseSudo(useSudo bool) {
+	c.useSudo = useSudo
 }
 
 type SSHConn struct {

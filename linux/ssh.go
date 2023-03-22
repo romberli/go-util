@@ -148,7 +148,7 @@ func (conn *SSHConn) Close() error {
 
 // SetUseSudo sets if use sudo or not
 func (conn *SSHConn) SetUseSudo(useSudo bool) {
-	conn.Config.useSudo = useSudo
+	conn.Config.SetUseSudo(useSudo)
 }
 
 // ExecuteCommand executes shell command on the remote host

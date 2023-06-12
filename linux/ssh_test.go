@@ -294,16 +294,10 @@ func TestSSHConn_CopyToRemote(t *testing.T) {
 func TestSSHConn_Common(t *testing.T) {
 	asst := assert.New(t)
 
-	path := "/data/containers/storage"
-
-	_, err := testSSHConn.SFTPClient.Stat(path)
-	asst.Nil(err, "test Stat() failed")
-	exists, err := testSSHConn.PathExists(path)
-	asst.Nil(err, "test PathExists() failed")
-	asst.True(exists, "test PathExists() failed")
-
-	subDir, err := testSSHConn.ListPath(path)
-	asst.Nil(err, "test PathExists() failed")
-	asst.NotZero(subDir, "test PathExists() failed")
-	t.Log(subDir)
+	testSSHConn.SetUseSudo(false)
+	cmd := `sudo su - && whoami`
+	output, err := testSSHConn.ExecuteCommand(cmd)
+	asst.Nil(err, "test ExecuteCommand() failed")
+	output, err = testSSHConn.ExecuteCommand("whoami")
+	t.Log(output)
 }

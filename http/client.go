@@ -9,11 +9,15 @@ import (
 
 	"github.com/buger/jsonparser"
 	"github.com/pingcap/errors"
-	"github.com/romberli/go-util/constant"
 	"github.com/romberli/log"
+
+	"github.com/romberli/go-util/constant"
 )
 
 const (
+	MethodGet  = http.MethodGet
+	MethodPost = http.MethodPost
+
 	StatusOK                  = http.StatusOK
 	StatusInternalServerError = http.StatusInternalServerError
 
@@ -228,4 +232,38 @@ func (c *Client) PostDAS(url string, body []byte) ([]byte, error) {
 	}
 
 	return respBody, nil
+}
+
+func (c *Client) SendRequestWithBasicAuth(method, url string, body []byte, user, pass string) ([]byte, error) {
+	req, err := http.NewRequest(method, PrepareURL(url), bytes.NewReader(body))
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.SetBasicAuth(user, pass)
+
+	resp, err := c.GetClient().Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.Errorf("metadata Repository.SendOCPRequest(): request failed. statusCode: %d, respBody: %s", resp.StatusCode, string(respBody))
+	}
+
+	return respBody, nil
+}
+
+func (c *Client) GetWithBasicAuth(url string, body []byte, user, pass string) ([]byte, error) {
+	return c.SendRequestWithBasicAuth(http.MethodGet, url, body, user, pass)
+}
+
+func (c *Client) PostWithBasicAuth(url string, body []byte, user, pass string) ([]byte, error) {
+	return c.SendRequestWithBasicAuth(http.MethodPost, url, body, user, pass)
 }

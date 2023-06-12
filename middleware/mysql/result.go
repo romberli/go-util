@@ -3,11 +3,11 @@ package mysql
 import (
 	"database/sql/driver"
 
+	"github.com/go-mysql-org/go-mysql/mysql"
+
 	"github.com/romberli/go-util/constant"
 	"github.com/romberli/go-util/middleware"
 	"github.com/romberli/go-util/middleware/result"
-
-	"github.com/go-mysql-org/go-mysql/mysql"
 )
 
 const middlewareType = "mysql"

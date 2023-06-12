@@ -6,6 +6,7 @@ import (
 	"reflect"
 
 	"github.com/pingcap/errors"
+
 	"github.com/romberli/go-util/common"
 	"github.com/romberli/go-util/constant"
 )
@@ -506,6 +507,75 @@ func (r *Rows) GetStringSliceByName(row int, name string) ([]string, error) {
 	return r.GetStringSlice(row, column)
 }
 
+// MapToIntSlice maps each row to a int slice,
+// first argument must be a slice of int,
+// only the specified column of the row will be mapped,
+// the column must be able to convert to int, and will map to the int in the slice
+func (r *Rows) MapToIntSlice(in []int, column int) error {
+	rowNum := r.RowNumber()
+	length := len(in)
+	if rowNum != length {
+		return errors.Errorf("number of rows(%d) is not equal to length of the slice(%d)", rowNum, length)
+	}
+
+	for i := constant.ZeroInt; i < rowNum; i++ {
+		value, err := r.GetInt(i, column)
+		if err != nil {
+			return err
+		}
+
+		in[i] = value
+	}
+
+	return nil
+}
+
+// MapToStringSlice maps each row to a string slice,
+// first argument must be a slice of string,
+// only the specified column of the row will be mapped,
+// the column must be able to convert to string, and will map to the string in the slice
+func (r *Rows) MapToStringSlice(in []string, column int) error {
+	rowNum := r.RowNumber()
+	length := len(in)
+	if rowNum != length {
+		return errors.Errorf("number of rows(%d) is not equal to length of the slice(%d)", rowNum, length)
+	}
+
+	for i := constant.ZeroInt; i < rowNum; i++ {
+		value, err := r.GetString(i, column)
+		if err != nil {
+			return err
+		}
+
+		in[i] = value
+	}
+
+	return nil
+}
+
+// MapToFloatSlice maps each row to a float slice,
+// first argument must be a slice of float64,
+// only the specified column of the row will be mapped,
+// the column must be able to convert to int, and will map to the float in the slice
+func (r *Rows) MapToFloatSlice(in []float64, column int) error {
+	rowNum := r.RowNumber()
+	length := len(in)
+	if rowNum != length {
+		return errors.Errorf("number of rows(%d) is not equal to length of the slice(%d)", rowNum, length)
+	}
+
+	for i := constant.ZeroInt; i < rowNum; i++ {
+		value, err := r.GetFloat(i, column)
+		if err != nil {
+			return err
+		}
+
+		in[i] = value
+	}
+
+	return nil
+}
+
 // MapToStructSlice maps each row to a struct of the first argument,
 // first argument must be a slice of pointers to structs,
 // each row in the result maps to a struct in the slice,
@@ -529,7 +599,7 @@ func (r *Rows) MapToStructSlice(in interface{}, tag string) error {
 		return errors.Errorf("number of rows(%d) is not equal to length of the slice(%d)", rowNum, length)
 	}
 
-	for i := 0; i < length; i++ {
+	for i := constant.ZeroInt; i < length; i++ {
 		value := inVal.Index(i).Interface()
 		err := r.mapToStructByRowIndex(value, i, tag)
 		if err != nil {

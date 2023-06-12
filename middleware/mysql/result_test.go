@@ -50,10 +50,23 @@ func TestResult(t *testing.T) {
 	conn, err = pool.Get()
 	asst.Nil(err, "get connection from pool failed")
 
-	// map to struct
 	sql := `select id, env_name, del_flag, create_time, last_update_time from t_meta_env_info;`
 	result, err = conn.Execute(sql)
 	asst.Nil(err, "execute sql failed")
+	// map to int slice
+	idList := make([]int, result.RowNumber())
+	err = result.MapToIntSlice(idList, constant.ZeroInt)
+	asst.Nil(err, "map to int slice failed")
+	// map to string slice
+	envNameList := make([]string, result.RowNumber())
+	err = result.MapToStringSlice(envNameList, constant.OneInt)
+	asst.Nil(err, "map to string slice failed")
+	// map to float64 slice
+	delFlagList := make([]float64, result.RowNumber())
+	err = result.MapToFloatSlice(delFlagList, constant.TwoInt)
+	asst.Nil(err, "map to float64 slice failed")
+
+	// map to struct
 	envInfoList := make([]*EnvInfo, result.RowNumber())
 	for i := range envInfoList {
 		envInfoList[i] = &EnvInfo{}

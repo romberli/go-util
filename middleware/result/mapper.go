@@ -1,6 +1,21 @@
 package result
 
 type Unmarshaler interface {
+	// MapToIntSlice maps each row to a int slice,
+	// first argument must be a slice of int,
+	// only the specified column of the row will be mapped,
+	// the column must be able to convert to int, and will map to the int in the slice
+	MapToIntSlice(in []int, column int) error
+	// MapToStringSlice maps each row to a string slice,
+	// first argument must be a slice of string,
+	// only the specified column of the row will be mapped,
+	// the column must be able to convert to string, and will map to the string in the slice
+	MapToStringSlice(in []string, column int) error
+	// MapToFloatSlice maps each row to a float slice,
+	// first argument must be a slice of float64,
+	// only the specified column of the row will be mapped,
+	// the column must be able to convert to int, and will map to the float in the slice
+	MapToFloatSlice(in []float64, column int) error
 	// MapToStructSlice maps each row to a struct of the first argument,
 	// first argument must be a slice of pointers to structs,
 	// each row in the result maps to a struct in the slice,

@@ -132,4 +132,8 @@ const (
 
 	AArch64Arch = "aarch64"
 	X64Arch     = "x86_64"
+
+	UTF8MB4Charset = "utf8mb4"
+	GB18030Charset = "gb18030"
+	GBKCharset     = "gbk"
 )

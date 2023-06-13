@@ -36,23 +36,23 @@ func NewRSAWithPrivateKey(privateKey *rsa.PrivateKey) *RSA {
 }
 
 // NewRSAWithPrivateKeyString returns a new *RSA with given private key base64 string
-func NewRSAWithPrivateKeyString(privateKeyString string) (*RSA, error) {
-	privateKey, err := base64.StdEncoding.DecodeString(privateKeyString)
+func NewRSAWithPrivateKeyString(privateKeyStr string) (*RSA, error) {
+	privateKey, err := base64.StdEncoding.DecodeString(privateKeyStr)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewRSAWithPrivateKeyBytes(privateKey)
-}
-
-// NewRSAWithPrivateKeyBytes returns a new *RSA with given private key
-func NewRSAWithPrivateKeyBytes(privateKey []byte) (*RSA, error) {
 	priv, err := x509.ParsePKCS1PrivateKey(privateKey)
 	if err != nil {
 		panic(err)
 	}
 
 	return newRSAWithPrivateKey(priv), nil
+}
+
+// NewEmptyRSA returns a new *RSA
+func NewEmptyRSA() *RSA {
+	return &RSA{}
 }
 
 // newRSAWithKeySize returns a new *RSA
@@ -85,6 +85,41 @@ func (r *RSA) GetPublicKey() (string, error) {
 	b := x509.MarshalPKCS1PublicKey(r.publicKey)
 
 	return base64.StdEncoding.EncodeToString(b), nil
+}
+
+// SetPrivateKey sets the private key with base64 string
+func (r *RSA) SetPrivateKey(privateKeyStr string) error {
+	b, err := base64.StdEncoding.DecodeString(privateKeyStr)
+	if err != nil {
+		return err
+	}
+
+	priv, err := x509.ParsePKCS1PrivateKey(b)
+	if err != nil {
+		return err
+	}
+
+	r.privateKey = priv
+	r.publicKey = &priv.PublicKey
+
+	return nil
+}
+
+// SetPublicKey sets the public key with base64 string
+func (r *RSA) SetPublicKey(publicKeyStr string) error {
+	b, err := base64.StdEncoding.DecodeString(publicKeyStr)
+	if err != nil {
+		return err
+	}
+
+	pub, err := x509.ParsePKCS1PublicKey(b)
+	if err != nil {
+		return err
+	}
+
+	r.publicKey = pub
+
+	return nil
 }
 
 // Encrypt encrypts the string and returns the base64 string

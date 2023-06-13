@@ -3,10 +3,11 @@ package rabbitmq
 import (
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/pingcap/errors"
 	amqp "github.com/rabbitmq/amqp091-go"
+
 	"github.com/romberli/go-util/constant"
-	uuid "github.com/satori/go.uuid"
 )
 
 const DefaultRabbitmqVhost = "/"
@@ -26,13 +27,13 @@ func NewConfig(addr, user, pass, vhost, tag string) *Config {
 
 // NewConfigWithDefault returns a new *Config with default values
 func NewConfigWithDefault(addr, user, pass string) *Config {
-	return NewConfig(addr, user, pass, DefaultRabbitmqVhost, uuid.NewV4().String())
+	return NewConfig(addr, user, pass, DefaultRabbitmqVhost, uuid.New().String())
 }
 
 // newConfig returns a new *Config
 func newConfig(addr, user, pass, vhost, tag string) *Config {
 	if tag == constant.EmptyString {
-		tag = uuid.NewV4().String()
+		tag = uuid.New().String()
 	}
 
 	return &Config{

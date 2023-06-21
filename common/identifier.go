@@ -10,7 +10,7 @@ import (
 func CheckIdentifier(s string) error {
 	first := s[constant.ZeroInt]
 	if !(first >= 'a' && first <= 'z' || first >= 'A' && first <= 'Z' || first == '_') {
-		return errors.Errorf("identifier %s must start with upper case, lower case or under bar, %c is not valid", s, first)
+		return errors.Errorf("identifier(%s) must start with upper case, lower case or under bar, %c is not valid", s, first)
 	}
 
 	for _, c := range s {
@@ -21,7 +21,7 @@ func CheckIdentifier(s string) error {
 		case c == '_':
 			continue
 		default:
-			return errors.Errorf("identifier %s must only contain upper case, lower case, digit or under bar, %c is not valid", s, c)
+			return errors.Errorf("identifier(%s) must only contain upper case, lower case, digit or under bar, %c is not valid", s, c)
 		}
 	}
 

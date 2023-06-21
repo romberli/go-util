@@ -8,6 +8,18 @@ import (
 	"github.com/romberli/go-util/constant"
 )
 
+const (
+	testWeakPassNotLongEnough = "123456"
+	testWeakPassTooLong       = "Hello,World.123Hello,World.123"
+	testWeakPassNoUpperCase   = "hello,world.123"
+	testWeakPassNoLowerCase   = "HELLO,WORLD.123"
+	testWeakPassNoDigit       = "Hello,World."
+	testWeakPassNoSpecial     = "HelloWorld123"
+	testWeakPassUnsupported   = "Hello,World中文"
+
+	testStrongPass = "Hello,World.123"
+)
+
 func checkRandomString(s string) (int, int, int, int) {
 	var (
 		NormalCharNum  int
@@ -114,4 +126,70 @@ func TestGetRandomBytes(t *testing.T) {
 
 	t.Logf("randomBytes: %s, normalCharNum: %d, digitCharNum: %d, specialCharNum: %d, unknownCharNum: %d",
 		string(b), NormalCharNum, DigitCharNum, SpecialCharNum, UnknownCharNum)
+}
+
+func TestCheckPasswordStrength(t *testing.T) {
+	asst := assert.New(t)
+
+	err := CheckPasswordStrength(testWeakPassNotLongEnough, DefaultMinPasswordLength, DefaultMaxPasswordLength, DefaultMinUpperCaseCharNum,
+		DefaultMinLowerCaseCharNum, DefaultMinDigitalCharNum, DefaultMinSpecialCharNum, DefaultSpecialCharString)
+	asst.NotNil(err, "test CheckPasswordStrength() failed")
+	t.Logf("check error: %s", err.Error())
+	err = CheckPasswordStrength(testWeakPassTooLong, DefaultMinPasswordLength, DefaultMaxPasswordLength, DefaultMinUpperCaseCharNum,
+		DefaultMinLowerCaseCharNum, DefaultMinDigitalCharNum, DefaultMinSpecialCharNum, DefaultSpecialCharString)
+	asst.NotNil(err, "test CheckPasswordStrength() failed")
+	t.Logf("check error: %s", err.Error())
+	err = CheckPasswordStrength(testWeakPassNoUpperCase, DefaultMinPasswordLength, DefaultMaxPasswordLength, DefaultMinUpperCaseCharNum,
+		DefaultMinLowerCaseCharNum, DefaultMinDigitalCharNum, DefaultMinSpecialCharNum, DefaultSpecialCharString)
+	asst.NotNil(err, "test CheckPasswordStrength() failed")
+	t.Logf("check error: %s", err.Error())
+	err = CheckPasswordStrength(testWeakPassNoLowerCase, DefaultMinPasswordLength, DefaultMaxPasswordLength, DefaultMinUpperCaseCharNum,
+		DefaultMinLowerCaseCharNum, DefaultMinDigitalCharNum, DefaultMinSpecialCharNum, DefaultSpecialCharString)
+	asst.NotNil(err, "test CheckPasswordStrength() failed")
+	t.Logf("check error: %s", err.Error())
+	err = CheckPasswordStrength(testWeakPassNoDigit, DefaultMinPasswordLength, DefaultMaxPasswordLength, DefaultMinUpperCaseCharNum,
+		DefaultMinLowerCaseCharNum, DefaultMinDigitalCharNum, DefaultMinSpecialCharNum, DefaultSpecialCharString)
+	asst.NotNil(err, "test CheckPasswordStrength() failed")
+	t.Logf("check error: %s", err.Error())
+	err = CheckPasswordStrength(testWeakPassNoSpecial, DefaultMinPasswordLength, DefaultMaxPasswordLength, DefaultMinUpperCaseCharNum,
+		DefaultMinLowerCaseCharNum, DefaultMinDigitalCharNum, DefaultMinSpecialCharNum, DefaultSpecialCharString)
+	asst.NotNil(err, "test CheckPasswordStrength() failed")
+	t.Logf("check error: %s", err.Error())
+	err = CheckPasswordStrength(testWeakPassUnsupported, DefaultMinPasswordLength, DefaultMaxPasswordLength, DefaultMinUpperCaseCharNum,
+		DefaultMinLowerCaseCharNum, DefaultMinDigitalCharNum, DefaultMinSpecialCharNum, DefaultSpecialCharString)
+	asst.NotNil(err, "test CheckPasswordStrength() failed")
+	t.Logf("check error: %s", err.Error())
+
+	err = CheckPasswordStrength(testStrongPass, DefaultMinPasswordLength, DefaultMaxPasswordLength, DefaultMinUpperCaseCharNum,
+		DefaultMinLowerCaseCharNum, DefaultMinDigitalCharNum, DefaultMinSpecialCharNum, DefaultSpecialCharString)
+	asst.Nil(err, "test CheckPasswordStrength() failed")
+}
+
+func TestCheckPasswordStrengthWithDefault(t *testing.T) {
+	asst := assert.New(t)
+
+	err := CheckPasswordStrengthWithDefault(testWeakPassNotLongEnough)
+	asst.NotNil(err, "test CheckPasswordStrengthWithDefault() failed")
+	t.Logf("check error: %s", err.Error())
+	err = CheckPasswordStrengthWithDefault(testWeakPassTooLong)
+	asst.NotNil(err, "test CheckPasswordStrengthWithDefault() failed")
+	t.Logf("check error: %s", err.Error())
+	err = CheckPasswordStrengthWithDefault(testWeakPassNoUpperCase)
+	asst.NotNil(err, "test CheckPasswordStrengthWithDefault() failed")
+	t.Logf("check error: %s", err.Error())
+	err = CheckPasswordStrengthWithDefault(testWeakPassNoLowerCase)
+	asst.NotNil(err, "test CheckPasswordStrengthWithDefault() failed")
+	t.Logf("check error: %s", err.Error())
+	err = CheckPasswordStrengthWithDefault(testWeakPassNoDigit)
+	asst.NotNil(err, "test CheckPasswordStrengthWithDefault() failed")
+	t.Logf("check error: %s", err.Error())
+	err = CheckPasswordStrengthWithDefault(testWeakPassNoSpecial)
+	asst.NotNil(err, "test CheckPasswordStrengthWithDefault() failed")
+	t.Logf("check error: %s", err.Error())
+	err = CheckPasswordStrengthWithDefault(testWeakPassUnsupported)
+	asst.NotNil(err, "test CheckPasswordStrengthWithDefault() failed")
+	t.Logf("check error: %s", err.Error())
+
+	err = CheckPasswordStrengthWithDefault(testStrongPass)
+	asst.Nil(err, "test CheckPasswordStrengthWithDefault() failed")
 }

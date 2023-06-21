@@ -5,11 +5,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/romberli/log"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/romberli/go-util/common"
 	"github.com/romberli/go-util/constant"
 	"github.com/romberli/go-util/middleware"
-	"github.com/romberli/log"
-	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -107,10 +108,10 @@ func TestMySQLConnection(t *testing.T) {
 
 	asst := assert.New(t)
 
-	//defer func() {
+	// defer func() {
 	//	err = conn.Close()
 	//	asst.Nil(err, "close connection failed")
-	//}()
+	// }()
 
 	// drop table
 	err = dropTable()
@@ -271,4 +272,26 @@ func TestConn_SetGlobalVariables(t *testing.T) {
 	value, err := conn.ShowGlobalVariable(testGlobalVariableName)
 	asst.Nil(err, "test SetGlobalVariables() failed")
 	asst.Equal(testGlobalVariableValue, value, "test SetGlobalVariables() failed")
+}
+
+func TestTemp(t *testing.T) {
+	asst := assert.New(t)
+
+	addr := "192.168.137.12:2883"
+	dbName := ""
+	dbUser := "root"
+	dbPass := "root"
+
+	conn, err := NewConn(addr, dbName, dbUser, dbPass)
+	asst.Nil(err, "new conn failed")
+
+	sql := `CREATE TENANT %s RESOURCE_POOL_LIST = ('%s'), CHARSET = '%s', PRIMARY_ZONE = '%s' set OB_TCP_INVITED_NODES = '%%' ;`
+	// sql := `CREATE TENANT ? RESOURCE_POOL_LIST = ?, CHARSET = ?, PRIMARY_ZONE = ? set OB_TCP_INVITED_NODES = '%%' ;`
+	zones := "zone1,zone2,zone3"
+	sql = fmt.Sprintf(sql, "test", "test", "utf8mb4", zones)
+
+	sql = `drop tenant test;`
+	result, err := conn.Execute(sql)
+	asst.Nil(err, "execute sql failed")
+	t.Logf("result: %v", result)
 }

@@ -8,8 +8,9 @@ import (
 	"time"
 
 	"github.com/pingcap/errors"
-	"github.com/romberli/go-util/constant"
 	"github.com/siddontang/go/hack"
+
+	"github.com/romberli/go-util/constant"
 )
 
 // ConvertArgsToNamedValues converts args to named values
@@ -45,6 +46,17 @@ func ConvertSliceToString(args ...interface{}) (string, error) {
 	}
 
 	return strings.Trim(result, constant.CommaString), nil
+}
+
+// GetQuestionMarks returns question marks with given num
+func GetQuestionMarks(num int) string {
+	var result string
+
+	for i := constant.ZeroInt; i < num; i++ {
+		result += constant.QuestionMarkString + constant.SpaceString
+	}
+
+	return strings.Trim(result, constant.QuestionMarkString+constant.SpaceString)
 }
 
 // ConvertToString converts an interface type argument to string,

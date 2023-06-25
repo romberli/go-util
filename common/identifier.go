@@ -15,7 +15,7 @@ func CheckIdentifier(s string, checkLeadChar bool, specialCharStr string) error 
 	if checkLeadChar {
 		first := s[constant.ZeroInt]
 		if !(first >= 'a' && first <= 'z' || first >= 'A' && first <= 'Z' || first == '_') {
-			return errors.Errorf("identifier(%s) must start with upper case, lower case or under bar, %c is not valid", s, first)
+			return errors.Errorf("identifier(%s) must start with alphabet or under bar, %c is not valid", s, first)
 		}
 	}
 
@@ -36,7 +36,7 @@ func CheckIdentifier(s string, checkLeadChar bool, specialCharStr string) error 
 			}
 
 			if !hasSpecialChar {
-				return errors.Errorf("identifier(%s) must only contain upper case, lower case, digit or under bar, %c is not valid", s, c)
+				return errors.Errorf("identifier(%s) must only contain alphabet, digit or under bar, %c is not valid", s, c)
 			}
 		}
 	}

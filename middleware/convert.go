@@ -53,10 +53,10 @@ func GetQuestionMarks(num int) string {
 	var result string
 
 	for i := constant.ZeroInt; i < num; i++ {
-		result += constant.QuestionMarkString + constant.SpaceString
+		result += constant.QuestionMarkString + constant.CommaString
 	}
 
-	return strings.Trim(result, constant.QuestionMarkString+constant.SpaceString)
+	return strings.Trim(result, constant.CommaString)
 }
 
 // ConvertToString converts an interface type argument to string,

@@ -44,7 +44,7 @@ func NewRSAWithPrivateKeyString(privateKeyStr string) (*RSA, error) {
 
 	priv, err := x509.ParsePKCS1PrivateKey(privateKey)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	return newRSAWithPrivateKey(priv), nil

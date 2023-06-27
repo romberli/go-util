@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 
 	hrsa "github.com/hnlq715/rsa"
+	"github.com/pingcap/errors"
 
 	"github.com/romberli/go-util/constant"
 )
@@ -39,12 +40,12 @@ func NewRSAWithPrivateKey(privateKey *rsa.PrivateKey) *RSA {
 func NewRSAWithPrivateKeyString(privateKeyStr string) (*RSA, error) {
 	privateKey, err := base64.StdEncoding.DecodeString(privateKeyStr)
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	priv, err := x509.ParsePKCS1PrivateKey(privateKey)
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	return newRSAWithPrivateKey(priv), nil
@@ -59,7 +60,7 @@ func NewEmptyRSA() *RSA {
 func newRSAWithKeySize(size int) (*RSA, error) {
 	privateKey, err := rsa.GenerateKey(rand.Reader, size)
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	return newRSAWithPrivateKey(privateKey), nil
@@ -91,12 +92,12 @@ func (r *RSA) GetPublicKey() (string, error) {
 func (r *RSA) SetPrivateKey(privateKeyStr string) error {
 	b, err := base64.StdEncoding.DecodeString(privateKeyStr)
 	if err != nil {
-		return err
+		return errors.Trace(err)
 	}
 
 	priv, err := x509.ParsePKCS1PrivateKey(b)
 	if err != nil {
-		return err
+		return errors.Trace(err)
 	}
 
 	r.privateKey = priv
@@ -109,12 +110,12 @@ func (r *RSA) SetPrivateKey(privateKeyStr string) error {
 func (r *RSA) SetPublicKey(publicKeyStr string) error {
 	b, err := base64.StdEncoding.DecodeString(publicKeyStr)
 	if err != nil {
-		return err
+		return errors.Trace(err)
 	}
 
 	pub, err := x509.ParsePKCS1PublicKey(b)
 	if err != nil {
-		return err
+		return errors.Trace(err)
 	}
 
 	r.publicKey = pub
@@ -136,7 +137,7 @@ func (r *RSA) Decrypt(cipher string) (string, error) {
 func (r *RSA) EncryptWithPublicKey(message string) (string, error) {
 	cipher, err := rsa.EncryptPKCS1v15(rand.Reader, r.publicKey, []byte(message))
 	if err != nil {
-		return constant.EmptyString, err
+		return constant.EmptyString, errors.Trace(err)
 	}
 
 	return base64.StdEncoding.EncodeToString(cipher), nil
@@ -146,12 +147,12 @@ func (r *RSA) EncryptWithPublicKey(message string) (string, error) {
 func (r *RSA) DecryptWithPrivateKey(cipher string) (string, error) {
 	c, err := base64.StdEncoding.DecodeString(cipher)
 	if err != nil {
-		return constant.EmptyString, err
+		return constant.EmptyString, errors.Trace(err)
 	}
 
 	message, err := rsa.DecryptPKCS1v15(rand.Reader, r.privateKey, c)
 	if err != nil {
-		return constant.EmptyString, err
+		return constant.EmptyString, errors.Trace(err)
 	}
 
 	return string(message), nil
@@ -161,7 +162,7 @@ func (r *RSA) DecryptWithPrivateKey(cipher string) (string, error) {
 func (r *RSA) EncryptWithPrivateKey(message string) (string, error) {
 	b, err := hrsa.PriKeyByte(r.privateKey, []byte(message), true)
 	if err != nil {
-		return constant.EmptyString, err
+		return constant.EmptyString, errors.Trace(err)
 	}
 
 	return base64.StdEncoding.EncodeToString(b), nil
@@ -171,12 +172,12 @@ func (r *RSA) EncryptWithPrivateKey(message string) (string, error) {
 func (r *RSA) DecryptWithPublicKey(cipher string) (string, error) {
 	c, err := base64.StdEncoding.DecodeString(cipher)
 	if err != nil {
-		return constant.EmptyString, err
+		return constant.EmptyString, errors.Trace(err)
 	}
 
 	b, err := hrsa.PubKeyByte(r.publicKey, c, false)
 	if err != nil {
-		return constant.EmptyString, err
+		return constant.EmptyString, errors.Trace(err)
 	}
 
 	return string(b), nil

@@ -13,8 +13,9 @@ import (
 
 	"github.com/pingcap/errors"
 	"github.com/pkg/sftp"
-	"github.com/romberli/go-util/constant"
 	"golang.org/x/crypto/ssh"
+
+	"github.com/romberli/go-util/constant"
 
 	utilrand "k8s.io/apimachinery/pkg/util/rand"
 )

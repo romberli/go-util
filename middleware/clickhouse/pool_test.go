@@ -3,10 +3,11 @@ package clickhouse
 import (
 	"testing"
 
-	"github.com/romberli/go-util/middleware"
 	"github.com/romberli/log"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap/zapcore"
+
+	"github.com/romberli/go-util/middleware"
 )
 
 func TestPool(t *testing.T) {

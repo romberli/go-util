@@ -5,9 +5,11 @@ import (
 	"strings"
 
 	"github.com/pingcap/parser/ast"
-	driver "github.com/pingcap/parser/test_driver"
+
 	"github.com/romberli/go-util/common"
 	"github.com/romberli/go-util/constant"
+
+	driver "github.com/pingcap/parser/test_driver"
 )
 
 const (

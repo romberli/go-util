@@ -10,6 +10,7 @@ import (
 	"github.com/pingcap/parser"
 	"github.com/pingcap/parser/ast"
 	"github.com/romberli/go-multierror"
+
 	"github.com/romberli/go-util/constant"
 )
 

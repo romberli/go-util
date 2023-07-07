@@ -6,10 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/romberli/go-util/constant"
 	"github.com/romberli/log"
 	"github.com/shirou/gopsutil/v3/process"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/romberli/go-util/constant"
 )
 
 func StartSandbox(cmd string) {

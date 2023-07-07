@@ -4,11 +4,13 @@ import (
 	"database/sql/driver"
 
 	"github.com/pingcap/errors"
-	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
+
 	"github.com/romberli/go-util/constant"
 	"github.com/romberli/go-util/middleware"
 	"github.com/romberli/go-util/middleware/result"
+
+	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
 const (

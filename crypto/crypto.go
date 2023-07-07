@@ -1,6 +1,8 @@
 package crypto
 
-import "github.com/romberli/go-util/constant"
+import (
+	"github.com/romberli/go-util/constant"
+)
 
 // EncryptWithPublicKeyString encrypts the data with public key string
 func EncryptWithPublicKeyString(publicKeyStr, message string) (string, error) {

@@ -5,9 +5,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/pingcap/errors"
-	amqp "github.com/rabbitmq/amqp091-go"
 
 	"github.com/romberli/go-util/constant"
+
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 const DefaultRabbitmqVhost = "/"

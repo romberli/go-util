@@ -5,10 +5,11 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/romberli/go-util/common"
-	"github.com/romberli/go-util/constant"
 	"github.com/romberli/log"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/romberli/go-util/common"
+	"github.com/romberli/go-util/constant"
 )
 
 var testProducer *Producer

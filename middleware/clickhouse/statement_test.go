@@ -6,8 +6,9 @@ import (
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
-	"github.com/romberli/go-util/constant"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/romberli/go-util/constant"
 )
 
 const (

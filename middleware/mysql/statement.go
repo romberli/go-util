@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/go-mysql-org/go-mysql/client"
+
 	"github.com/romberli/go-util/middleware"
 )
 

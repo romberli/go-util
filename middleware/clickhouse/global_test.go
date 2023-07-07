@@ -4,8 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/romberli/go-util/middleware"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/romberli/go-util/middleware"
 )
 
 func TestGlobalPool(t *testing.T) {

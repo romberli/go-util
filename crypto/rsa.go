@@ -6,10 +6,11 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 
-	hrsa "github.com/hnlq715/rsa"
 	"github.com/pingcap/errors"
 
 	"github.com/romberli/go-util/constant"
+
+	hrsa "github.com/hnlq715/rsa"
 )
 
 const (

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/pingcap/errors"
+
 	"github.com/romberli/go-util/constant"
 )
 

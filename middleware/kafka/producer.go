@@ -6,8 +6,9 @@ import (
 
 	"github.com/Shopify/sarama"
 	"github.com/pingcap/errors"
-	"github.com/romberli/go-util/constant"
 	"github.com/romberli/log"
+
+	"github.com/romberli/go-util/constant"
 )
 
 type AsyncProducer struct {

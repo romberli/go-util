@@ -5,6 +5,7 @@ import (
 	"database/sql"
 
 	"github.com/pingcap/errors"
+
 	"github.com/romberli/go-util/middleware"
 	"github.com/romberli/go-util/middleware/sql/statement"
 )

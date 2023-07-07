@@ -4,8 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/romberli/go-util/constant"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/romberli/go-util/constant"
 )
 
 func TestStatementAll(t *testing.T) {

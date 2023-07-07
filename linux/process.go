@@ -10,11 +10,10 @@ import (
 	"syscall"
 
 	"github.com/pingcap/errors"
+	"github.com/romberli/log"
+	"github.com/shirou/gopsutil/v3/process"
 
 	"github.com/romberli/go-util/constant"
-	"github.com/romberli/log"
-
-	"github.com/shirou/gopsutil/v3/process"
 )
 
 // IsRunningWithPid returns if given pid is running

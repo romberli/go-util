@@ -4,9 +4,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/romberli/go-util/common"
 	"github.com/romberli/log"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/romberli/go-util/common"
 )
 
 var testConsumer *Consumer

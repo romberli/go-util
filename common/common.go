@@ -6,10 +6,12 @@ import (
 	"strings"
 	"time"
 
-	json "github.com/json-iterator/go"
 	"github.com/pingcap/errors"
 	"github.com/romberli/dynamic-struct"
+
 	"github.com/romberli/go-util/constant"
+
+	json "github.com/json-iterator/go"
 )
 
 // SetRandomValueToNil set each value in slice values if value is a random value

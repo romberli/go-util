@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	DefaultConsumeSeconds = 5 * time.Second
+	DefaultConsumeTime = 5 * time.Second
 )
 
 func TestConsume(t *testing.T) {
@@ -39,7 +39,7 @@ func TestConsume(t *testing.T) {
 		asst.EqualError(err, "context canceled", "context error is not nil. group: %s, topic: %s, message: %s", groupName, topicName, err.Error())
 	}()
 
-	time.Sleep(DefaultConsumeSeconds)
+	time.Sleep(DefaultConsumeTime)
 
 	cancel()
 

@@ -8,13 +8,14 @@ import (
 	"time"
 
 	"github.com/Shopify/sarama"
-	"github.com/romberli/go-util/linux"
 	"github.com/romberli/log"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/romberli/go-util/linux"
 )
 
 const (
-	DefaultProduceSeconds = 5 * time.Second
+	DefaultProduceTime = 5 * time.Second
 )
 
 func TestProduce(t *testing.T) {
@@ -70,7 +71,7 @@ func TestProduce(t *testing.T) {
 		}
 	}()
 
-	time.Sleep(DefaultProduceSeconds)
+	time.Sleep(DefaultProduceTime)
 
 	cancel()
 

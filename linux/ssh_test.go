@@ -2,12 +2,13 @@ package linux
 
 import (
 	"fmt"
-	"github.com/romberli/go-util/constant"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/romberli/go-util/constant"
 )
 
 const (

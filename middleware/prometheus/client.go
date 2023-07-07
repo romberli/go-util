@@ -8,11 +8,13 @@ import (
 	"time"
 
 	"github.com/pingcap/errors"
-	client "github.com/prometheus/client_golang/api"
-	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
+
 	"github.com/romberli/go-util/constant"
+
+	client "github.com/prometheus/client_golang/api"
+	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
 const (

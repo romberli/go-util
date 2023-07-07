@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/romberli/go-util/common"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/romberli/go-util/common"
 )
 
 const (

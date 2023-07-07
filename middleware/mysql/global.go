@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"github.com/pingcap/errors"
+
 	"github.com/romberli/go-util/middleware"
 )
 

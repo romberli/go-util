@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-mysql-org/go-mysql/client"
 	"github.com/pingcap/errors"
+
 	"github.com/romberli/go-util/common"
 	"github.com/romberli/go-util/constant"
 )

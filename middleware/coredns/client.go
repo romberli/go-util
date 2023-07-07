@@ -8,8 +8,9 @@ import (
 	"time"
 
 	"github.com/pingcap/errors"
-	"github.com/romberli/go-util/constant"
 	"github.com/romberli/log"
+
+	"github.com/romberli/go-util/constant"
 
 	clientv3 "go.etcd.io/etcd/client/v3"
 

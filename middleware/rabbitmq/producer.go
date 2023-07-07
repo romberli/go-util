@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/pingcap/errors"
+
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 

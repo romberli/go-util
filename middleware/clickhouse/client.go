@@ -3,14 +3,15 @@ package clickhouse
 import (
 	"context"
 	"database/sql"
-	"github.com/romberli/go-util/middleware/sql/statement"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/pingcap/errors"
+
 	"github.com/romberli/go-util/common"
 	"github.com/romberli/go-util/constant"
 	"github.com/romberli/go-util/middleware"
+	"github.com/romberli/go-util/middleware/sql/statement"
 )
 
 const (

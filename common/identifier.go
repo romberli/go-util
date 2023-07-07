@@ -36,7 +36,7 @@ func CheckIdentifier(s string, checkLeadChar bool, specialCharStr string) error 
 			}
 
 			if !hasSpecialChar {
-				return errors.Errorf("identifier must only contain alphabet, digit or valid special characters[%s], %s is not valid", specialCharStr, s)
+				return errors.Errorf("identifier must only contain alphabet, digit or valid special characters(%s), %s is not valid", specialCharStr, s)
 			}
 		}
 	}

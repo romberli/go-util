@@ -24,6 +24,7 @@ func TestPool(t *testing.T) {
 	asst := assert.New(t)
 
 	log.SetLevel(zapcore.DebugLevel)
+	log.SetDisableEscape(true)
 
 	addr := "192.168.137.11:3306"
 	dbName := "test"

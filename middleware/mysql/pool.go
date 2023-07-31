@@ -296,12 +296,13 @@ func NewPoolWithPoolConfig(config PoolConfig) (*Pool, error) {
 // init initiates pool
 func (p *Pool) init() error {
 	// add sufficient connections to the pool
-	// TODO: romber
-	// uncomment below code after debugging the connection problem
-	// err := p.supply(p.InitConnections)
-	// if err != nil {
-	// 	return err
-	// }
+	err := p.supply(p.InitConnections)
+	if err != nil {
+		// TODO: romber
+		// uncomment below code after debugging the connection problem
+		// return err
+		log.Errorf("init mysql pool error: %+v", err)
+	}
 
 	// start a new routine to maintain free connection channel
 	go p.maintainFreeChan()

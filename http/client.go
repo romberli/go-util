@@ -152,12 +152,12 @@ func (c *Client) Get(url string) (*http.Response, error) {
 		if err != nil {
 			// check retry count
 			if c.maxRetryCount >= constant.ZeroInt && i >= c.maxRetryCount {
-				return resp, err
+				return resp, errors.Trace(err)
 			}
 			// check wait time
 			select {
 			case <-timeoutChan:
-				return resp, err
+				return resp, errors.Trace(err)
 			default:
 				time.Sleep(time.Duration(c.delayTime) * time.Millisecond)
 			}
@@ -184,12 +184,12 @@ func (c *Client) Post(url string, body []byte) (*http.Response, error) {
 		if err != nil {
 			// check retry count
 			if c.maxRetryCount >= constant.ZeroInt && i >= c.maxRetryCount {
-				return resp, err
+				return resp, errors.Trace(err)
 			}
 			// check wait timeout
 			select {
 			case <-timeoutChan:
-				return resp, err
+				return resp, errors.Trace(err)
 			default:
 				time.Sleep(time.Duration(c.delayTime) * time.Millisecond)
 			}
@@ -235,9 +235,49 @@ func (c *Client) PostDAS(url string, body []byte) ([]byte, error) {
 }
 
 func (c *Client) SendRequestWithBasicAuth(method, url string, body []byte, user, pass string) ([]byte, error) {
+	maxWait := c.maxWaitTime
+	if maxWait < constant.ZeroInt {
+		maxWait = int(constant.Century.Seconds())
+	}
+	timeoutChan := time.After(time.Duration(maxWait) * time.Second)
+
+	var i int
+
+	for {
+		resp, err := c.sendRequestWithBasicAuth(method, url, body, user, pass)
+		if err != nil {
+			// check retry count
+			if c.maxRetryCount >= constant.ZeroInt && i >= c.maxRetryCount {
+				return resp, errors.Trace(err)
+			}
+			// check wait timeout
+			select {
+			case <-timeoutChan:
+				return resp, errors.Trace(err)
+			default:
+				time.Sleep(time.Duration(c.delayTime) * time.Millisecond)
+			}
+
+			i++
+			continue
+		}
+
+		return resp, nil
+	}
+}
+
+func (c *Client) GetWithBasicAuth(url string, body []byte, user, pass string) ([]byte, error) {
+	return c.SendRequestWithBasicAuth(http.MethodGet, url, body, user, pass)
+}
+
+func (c *Client) PostWithBasicAuth(url string, body []byte, user, pass string) ([]byte, error) {
+	return c.SendRequestWithBasicAuth(http.MethodPost, url, body, user, pass)
+}
+
+func (c *Client) sendRequestWithBasicAuth(method, url string, body []byte, user, pass string) ([]byte, error) {
 	req, err := http.NewRequest(method, PrepareURL(url), bytes.NewReader(body))
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -245,7 +285,7 @@ func (c *Client) SendRequestWithBasicAuth(method, url string, body []byte, user,
 
 	resp, err := c.GetClient().Do(req)
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
@@ -258,12 +298,4 @@ func (c *Client) SendRequestWithBasicAuth(method, url string, body []byte, user,
 	}
 
 	return respBody, nil
-}
-
-func (c *Client) GetWithBasicAuth(url string, body []byte, user, pass string) ([]byte, error) {
-	return c.SendRequestWithBasicAuth(http.MethodGet, url, body, user, pass)
-}
-
-func (c *Client) PostWithBasicAuth(url string, body []byte, user, pass string) ([]byte, error) {
-	return c.SendRequestWithBasicAuth(http.MethodPost, url, body, user, pass)
 }

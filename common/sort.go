@@ -5,9 +5,10 @@ import (
 )
 
 const (
-	CompareResultEqual CompareResult = 0
-	CompareResultGT    CompareResult = 1
-	CompareResultLT    CompareResult = -1
+	CompareResultUnknown CompareResult = iota
+	CompareResultEqual
+	CompareResultGT
+	CompareResultLT
 )
 
 type CompareResult int

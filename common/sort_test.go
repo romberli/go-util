@@ -34,26 +34,9 @@ func (tc *testComparable) Compare(other Comparable) (CompareResult, error) {
 	return CompareResultLT, nil
 }
 
-type testComp struct {
-}
-
-func (tc *testComp) Compare(other Comparable) (CompareResult, error) {
-	return CompareResultEqual, nil
-}
-
 func TestComparable_All(t *testing.T) {
 	TestQuickSortAsc(t)
 	TestQuickSortDesc(t)
-}
-
-func Test(t *testing.T) {
-	asst := assert.New(t)
-	tc := &testComparable{Value: 1}
-	other := &testComp{}
-
-	result, err := tc.Compare(other)
-	asst.Nil(err, "test QuickSort() failed")
-	t.Logf("%d", result)
 }
 
 func TestQuickSortAsc(t *testing.T) {

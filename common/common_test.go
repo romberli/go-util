@@ -169,16 +169,13 @@ func TestCommon(t *testing.T) {
 	t.Log("==========test ConvertInterfaceToMapInterfaceInterface() completed==========")
 
 	t.Log("==========test ElementInSlice() started==========")
-	exists, err = ElementInSlice(sliceStr, str1)
-	asst.Nil(err, "test ElementInSlice str1 sliceStr failed")
+	exists = ElementInSlice[string](sliceStr, str1)
 	asst.True(exists, "test ElementInSlice str1 sliceStr failed")
 
-	exists, err = ElementInSlice(sliceInt, str1)
-	asst.Nil(err, "test ElementInSlice str1 sliceInt failed")
+	exists = ElementInSlice[int](sliceInt, int1)
 	asst.False(exists, "test ElementInSlice str1 sliceInt failed")
 
-	exists, err = ElementInSlice(sliceStr, str2)
-	asst.Nil(err, "test ElementInSlice str1 failed")
+	exists = ElementInSlice[string](sliceStr, str2)
 	asst.False(exists, "test ElementInSlice str2 failed")
 	t.Log("==========test ElementInSlice() completed==========")
 

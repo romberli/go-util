@@ -9,9 +9,10 @@ import (
 	"github.com/pingcap/errors"
 	"github.com/romberli/dynamic-struct"
 
-	"github.com/romberli/go-util/constant"
-
 	json "github.com/json-iterator/go"
+
+	"github.com/romberli/go-util/constant"
+	"github.com/romberli/go-util/types"
 )
 
 // SetRandomValueToNil set each value in slice values if value is a random value
@@ -138,21 +139,14 @@ func StringKeyInMap(m map[string]string, str string) bool {
 }
 
 // ElementInSlice checks if given element is in the slice
-func ElementInSlice(s interface{}, e interface{}) (bool, error) {
-	kind := reflect.TypeOf(s).Kind()
-	sValue := reflect.ValueOf(s)
-
-	if kind != reflect.Slice {
-		return false, errors.Errorf("first argument must be array or slice, %s is not valid", kind.String())
-	}
-
-	for i := constant.ZeroInt; i < sValue.Len(); i++ {
-		if reflect.DeepEqual(e, sValue.Index(i).Interface()) {
-			return true, nil
+func ElementInSlice[T types.Primitive](s []T, e T) bool {
+	for i := range s {
+		if s[i] == e {
+			return true
 		}
 	}
 
-	return false, nil
+	return false
 }
 
 // KeyInMap checks if given key is in the map
@@ -576,10 +570,7 @@ func CopyStructWithFields(in interface{}, fields ...string) (interface{}, error)
 
 	for i := constant.ZeroInt; i < inVal.NumField(); i++ {
 		fieldName := inType.Field(i).Name
-		ok, err := ElementInSlice(fields, fieldName)
-		if err != nil {
-			return nil, err
-		}
+		ok := StringInSlice(fields, fieldName)
 		if !ok {
 			removeFields = append(removeFields, fieldName)
 		}

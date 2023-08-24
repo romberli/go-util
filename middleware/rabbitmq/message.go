@@ -209,7 +209,7 @@ func (m *Message) convertToInsertSQL() ([]map[string][]interface{}, error) {
 
 	for _, columnName := range columnNames {
 		columnNamesStr += columnName + constant.CommaString
-		if !common.StringInSlice(m.GetPKNames(), columnName) {
+		if !common.ElementInSlice(m.GetPKNames(), columnName) {
 			duplicateStr += fmt.Sprintf("%s=VALUES(%s),", columnName, columnName)
 		}
 	}

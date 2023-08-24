@@ -118,17 +118,6 @@ func CombineMessageWithError(message string, err error) string {
 	return fmt.Sprintf("%s\n%s", message, err.Error())
 }
 
-// StringInSlice checks if a string is in the slice
-func StringInSlice(s []string, str string) bool {
-	for i := range s {
-		if s[i] == str {
-			return true
-		}
-	}
-
-	return false
-}
-
 // StringKeyInMap checks if a string key is in the map
 func StringKeyInMap(m map[string]string, str string) bool {
 	if _, ok := m[str]; ok {
@@ -570,7 +559,7 @@ func CopyStructWithFields(in interface{}, fields ...string) (interface{}, error)
 
 	for i := constant.ZeroInt; i < inVal.NumField(); i++ {
 		fieldName := inType.Field(i).Name
-		ok := StringInSlice(fields, fieldName)
+		ok := ElementInSlice(fields, fieldName)
 		if !ok {
 			removeFields = append(removeFields, fieldName)
 		}

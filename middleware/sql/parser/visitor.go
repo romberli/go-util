@@ -92,7 +92,7 @@ func (v *Visitor) GetResult() *Result {
 func (v *Visitor) Enter(in ast.Node) (out ast.Node, skipChildren bool) {
 	astType := reflect.TypeOf(in).String()
 
-	if common.StringInSlice(v.sqlList, astType) {
+	if common.ElementInSlice(v.sqlList, astType) {
 		v.toParse = true
 		// set sql type
 		v.result.SetSQLType(strings.Split(astType, constant.DotString)[1])

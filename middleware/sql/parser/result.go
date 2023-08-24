@@ -97,21 +97,21 @@ func (r *Result) AddTableDBListMap(tableName string, dbName string) {
 	if !ok {
 		r.TableDBListMap[tableName] = []string{dbName}
 	}
-	if ok && !common.StringInSlice(dbList, dbName) {
+	if ok && !common.ElementInSlice(dbList, dbName) {
 		r.TableDBListMap[tableName] = append(dbList, dbName)
 	}
 }
 
 // AddDBName adds db name to the result
 func (r *Result) AddDBName(dbName string) {
-	if !common.StringInSlice(r.DBNames, dbName) {
+	if !common.ElementInSlice(r.DBNames, dbName) {
 		r.DBNames = append(r.DBNames, dbName)
 	}
 }
 
 // AddTableName adds table name to the result
 func (r *Result) AddTableName(tableName string) {
-	if !common.StringInSlice(r.TableNames, tableName) {
+	if !common.ElementInSlice(r.TableNames, tableName) {
 		r.TableNames = append(r.TableNames, tableName)
 	}
 }
@@ -123,7 +123,7 @@ func (r *Result) SetTableComment(tableName string, tableComment string) {
 
 // AddColumn adds column name to the result
 func (r *Result) AddColumn(columnName string) {
-	if !common.StringInSlice(r.ColumnNames, columnName) {
+	if !common.ElementInSlice(r.ColumnNames, columnName) {
 		r.ColumnNames = append(r.ColumnNames, columnName)
 	}
 }

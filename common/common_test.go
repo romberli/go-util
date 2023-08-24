@@ -170,37 +170,37 @@ func TestCommon(t *testing.T) {
 
 	t.Log("==========test ElementInSlice() started==========")
 	exists = ElementInSlice[string](sliceStr, str1)
-	asst.True(exists, "test ElementInSlice str1 sliceStr failed")
+	asst.True(exists, "test ElementInSlice() failed")
 
 	exists = ElementInSlice[int](sliceInt, int1)
-	asst.False(exists, "test ElementInSlice str1 sliceInt failed")
+	asst.False(exists, "test ElementInSlice() failed")
 
 	exists = ElementInSlice[string](sliceStr, str2)
-	asst.False(exists, "test ElementInSlice str2 failed")
+	asst.False(exists, "test ElementInSlice() failed")
 	t.Log("==========test ElementInSlice() completed==========")
 
 	t.Log("==========test KeyInMap() started==========")
 	exists, err = KeyInMap(mapStrInt, str1)
-	asst.Nil(err, "test KeyInMap str1 mapStrInt failed")
-	asst.True(exists, "test ElementInSlice str1 mapStrInt failed")
+	asst.Nil(err, "test KeyInMap() failed")
+	asst.True(exists, "test KeyInMap() failed")
 
 	exists, err = KeyInMap(mapStrStr, str2)
-	asst.Nil(err, "test ElementInSlice str1 failed")
-	asst.False(exists, "test ElementInSlice str2 failed")
+	asst.Nil(err, "test KeyInMap() failed")
+	asst.False(exists, "test KeyInMap() failed")
 	t.Log("==========test KeyInMap() completed==========")
 
 	t.Log("==========test ValueInMap() started==========")
 	exists, err = ValueInMap(mapStrInt, str1)
-	asst.Nil(err, "test ValueInMap str1 mapStrInt failed")
-	asst.False(exists, "test ValueInMap str1 mapStrInt failed")
+	asst.Nil(err, "test ValueInMap() failed")
+	asst.False(exists, "test ValueInMap() failed")
 
 	exists, err = ValueInMap(mapStrStr, str1)
-	asst.Nil(err, "test ValueInMap str1 mapStrStr failed")
-	asst.False(exists, "test ValueInMap str2 mapStrStr failed")
+	asst.Nil(err, "test ValueInMap() failed")
+	asst.False(exists, "test ValueInMap() failed")
 
 	exists, err = ValueInMap(mapStrStr, str2)
-	asst.Nil(err, "test ValueInMap str2 mapStrStr failed")
-	asst.True(exists, "test ValueInMap str2 mapStrStr failed")
+	asst.Nil(err, "test ValueInMap() failed")
+	asst.True(exists, "test ValueInMap() failed")
 	t.Log("==========test ValueInMap() completed==========")
 
 	t.Log("==========test TrimSpaceOfStructString() started==========")

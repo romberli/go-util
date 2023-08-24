@@ -164,12 +164,7 @@ func SortAddrs(addrs []string) error {
 		return nil
 	}
 
-	err := quickSortAddrs(addrs, constant.ZeroInt, len(addrs)-1)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return quickSortAddrs(addrs, constant.ZeroInt, len(addrs)-1)
 }
 
 // quickSortAddrs sorts the addr list with quick sort algorithm

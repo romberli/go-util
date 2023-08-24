@@ -5,8 +5,6 @@ import (
 
 	"github.com/pingcap/errors"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/romberli/go-util/constant"
 )
 
 var (
@@ -20,7 +18,7 @@ type testComparable struct {
 func (tc *testComparable) Compare(other Comparable) (CompareResult, error) {
 	oth, ok := other.(*testComparable)
 	if !ok {
-		return constant.ZeroInt, errors.Errorf("type assertion failed, expectType: *testComparable, actualType: %T", other)
+		return CompareResultUnknown, errors.Errorf("type assertion failed, expectType: *testComparable, actualType: %T", other)
 	}
 
 	if tc.Value == oth.Value {

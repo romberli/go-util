@@ -138,6 +138,24 @@ func ElementInSlice[T types.Primitive](s []T, e T) bool {
 	return false
 }
 
+// ElementInSliceInterface checks if given element is in the slice
+func ElementInSliceInterface(s interface{}, e interface{}) (bool, error) {
+	kind := reflect.TypeOf(s).Kind()
+	sValue := reflect.ValueOf(s)
+
+	if kind != reflect.Slice {
+		return false, errors.Errorf("first argument must be array or slice, %s is not valid", kind.String())
+	}
+
+	for i := constant.ZeroInt; i < sValue.Len(); i++ {
+		if reflect.DeepEqual(e, sValue.Index(i).Interface()) {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
 // KeyInMap checks if given key is in the map
 func KeyInMap(m interface{}, k interface{}) (bool, error) {
 	kind := reflect.TypeOf(m).Kind()

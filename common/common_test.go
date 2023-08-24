@@ -85,6 +85,8 @@ func TestCommon(t *testing.T) {
 		nil,
 	}
 
+	tsList := []*trimStruct{ts}
+
 	// test ConvertInterfaceToString()
 	t.Log("==========test ConvertInterfaceToString() started==========")
 	s, err = ConvertNumberToString(str1)
@@ -178,6 +180,12 @@ func TestCommon(t *testing.T) {
 	exists = ElementInSlice(sliceStr, str2)
 	asst.False(exists, "test ElementInSlice() failed")
 	t.Log("==========test ElementInSlice() completed==========")
+
+	t.Log("==========test ElementInSliceInterface() started==========")
+	exists, err = ElementInSliceInterface(tsList, ts)
+	asst.Nil(err, "test ElementInSliceInterface() failed")
+	asst.True(exists, "test ElementInSliceInterface() failed")
+	t.Log("==========test ElementInSliceInterface() completed==========")
 
 	t.Log("==========test KeyInMap() started==========")
 	exists, err = KeyInMap(mapStrInt, str1)

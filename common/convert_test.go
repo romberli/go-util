@@ -1,0 +1,34 @@
+package common
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/romberli/go-util/constant"
+)
+
+func TestConvert_All(t *testing.T) {
+	TestConvert_ConvertSliceToString(t)
+}
+
+func TestConvert_ConvertSliceToString(t *testing.T) {
+	asst := assert.New(t)
+
+	// bool slice
+	bl := []bool{true, false, true}
+	s := "true,false,true"
+	asst.Equal(s, ConvertSliceToString(bl, constant.CommaString), "test ConvertSliceToString() failed")
+	// string slice
+	sl := []string{"a", "b", "c"}
+	s = "a,b,c"
+	asst.Equal(s, ConvertSliceToString(sl, constant.CommaString), "test ConvertSliceToString() failed")
+	// int slice
+	il := []int{1, 2, 3}
+	s = "1,2,3"
+	asst.Equal(s, ConvertSliceToString(il, constant.CommaString), "test ConvertSliceToString() failed")
+	// float64 slice
+	fl := []float64{1.1, 2.2, 3.3}
+	s = "1.1,2.2,3.3"
+	asst.Equal(s, ConvertSliceToString(fl, constant.CommaString), "test ConvertSliceToString() failed")
+}

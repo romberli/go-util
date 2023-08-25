@@ -12,6 +12,7 @@ import (
 	"github.com/siddontang/go/hack"
 
 	"github.com/romberli/go-util/constant"
+	"github.com/romberli/go-util/types"
 )
 
 // StringToBytes converts string type to byte slice
@@ -435,12 +436,12 @@ func ConvertToSlice(in interface{}, kind reflect.Kind) (interface{}, error) {
 	}
 }
 
-// ConvertStringSliceToString converts string slice to string, it uses c as the separation character
-func ConvertStringSliceToString(s []string, c string) string {
+// ConvertSliceToString converts the slice to string, it uses c as the separation character
+func ConvertSliceToString[T types.Primitive](s []T, c string) string {
 	var result string
 
-	for _, str := range s {
-		result = result + str + c
+	for _, v := range s {
+		result += fmt.Sprintf("%v%s", v, c)
 	}
 
 	return strings.Trim(result, c)

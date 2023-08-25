@@ -12,6 +12,9 @@ const (
 
 // CheckIdentifier checks if the given string is a valid identifier
 func CheckIdentifier(s string, checkLeadChar bool, specialCharStr string) error {
+	if s == constant.EmptyString {
+		return errors.Errorf("identifier should not be empty")
+	}
 	if checkLeadChar {
 		first := s[constant.ZeroInt]
 		if !(first >= 'a' && first <= 'z' || first >= 'A' && first <= 'Z' || first == '_') {

@@ -18,6 +18,9 @@ const (
 	MethodGet  = http.MethodGet
 	MethodPost = http.MethodPost
 
+	DefaultContentTypeKey   = "Content-Type"
+	DefaultContentTypeValue = "application/json"
+
 	StatusOK                  = http.StatusOK
 	StatusInternalServerError = http.StatusInternalServerError
 
@@ -27,8 +30,6 @@ const (
 	defaultDialTimeout           = 30 * time.Second
 	defaultKeepAlive             = 30 * time.Second
 	defaultTLSHandshakeTimeout   = 10 * time.Second
-	defaultContentTypeKey        = "Content-Type"
-	defaultContentTypeValue      = "application/json"
 	defaultMaxIdleConns          = 100
 	defaultIdleConnTimeout       = 90 * time.Second
 	defaultExpectContinueTimeout = 1 * time.Second
@@ -181,7 +182,7 @@ func (c *Client) Post(url string, body []byte) (*http.Response, error) {
 	var i int
 
 	for {
-		resp, err := c.client.Post(PrepareURL(url), defaultContentTypeValue, bytes.NewBuffer(body))
+		resp, err := c.client.Post(PrepareURL(url), DefaultContentTypeValue, bytes.NewBuffer(body))
 		if err != nil {
 			// check retry count
 			if c.maxRetryCount >= constant.ZeroInt && i >= c.maxRetryCount {
@@ -313,7 +314,7 @@ func (c *Client) sendRequestWithBasicAuth(method, url string, body []byte, user,
 		return nil, errors.Trace(err)
 	}
 
-	req.Header.Set(defaultContentTypeKey, defaultContentTypeValue)
+	req.Header.Set(DefaultContentTypeKey, DefaultContentTypeValue)
 	req.SetBasicAuth(user, pass)
 
 	resp, err := c.GetClient().Do(req)
@@ -339,7 +340,7 @@ func (c *Client) sendRequestWithHeaderAndBody(method, url string, header map[str
 		return nil, errors.Trace(err)
 	}
 
-	req.Header.Set(defaultContentTypeKey, defaultContentTypeValue)
+	req.Header.Set(DefaultContentTypeKey, DefaultContentTypeValue)
 	for k, v := range header {
 		req.Header.Set(k, v)
 	}

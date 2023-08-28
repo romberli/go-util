@@ -27,7 +27,8 @@ const (
 	defaultDialTimeout           = 30 * time.Second
 	defaultKeepAlive             = 30 * time.Second
 	defaultTLSHandshakeTimeout   = 10 * time.Second
-	defaultContentType           = "application/json"
+	defaultContentTypeKey        = "Content-Type"
+	defaultContentTypeValue      = "application/json"
 	defaultMaxIdleConns          = 100
 	defaultIdleConnTimeout       = 90 * time.Second
 	defaultExpectContinueTimeout = 1 * time.Second
@@ -180,7 +181,7 @@ func (c *Client) Post(url string, body []byte) (*http.Response, error) {
 	var i int
 
 	for {
-		resp, err := c.client.Post(PrepareURL(url), defaultContentType, bytes.NewBuffer(body))
+		resp, err := c.client.Post(PrepareURL(url), defaultContentTypeValue, bytes.NewBuffer(body))
 		if err != nil {
 			// check retry count
 			if c.maxRetryCount >= constant.ZeroInt && i >= c.maxRetryCount {
@@ -266,6 +267,38 @@ func (c *Client) SendRequestWithBasicAuth(method, url string, body []byte, user,
 	}
 }
 
+func (c *Client) SendRequestWithHeaderAndBody(method, url string, header map[string]string, body []byte) ([]byte, error) {
+	maxWait := c.maxWaitTime
+	if maxWait < constant.ZeroInt {
+		maxWait = int(constant.Century.Seconds())
+	}
+	timeoutChan := time.After(time.Duration(maxWait) * time.Second)
+
+	var i int
+
+	for {
+		resp, err := c.sendRequestWithHeaderAndBody(method, url, header, body)
+		if err != nil {
+			// check retry count
+			if c.maxRetryCount >= constant.ZeroInt && i >= c.maxRetryCount {
+				return resp, errors.Trace(err)
+			}
+			// check wait timeout
+			select {
+			case <-timeoutChan:
+				return resp, errors.Trace(err)
+			default:
+				time.Sleep(time.Duration(c.delayTime) * time.Millisecond)
+			}
+
+			i++
+			continue
+		}
+
+		return resp, nil
+	}
+}
+
 func (c *Client) GetWithBasicAuth(url string, body []byte, user, pass string) ([]byte, error) {
 	return c.SendRequestWithBasicAuth(http.MethodGet, url, body, user, pass)
 }
@@ -280,7 +313,7 @@ func (c *Client) sendRequestWithBasicAuth(method, url string, body []byte, user,
 		return nil, errors.Trace(err)
 	}
 
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set(defaultContentTypeKey, defaultContentTypeValue)
 	req.SetBasicAuth(user, pass)
 
 	resp, err := c.GetClient().Do(req)
@@ -295,6 +328,34 @@ func (c *Client) sendRequestWithBasicAuth(method, url string, body []byte, user,
 	}
 	if resp.StatusCode != http.StatusOK {
 		return nil, errors.Errorf("metadata Repository.SendOCPRequest(): request failed. statusCode: %d, respBody: %s", resp.StatusCode, string(respBody))
+	}
+
+	return respBody, nil
+}
+
+func (c *Client) sendRequestWithHeaderAndBody(method, url string, header map[string]string, body []byte) ([]byte, error) {
+	req, err := http.NewRequest(method, PrepareURL(url), bytes.NewReader(body))
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
+
+	req.Header.Set(defaultContentTypeKey, defaultContentTypeValue)
+	for k, v := range header {
+		req.Header.Set(k, v)
+	}
+
+	resp, err := c.GetClient().Do(req)
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.Errorf("metadata Repository.SendOCPRequest(): request failed. statusCode: %d, header: %v, respBody: %s", resp.StatusCode, header, string(respBody))
 	}
 
 	return respBody, nil

@@ -16,6 +16,9 @@ import (
 )
 
 const (
+	HTTPSchemeStr  = "http"
+	HTTPSSchemeStr = "https"
+
 	MethodGet  = http.MethodGet
 	MethodPost = http.MethodPost
 

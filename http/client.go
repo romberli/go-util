@@ -128,10 +128,11 @@ func (c *Client) GetClient() *http.Client {
 	return c.client
 }
 
-func (c *Client) SetTLSCertificationVerify(skip bool) error {
+// SetTLSInsecureSkipVerify sets TLS insecure skip verify
+func (c *Client) SetTLSInsecureSkipVerify(skip bool) error {
 	t, ok := c.client.Transport.(*http.Transport)
 	if !ok {
-		return errors.New("http.Client.Transport is not *http.Transport, can not set TLS certification verify")
+		return errors.New("http.Client.Transport is not *http.Transport, can not set TLS insecure skip verify")
 	}
 
 	if t.TLSClientConfig == nil {

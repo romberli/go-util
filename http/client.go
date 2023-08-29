@@ -134,6 +134,10 @@ func (c *Client) SetTLSCertificationVerify(skip bool) error {
 		return errors.New("http.Client.Transport is not *http.Transport, can not set TLS certification verify")
 	}
 
+	if t.TLSClientConfig == nil {
+		t.TLSClientConfig = &tls.Config{}
+	}
+
 	t.TLSClientConfig.InsecureSkipVerify = skip
 
 	return nil

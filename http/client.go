@@ -5,6 +5,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/buger/jsonparser"
@@ -138,6 +139,23 @@ func (c *Client) SetRetryOption(maxWaitTime, maxRetryCount, delay int) {
 	c.maxWaitTime = maxWaitTime
 	c.maxRetryCount = maxRetryCount
 	c.delayTime = delay
+}
+
+// PrepareURL prepares the url
+func (c *Client) PrepareURL(scheme, addr, path string, params map[string]string) string {
+	query := url.Values{}
+	for key, value := range params {
+		query.Add(key, value)
+	}
+
+	u := &url.URL{
+		Scheme:   scheme,
+		Host:     addr,
+		Path:     path,
+		RawQuery: query.Encode(),
+	}
+
+	return u.String()
 }
 
 func (c *Client) Get(url string) (*http.Response, error) {

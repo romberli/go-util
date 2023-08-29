@@ -2,6 +2,7 @@ package http
 
 import (
 	"bytes"
+	"crypto/tls"
 	"io"
 	"net"
 	"net/http"
@@ -52,6 +53,7 @@ var (
 		Proxy:                 http.ProxyFromEnvironment,
 		DialContext:           (&net.Dialer{Timeout: defaultDialTimeout, KeepAlive: defaultKeepAlive}).DialContext,
 		TLSHandshakeTimeout:   defaultTLSHandshakeTimeout,
+		TLSClientConfig:       &tls.Config{},
 		ForceAttemptHTTP2:     true,
 		MaxIdleConns:          defaultMaxIdleConns,
 		IdleConnTimeout:       defaultIdleConnTimeout,

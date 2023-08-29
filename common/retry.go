@@ -9,77 +9,90 @@ import (
 )
 
 const (
-	DefaultAttempts int64 = 10
-	DefaultDelay          = 500 * time.Millisecond
-	DefaultTimeout        = 10 * time.Second
+	MinMaxRetryCount = -1
+	MaxMaxRetryCount = constant.MaxInt
+
+	DefaultMaxRetryCount = 10
+	DefaultDelayTime     = 500 * time.Millisecond
+	DefaultMaxWaitTime   = 10 * time.Second
 )
 
 // RetryOption is options for Retry()
 type RetryOption struct {
-	Attempts int64
-	Delay    time.Duration
-	Timeout  time.Duration
+	MaxRetryCount int
+	DelayTime     time.Duration
+	MaxWaitTime   time.Duration
 }
 
 // NewRetryOption returns RetryOption
-func NewRetryOption(attempts int64, delay, timeout time.Duration) RetryOption {
-	return RetryOption{
-		Attempts: attempts,
-		Delay:    delay,
-		Timeout:  timeout,
+func NewRetryOption(maxRetryCount int, delayTime, maxWaitTime time.Duration) *RetryOption {
+	return &RetryOption{
+		MaxRetryCount: maxRetryCount,
+		DelayTime:     delayTime,
+		MaxWaitTime:   maxWaitTime,
 	}
+}
+
+// NewRetryOptionWithDefault returns RetryOption with default values
+func NewRetryOptionWithDefault() *RetryOption {
+	return &RetryOption{
+		MaxRetryCount: DefaultMaxRetryCount,
+		DelayTime:     DefaultDelayTime,
+		MaxWaitTime:   DefaultMaxWaitTime,
+	}
+}
+
+// Validate validates RetryOption
+func (ro *RetryOption) Validate() error {
+	if ro.MaxRetryCount < MinMaxRetryCount || ro.MaxRetryCount > MaxMaxRetryCount {
+		return errors.Errorf("max retry count must be between %d and %d, %d is not valid", MinMaxRetryCount, MaxMaxRetryCount, ro.MaxRetryCount)
+	}
+
+	return nil
 }
 
 // Retry retries the func until it returns no error or reaches attempts limit or
 // timed out, either one is earlier
-func Retry(doFunc func() error, attempts int64, delay, timeout time.Duration) error {
-	retryOption := NewRetryOption(attempts, delay, timeout)
-	return RetryWithRetryOption(doFunc, retryOption)
+func Retry(doFunc func() error, maxRetryCount int, delayTime, maxWaitTime time.Duration) error {
+	retryOption := NewRetryOption(maxRetryCount, delayTime, maxWaitTime)
+	return RetryWithOption(doFunc, retryOption)
 }
 
-// RetryWithRetryOption retries the func until it returns no error or reaches attempts limit or
-// timed out, either one is earlier
-func RetryWithRetryOption(doFunc func() error, opts ...RetryOption) error {
-	var (
-		err          error
-		retryOption  RetryOption
-		attemptCount int64
-	)
-
-	if len(opts) > constant.ZeroInt {
-		retryOption = opts[constant.ZeroInt]
-	} else {
-		retryOption = NewRetryOption(DefaultAttempts, DefaultDelay, DefaultTimeout)
+// RetryWithOption retries the func until it returns no error or reaches max retry count or
+// max wait time, either one is earlier
+func RetryWithOption(doFunc func() error, option *RetryOption) error {
+	if option == nil {
+		return doFunc()
+	}
+	err := option.Validate()
+	if err != nil {
+		return err
 	}
 
-	if retryOption.Timeout < constant.ZeroInt {
-		return errors.Errorf("timeout must NOT be less than 0, %d is not valid.", retryOption.Timeout)
-	}
-	if retryOption.Delay < constant.ZeroInt {
-		return errors.Errorf("delay must NOT be less than 0, %d is not valid.", retryOption.Delay)
-	}
+	timeoutChan := time.After(option.MaxWaitTime)
 
-	timeoutChan := time.After(retryOption.Timeout)
+	var i int
 
-	// call the function
-	for attemptCount = constant.ZeroInt; attemptCount <= retryOption.Attempts; attemptCount++ {
+	for {
+		// run the function
 		err = doFunc()
-		if err == nil {
-			return nil
-		}
-		// if attempts or timeout equal to 0, then not to retry
-		if retryOption.Attempts == constant.ZeroInt || retryOption.Timeout == constant.ZeroInt {
-			return errors.Trace(err)
+		if err != nil {
+			// check retry count
+			if option.MaxRetryCount >= constant.ZeroInt && i >= option.MaxRetryCount {
+				return errors.Trace(err)
+			}
+			// check wait timeout
+			select {
+			case <-timeoutChan:
+				return errors.Trace(err)
+			default:
+				time.Sleep(option.DelayTime)
+			}
+
+			i++
+			continue
 		}
 
-		// check for timeout
-		select {
-		case <-timeoutChan:
-			return errors.Trace(err)
-		default:
-			time.Sleep(retryOption.Delay)
-		}
+		return nil
 	}
-
-	return errors.Trace(err)
 }

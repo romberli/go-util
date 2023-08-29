@@ -51,16 +51,9 @@ func (ro *RetryOption) Validate() error {
 	return nil
 }
 
-// Retry retries the func until it returns no error or reaches attempts limit or
-// timed out, either one is earlier
-func Retry(doFunc func() error, maxRetryCount int, delayTime, maxWaitTime time.Duration) error {
-	retryOption := NewRetryOption(maxRetryCount, delayTime, maxWaitTime)
-	return RetryWithOption(doFunc, retryOption)
-}
-
-// RetryWithOption retries the func until it returns no error or reaches max retry count or
+// Retry retries the function until it returns no error or reaches max retry count or
 // max wait time, either one is earlier
-func RetryWithOption(doFunc func() error, option *RetryOption) error {
+func Retry(doFunc func() error, option *RetryOption) error {
 	if option == nil {
 		return doFunc()
 	}

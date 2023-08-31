@@ -125,12 +125,24 @@ func TestClient_SendRequestWithBasicAuth(t *testing.T) {
 	respBody, err := testClient.SendRequestWithBasicAuth(
 		http.MethodGet,
 		testHTTPClientSendRequestWithBasicAuthURL,
-		// []byte(testHTTPClientSendRequestWithBasicAuthBodyStr),
 		nil,
 		testHTTPClientBasicAuthUser,
 		testHTTPClientBasicAuthPass,
 	)
 	asst.Nil(err, "test SendRequestWithBasicAuth() failed")
+	t.Log(string(respBody))
+}
+
+func TestClient_SendRequestWithHeaderAndBody(t *testing.T) {
+	asst := assert.New(t)
+
+	respBody, err := testClient.SendRequestWithHeaderAndBody(
+		http.MethodPost,
+		testHTTPClientDoURL,
+		nil,
+		[]byte(testHTTPClientReqBodyStr),
+	)
+	asst.Nil(err, "test SendRequestWithHeaderAndBody() failed")
 	t.Log(string(respBody))
 }
 

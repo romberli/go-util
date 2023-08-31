@@ -52,7 +52,8 @@ func (ro *RetryOption) Validate() error {
 }
 
 // Retry retries the function until it returns no error or reaches max retry count or
-// max wait time, either one is earlier
+// max wait time, either one is earlier, if option is nil,
+// it will only call the function once, and no retry.
 func Retry(doFunc func() error, option *RetryOption) error {
 	if option == nil {
 		return doFunc()

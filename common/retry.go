@@ -1,9 +1,12 @@
 package common
 
 import (
+	"reflect"
+	"runtime"
 	"time"
 
 	"github.com/pingcap/errors"
+	"github.com/romberli/log"
 
 	"github.com/romberli/go-util/constant"
 )
@@ -22,14 +25,16 @@ type RetryOption struct {
 	MaxRetryCount int
 	DelayTime     time.Duration
 	MaxWaitTime   time.Duration
+	Logger        *log.Logger
 }
 
 // NewRetryOption returns RetryOption
-func NewRetryOption(maxRetryCount int, delayTime, maxWaitTime time.Duration) *RetryOption {
+func NewRetryOption(maxRetryCount int, delayTime, maxWaitTime time.Duration, logger *log.Logger) *RetryOption {
 	return &RetryOption{
 		MaxRetryCount: maxRetryCount,
 		DelayTime:     delayTime,
 		MaxWaitTime:   maxWaitTime,
+		Logger:        logger,
 	}
 }
 
@@ -71,6 +76,10 @@ func Retry(doFunc func() error, option *RetryOption) error {
 		// run the function
 		err = doFunc()
 		if err != nil {
+			if option.Logger != nil {
+				funName := runtime.FuncForPC(reflect.ValueOf(doFunc).Pointer()).Name()
+				option.Logger.Errorf("common.Retry(): execute function failed. function name: %s, error:\n%+v", funName, err)
+			}
 			// check retry count
 			if option.MaxRetryCount >= constant.ZeroInt && i >= option.MaxRetryCount {
 				return errors.Trace(err)

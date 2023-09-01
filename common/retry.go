@@ -23,17 +23,17 @@ const (
 // RetryOption is options for Retry()
 type RetryOption struct {
 	MaxRetryCount int
-	DelayTime     time.Duration
 	MaxWaitTime   time.Duration
+	DelayTime     time.Duration
 	Logger        *log.Logger
 }
 
 // NewRetryOption returns RetryOption
-func NewRetryOption(maxRetryCount int, delayTime, maxWaitTime time.Duration, logger *log.Logger) *RetryOption {
+func NewRetryOption(maxRetryCount int, maxWaitTime, delayTime time.Duration, logger *log.Logger) *RetryOption {
 	return &RetryOption{
 		MaxRetryCount: maxRetryCount,
-		DelayTime:     delayTime,
 		MaxWaitTime:   maxWaitTime,
+		DelayTime:     delayTime,
 		Logger:        logger,
 	}
 }
@@ -42,8 +42,8 @@ func NewRetryOption(maxRetryCount int, delayTime, maxWaitTime time.Duration, log
 func NewRetryOptionWithLogger(logger *log.Logger) *RetryOption {
 	return &RetryOption{
 		MaxRetryCount: DefaultMaxRetryCount,
-		DelayTime:     DefaultDelayTime,
 		MaxWaitTime:   DefaultMaxWaitTime,
+		DelayTime:     DefaultDelayTime,
 		Logger:        logger,
 	}
 }
@@ -52,8 +52,8 @@ func NewRetryOptionWithLogger(logger *log.Logger) *RetryOption {
 func NewRetryOptionWithDefault() *RetryOption {
 	return &RetryOption{
 		MaxRetryCount: DefaultMaxRetryCount,
-		DelayTime:     DefaultDelayTime,
 		MaxWaitTime:   DefaultMaxWaitTime,
+		DelayTime:     DefaultDelayTime,
 		Logger:        log.L(),
 	}
 }

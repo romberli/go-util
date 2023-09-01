@@ -39,7 +39,7 @@ func TestRetry(t *testing.T) {
 	log.SetDisableEscape(true)
 
 	ts := newTestStruct()
-	option := NewRetryOption(testMaxRetryCount, DefaultDelayTime, testMaxWaitTime, log.L())
+	option := NewRetryOption(testMaxRetryCount, testMaxWaitTime, DefaultDelayTime, log.L())
 
 	err := Retry(ts.testFunc, option)
 	asst.Nil(err, "test Retry() failed")

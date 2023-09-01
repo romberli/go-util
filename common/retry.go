@@ -38,12 +38,23 @@ func NewRetryOption(maxRetryCount int, delayTime, maxWaitTime time.Duration, log
 	}
 }
 
+// NewRetryOptionWithLogger returns RetryOption with given logger
+func NewRetryOptionWithLogger(logger *log.Logger) *RetryOption {
+	return &RetryOption{
+		MaxRetryCount: DefaultMaxRetryCount,
+		DelayTime:     DefaultDelayTime,
+		MaxWaitTime:   DefaultMaxWaitTime,
+		Logger:        logger,
+	}
+}
+
 // NewRetryOptionWithDefault returns RetryOption with default values
 func NewRetryOptionWithDefault() *RetryOption {
 	return &RetryOption{
 		MaxRetryCount: DefaultMaxRetryCount,
 		DelayTime:     DefaultDelayTime,
 		MaxWaitTime:   DefaultMaxWaitTime,
+		Logger:        log.L(),
 	}
 }
 

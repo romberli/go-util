@@ -257,6 +257,12 @@ func SetValueOfStruct(in interface{}, field string, value interface{}) error {
 	}
 
 	if vType != valueType {
+		if valueType.ConvertibleTo(vType) {
+			// convert value type to field type
+			v.Set(reflect.ValueOf(value).Convert(vType))
+			return nil
+		}
+
 		return errors.Errorf("types of field and value mismatched. field: %s, field type: %s, value type: %s",
 			field, v.Type().String(), valueType.String())
 	}
@@ -325,6 +331,12 @@ func SetValueOfStructByTag(in interface{}, field string, value interface{}, tag 
 			}
 
 			if vType != valueType {
+				if valueType.ConvertibleTo(vType) {
+					// convert value type to field type
+					v.Set(reflect.ValueOf(value).Convert(vType))
+					return nil
+				}
+
 				return errors.Errorf("types of field and value mismatched. field: %s, field type: %s, value type: %s",
 					field, v.Type().String(), valueType.String())
 			}

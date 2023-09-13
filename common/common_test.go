@@ -379,3 +379,17 @@ func TestSetValuesWithMapAndRandomByTag(t *testing.T) {
 	err := SetValuesWithMapAndRandomByTag(ei, fields, "middleware")
 	asst.Nil(err, "test SetValuesWithMapAndRandomByTag() failed")
 }
+
+func TestSetValueOfStruct(t *testing.T) {
+	asst := assert.New(t)
+
+	type T int
+	type StructA struct {
+		T T
+	}
+
+	s := &StructA{}
+
+	err := SetValueOfStruct(s, "T", 1)
+	asst.Nil(err, "test SetValueOfStruct() failed")
+}

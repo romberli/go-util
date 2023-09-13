@@ -393,3 +393,21 @@ func TestSetValueOfStruct(t *testing.T) {
 	err := SetValueOfStruct(s, "T", 1)
 	asst.Nil(err, "test SetValueOfStruct() failed")
 }
+
+func TestIsIsRandomValue(t *testing.T) {
+	asst := assert.New(t)
+
+	type T int
+
+	a := T(1)
+
+	isRandom, err := IsRandomValue(a)
+	asst.Nil(err, "test IsRandomValue() failed")
+	asst.False(isRandom, "test IsRandomValue() failed")
+
+	b := T(constant.DefaultRandomInt)
+
+	isRandom, err = IsRandomValue(b)
+	asst.Nil(err, "test IsRandomValue() failed")
+	asst.True(isRandom, "test IsRandomValue() failed")
+}

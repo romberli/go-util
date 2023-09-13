@@ -96,12 +96,41 @@ func IsRandomValue(value interface{}) (bool, error) {
 		}
 	default:
 		val := reflect.ValueOf(value)
-		switch val.Kind() {
+		kind := val.Kind()
+		switch kind {
 		case reflect.Ptr, reflect.Slice, reflect.Map:
 			if val.IsNil() {
 				return true, nil
 			}
 		default:
+			valueType := reflect.TypeOf(value)
+			if valueType.ConvertibleTo(reflect.TypeOf(constant.DefaultRandomInt)) {
+				newVal := val.Convert(reflect.TypeOf(constant.DefaultRandomInt)).Interface().(int)
+				if newVal == constant.DefaultRandomInt {
+					return true, nil
+				}
+
+				return false, nil
+			}
+
+			if valueType.ConvertibleTo(reflect.TypeOf(constant.DefaultRandomFloat)) {
+				newVal := val.Convert(reflect.TypeOf(constant.DefaultRandomFloat)).Interface().(float64)
+				if newVal == constant.DefaultRandomFloat {
+					return true, nil
+				}
+
+				return false, nil
+			}
+
+			if valueType.ConvertibleTo(reflect.TypeOf(constant.DefaultRandomString)) {
+				newVal := val.Convert(reflect.TypeOf(constant.DefaultRandomString)).Interface().(string)
+				if newVal == constant.DefaultRandomString {
+					return true, nil
+				}
+
+				return false, nil
+			}
+
 			return false, errors.Errorf("unsupported data type: %T", value)
 		}
 	}

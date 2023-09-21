@@ -4,9 +4,9 @@ import (
 	"github.com/buger/jsonparser"
 )
 
-// KeyExists checks if the key exists in the json
-func KeyExists(json []byte, keys ...string) bool {
-	_, _, _, err := jsonparser.Get(json, keys...)
+// KeyPathExists checks if the key path exists in the json data
+func KeyPathExists(data []byte, keys ...string) bool {
+	_, _, _, err := jsonparser.Get(data, keys...)
 	if err != nil {
 		return false
 	}

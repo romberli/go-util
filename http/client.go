@@ -184,7 +184,9 @@ func (c *Client) Get(url string) (*http.Response, error) {
 	if maxWait < constant.ZeroInt {
 		maxWait = int(constant.Century.Seconds())
 	}
-	timeoutChan := time.After(time.Duration(maxWait) * time.Second)
+
+	timer := time.NewTimer(time.Duration(maxWait) * time.Second)
+	defer timer.Stop()
 
 	var i int
 
@@ -197,7 +199,7 @@ func (c *Client) Get(url string) (*http.Response, error) {
 			}
 			// check wait time
 			select {
-			case <-timeoutChan:
+			case <-timer.C:
 				return resp, errors.Trace(err)
 			default:
 				time.Sleep(time.Duration(c.delayTime) * time.Millisecond)
@@ -216,7 +218,8 @@ func (c *Client) Post(url string, body []byte) (*http.Response, error) {
 	if maxWait < constant.ZeroInt {
 		maxWait = int(constant.Century.Seconds())
 	}
-	timeoutChan := time.After(time.Duration(maxWait) * time.Second)
+	timer := time.NewTimer(time.Duration(maxWait) * time.Second)
+	defer timer.Stop()
 
 	var i int
 
@@ -229,7 +232,7 @@ func (c *Client) Post(url string, body []byte) (*http.Response, error) {
 			}
 			// check wait timeout
 			select {
-			case <-timeoutChan:
+			case <-timer.C:
 				return resp, errors.Trace(err)
 			default:
 				time.Sleep(time.Duration(c.delayTime) * time.Millisecond)
@@ -280,7 +283,8 @@ func (c *Client) SendRequestWithBasicAuth(method, url string, body []byte, user,
 	if maxWait < constant.ZeroInt {
 		maxWait = int(constant.Century.Seconds())
 	}
-	timeoutChan := time.After(time.Duration(maxWait) * time.Second)
+	timer := time.NewTimer(time.Duration(maxWait) * time.Second)
+	defer timer.Stop()
 
 	var i int
 
@@ -293,7 +297,7 @@ func (c *Client) SendRequestWithBasicAuth(method, url string, body []byte, user,
 			}
 			// check wait timeout
 			select {
-			case <-timeoutChan:
+			case <-timer.C:
 				return resp, errors.Trace(err)
 			default:
 				time.Sleep(time.Duration(c.delayTime) * time.Millisecond)
@@ -312,7 +316,8 @@ func (c *Client) SendRequestWithHeaderAndBody(method, url string, header map[str
 	if maxWait < constant.ZeroInt {
 		maxWait = int(constant.Century.Seconds())
 	}
-	timeoutChan := time.After(time.Duration(maxWait) * time.Second)
+	timer := time.NewTimer(time.Duration(maxWait) * time.Second)
+	defer timer.Stop()
 
 	var i int
 
@@ -325,7 +330,7 @@ func (c *Client) SendRequestWithHeaderAndBody(method, url string, header map[str
 			}
 			// check wait timeout
 			select {
-			case <-timeoutChan:
+			case <-timer.C:
 				return resp, errors.Trace(err)
 			default:
 				time.Sleep(time.Duration(c.delayTime) * time.Millisecond)

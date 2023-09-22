@@ -62,13 +62,11 @@ func (b *Bucket) Get() error {
 // note that each time it failed to get the token, it will sleep for 10ms,
 // so beware of the interval value when initializing the bucket
 func (b *Bucket) GetWithTimeout(timeout time.Duration) error {
-	for {
-		select {
-		case <-b.ch:
-			return nil
-		case <-time.After(timeout):
-			return errors.Errorf("timeout exceeded, but the bucket is still empty, please try again later")
-		}
+	select {
+	case <-b.ch:
+		return nil
+	case <-time.After(timeout):
+		return errors.Errorf("timeout exceeded, but the bucket is still empty, please try again later")
 	}
 }
 
@@ -103,15 +101,18 @@ func (b *Bucket) validate() error {
 
 // supply puts the specified number of tokens to the bucket every interval
 func (b *Bucket) supply() {
+	timer := time.NewTimer(b.interval)
+	defer timer.Stop()
+
 	for {
+		timer.Reset(b.interval)
+
 		if !b.pause {
 			select {
-			case <-time.After(b.interval):
+			case <-timer.C:
 				b.put(b.num)
 			}
 		}
-
-		time.Sleep(defaultSleepTime)
 	}
 }
 

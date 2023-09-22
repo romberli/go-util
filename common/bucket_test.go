@@ -14,7 +14,7 @@ import (
 const (
 	testBucketCapacity = 5
 	testBucketNum      = 5
-	testBucketInterval = 100 * time.Millisecond
+	testBucketInterval = 10 * time.Millisecond
 )
 
 var testBucket *Bucket
@@ -55,9 +55,9 @@ func TestBucket_GetWithTimeout(t *testing.T) {
 
 	testBucket.Resume()
 	asst.False(testBucket.pause, "test GetWithTimeout() failed")
-	time.Sleep(testBucket.interval * 2)
+	// time.Sleep(testBucket.interval * 2)
 
-	err := testBucket.GetWithTimeout(testBucketInterval)
+	err := testBucket.GetWithTimeout(5)
 	asst.Nil(err, "test GetWithTimeout() failed. error:\n%+v", err)
 	time.Sleep(testBucket.interval)
 	testBucket.Pause()

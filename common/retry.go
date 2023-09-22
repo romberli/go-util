@@ -79,7 +79,8 @@ func Retry(doFunc func() error, option *RetryOption) error {
 		return err
 	}
 
-	timeoutChan := time.After(option.MaxWaitTime)
+	timer := time.NewTimer(option.MaxWaitTime)
+	defer timer.Stop()
 
 	var i int
 
@@ -97,7 +98,7 @@ func Retry(doFunc func() error, option *RetryOption) error {
 			}
 			// check wait timeout
 			select {
-			case <-timeoutChan:
+			case <-timer.C:
 				return errors.Trace(err)
 			default:
 				time.Sleep(option.DelayTime)

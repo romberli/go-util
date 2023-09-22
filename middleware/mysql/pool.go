@@ -298,10 +298,7 @@ func (p *Pool) init() error {
 	// add sufficient connections to the pool
 	err := p.supply(p.InitConnections)
 	if err != nil {
-		// TODO: romber
-		// uncomment below code after debugging the connection problem
-		// return err
-		log.Errorf("init mysql pool error: %+v", err)
+		return err
 	}
 
 	// start a new routine to maintain free connection channel

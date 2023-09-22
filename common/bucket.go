@@ -62,10 +62,13 @@ func (b *Bucket) Get() error {
 // note that each time it failed to get the token, it will sleep for 10ms,
 // so beware of the interval value when initializing the bucket
 func (b *Bucket) GetWithTimeout(timeout time.Duration) error {
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+
 	select {
 	case <-b.ch:
 		return nil
-	case <-time.After(timeout):
+	case <-timer.C:
 		return errors.Errorf("timeout exceeded, but the bucket is still empty, please try again later")
 	}
 }

@@ -241,6 +241,8 @@ func TestConn_SetSuperReadOnly(t *testing.T) {
 	status, err = conn.IsSuperReadOnly()
 	asst.Nil(err, "test SetSuperReadOnly() failed")
 	asst.False(status, "test SetSuperReadOnly() failed")
+	err = conn.SetReadOnly(false)
+	asst.Nil(err, "test SetSuperReadOnly() failed")
 }
 
 func TestConn_ShowGlobalVariable(t *testing.T) {

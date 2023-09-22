@@ -415,15 +415,20 @@ func (p *Pool) get() (*PoolConn, error) {
 	// try to get connection from free connection channel
 	for i := 0; i < freeChanLen; i++ {
 		pc, ok := p.getFromFreeChan()
-		// check if connection is still valid
-		if ok && pc.IsValid() {
-			p.usedConnections++
-			return pc, nil
-		}
+		if ok {
+			if pc == nil {
+				continue
+			}
+			// check if connection is still valid
+			if pc.IsValid() {
+				p.usedConnections++
+				return pc, nil
+			}
 
-		err := pc.Disconnect()
-		if err != nil {
-			return nil, errors.Errorf("disconnecting invalid connection failed when getting connection from the pool. error:\n%+v", err)
+			err := pc.Disconnect()
+			if err != nil {
+				log.Warnf("disconnecting invalid connection failed when getting connection from the pool. error:\n%+v", err)
+			}
 		}
 	}
 
@@ -443,12 +448,13 @@ func (p *Pool) get() (*PoolConn, error) {
 // it will log with debug level
 func (p *Pool) maintainFreeChan() {
 	for {
-		if p.isClosed {
+		if p.IsClosed() {
 			return
 		}
 
 		p.Lock()
 		now := time.Now()
+
 		// keep alive connections
 		if now.After(p.keepAliveTime) {
 			p.keepAliveTime = now.Add(time.Duration(p.KeepAliveInterval) * time.Second)
@@ -459,23 +465,24 @@ func (p *Pool) maintainFreeChan() {
 			}
 		}
 		// supply enough connections
-		num := p.InitConnections - p.usedConnections - len(p.freeConnChan)
-		err := p.supply(num)
-		if err != nil {
-			log.Debugf("got error when supplying connections to the pool. total: %d, failed: %d. nested error:\n%+v",
-				num, err.(*multierror.Error).Len(), err)
+		if p.InitConnections+p.usedConnections <= p.MaxConnections {
+			num := p.InitConnections - len(p.freeConnChan)
+			err := p.supply(num)
+			if err != nil {
+				log.Debugf("got error when supplying connections to the pool. total: %d, failed: %d. nested error:\n%+v",
+					num, err.(*multierror.Error).Len(), err)
+			}
 		}
 		// release excessive connections
 		if now.After(p.expireTime) {
 			p.expireTime = now.Add(time.Duration(p.MaxIdleTime) * time.Second)
-			num = len(p.freeConnChan) + p.usedConnections - p.MaxIdleConnections
-			err = p.release(num)
+			num := len(p.freeConnChan) - p.MaxIdleConnections
+			err := p.release(num)
 			if err != nil {
 				log.Debugf("got error when releasing connections of the pool. total: %d, failed: %d. nested error:\n%+v",
 					num, err.(*multierror.Error).Len(), err)
 			}
 		}
-
 		p.Unlock()
 		time.Sleep(DefaultSleepTime * time.Second)
 	}
@@ -493,14 +500,20 @@ func (p *Pool) keepAlive(num int) error {
 	for i := 0; i < num; i++ {
 		select {
 		case pc, ok := <-p.freeConnChan:
-			if ok && pc.IsValid() {
-				p.addToFreeChan(pc)
-				continue
-			}
+			if ok {
+				if pc == nil {
+					continue
+				}
+				// check if connection is still valid
+				if pc.IsValid() {
+					p.addToFreeChan(pc)
+					continue
+				}
 
-			err := pc.Disconnect()
-			if err != nil {
-				merr = multierror.Append(merr, err)
+				err := pc.Disconnect()
+				if err != nil {
+					merr = multierror.Append(merr, err)
+				}
 			}
 		default:
 		}

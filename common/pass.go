@@ -10,14 +10,18 @@ import (
 )
 
 const (
-	DefaultLetters           = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+-,.?_"
-	DefaultNormalCharString  = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	DefaultDigitalCharString = "0123456789"
-	DefaultSpecialCharString = "+-,.?_"
+	DefaultLetters             = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+-,.?_"
+	DefaultNormalCharString    = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	DefaultUpperCaseCharString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	DefaultLowerCaseCharString = "abcdefghijklmnopqrstuvwxyz"
+	DefaultDigitalCharString   = "0123456789"
+	DefaultSpecialCharString   = "+-,.?_"
 
-	DefaultNormalCharNum = 6
-	DefaultDigitalNum    = 3
-	DefaultSpecialNum    = 2
+	DefaultNormalCharNum    = 6
+	DefaultUpperCaseCharNum = 2
+	DefaultLowerCaseCharNum = 4
+	DefaultDigitalNum       = 3
+	DefaultSpecialNum       = 2
 
 	DefaultMinPasswordLength   = 8
 	DefaultMaxPasswordLength   = 20
@@ -29,16 +33,19 @@ const (
 
 // GetRandomStringWithDefault returns a random string with default length
 func GetRandomStringWithDefault() string {
-	normalCharBytes := GetRandomBytes(DefaultNormalCharString, DefaultNormalCharNum)
+	first := GetRandomString(DefaultNormalCharString, constant.OneInt)
+	upperCaseCharBytes := GetRandomBytes(DefaultUpperCaseCharString, DefaultUpperCaseCharNum)
+	lowerCaseCharBytes := GetRandomBytes(DefaultLowerCaseCharString, DefaultLowerCaseCharNum)
 	digitalCharBytes := GetRandomBytes(DefaultDigitalCharString, DefaultDigitalNum)
 	specialCharBytes := GetRandomBytes(DefaultSpecialCharString, DefaultSpecialNum)
 
-	s := append(normalCharBytes, digitalCharBytes...)
+	s := append(upperCaseCharBytes, lowerCaseCharBytes...)
+	s = append(s, digitalCharBytes...)
 	s = append(s, specialCharBytes...)
 
-	rand.Shuffle(len(s)/constant.TwoInt, func(i, j int) { s[i], s[j] = s[j], s[i] })
+	rand.Shuffle(len(s), func(i, j int) { s[i], s[j] = s[j], s[i] })
 
-	return string(s)
+	return first + string(s)
 }
 
 // GetRandomNormalCharString returns a random string with given length

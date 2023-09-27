@@ -67,7 +67,7 @@ func TestGetRandomStringWithDefault(t *testing.T) {
 
 	s := GetRandomStringWithDefault()
 	NormalCharNum, DigitCharNum, SpecialCharNum, UnknownCharNum := checkRandomString(s)
-	asst.Equal(DefaultNormalCharNum, NormalCharNum, "test GetRandomStringWithDefault() failed")
+	asst.Equal(DefaultNormalCharNum+constant.OneInt, NormalCharNum, "test GetRandomStringWithDefault() failed")
 	asst.Equal(DefaultDigitalNum, DigitCharNum, "test GetRandomStringWithDefault() failed")
 	asst.Equal(DefaultSpecialNum, SpecialCharNum, "test GetRandomStringWithDefault() failed")
 	asst.Equal(constant.ZeroInt, UnknownCharNum, "test GetRandomStringWithDefault() failed")

@@ -65,6 +65,9 @@ func TestCommon(t *testing.T) {
 
 	asst := assert.New(t)
 
+	originStr := "ABCDEFGabcdefg1234567+-"
+	reversedStr := "-+7654321gfedcbaGFEDCBA"
+
 	str1 := "a"
 	str2 := "xxx"
 	int1 := 1234
@@ -86,6 +89,12 @@ func TestCommon(t *testing.T) {
 	}
 
 	tsList := []*trimStruct{ts}
+
+	// test ReverseString()
+	t.Log("==========test ReverseString() started==========")
+	s = ReverseString(originStr)
+	asst.Equal(reversedStr, s, "test ReverseString() failed")
+	t.Log("==========test ReverseString() completed==========")
 
 	// test ConvertInterfaceToString()
 	t.Log("==========test ConvertInterfaceToString() started==========")

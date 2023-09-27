@@ -15,6 +15,16 @@ import (
 	"github.com/romberli/go-util/types"
 )
 
+// ReverseString reverses a string
+func ReverseString(s string) string {
+	var reverse string
+	for _, v := range s {
+		reverse = string(v) + reverse
+	}
+
+	return reverse
+}
+
 // SetRandomValueToNil set each value in slice values if value is a random value
 func SetRandomValueToNil(values ...interface{}) error {
 	for i, value := range values {

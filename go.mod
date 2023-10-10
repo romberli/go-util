@@ -1,6 +1,6 @@
 module github.com/romberli/go-util
 
-go 1.19
+go 1.21
 
 require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.14.2

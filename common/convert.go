@@ -446,3 +446,14 @@ func ConvertSliceToString[T types.Primitive](s []T, c string) string {
 
 	return strings.Trim(result, c)
 }
+
+// ConvertInterfaceSliceToString converts the interface slice to string, it uses c as the separation character
+func ConvertInterfaceSliceToString(s []interface{}, c string) string {
+	var result string
+
+	for _, v := range s {
+		result += fmt.Sprintf("%v%s", v, c)
+	}
+
+	return strings.Trim(result, c)
+}

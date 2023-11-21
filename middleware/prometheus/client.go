@@ -90,7 +90,7 @@ func NewConfigWithBasicAuth(addr, user, pass string) Config {
 	return Config{
 		client.Config{
 			Address:      addr,
-			RoundTripper: config.NewBasicAuthRoundTripper(user, config.Secret(pass), constant.EmptyString, DefaultRoundTripper),
+			RoundTripper: config.NewBasicAuthRoundTripper(user, config.Secret(pass), constant.EmptyString, constant.EmptyString, DefaultRoundTripper),
 		},
 	}
 }

@@ -290,6 +290,31 @@ func TestTemp(t *testing.T) {
 	conn, err := NewConn(addr, dbName, dbUser, dbPass)
 	asst.Nil(err, "new conn failed")
 
+	sql := `CREATE TENANT %s RESOURCE_POOL_LIST = ('%s'), CHARSET = '%s', PRIMARY_ZONE = '%s' set OB_TCP_INVITED_NODES = '%%' ;`
+	// sql := `CREATE TENANT ? RESOURCE_POOL_LIST = ?, CHARSET = ?, PRIMARY_ZONE = ? set OB_TCP_INVITED_NODES = '%%' ;`
+	zones := "zone1,zone2,zone3"
+	sql = fmt.Sprintf(sql, "test", "test", "utf8mb4", zones)
+
+	sql = `drop tenant test;`
+	result, err := conn.Execute(sql)
+	asst.Nil(err, "execute sql failed")
+	t.Logf("result: %v", result)
+}
+
+func TestMock(t *testing.T) {
+	asst := assert.New(t)
+
+	addr := "192.168.137.12:2883"
+	dbName := ""
+	dbUser := "root"
+	dbPass := "root"
+
+	patches := MockClientNewConn()
+	defer patches.Reset()
+
+	conn, err := NewConn(addr, dbName, dbUser, dbPass)
+	asst.Nil(err, "new conn failed")
+
 	patches.Reset()
 	sql := `select 1;`
 	patches = MockClientExecute(conn, sql)
@@ -301,14 +326,4 @@ func TestTemp(t *testing.T) {
 	r, err := result.GetInt(constant.ZeroInt, constant.ZeroInt)
 	asst.Nil(err, "execute sql failed")
 	asst.Equal(1, r, "execute sql failed")
-
-	sql = `CREATE TENANT %s RESOURCE_POOL_LIST = ('%s'), CHARSET = '%s', PRIMARY_ZONE = '%s' set OB_TCP_INVITED_NODES = '%%' ;`
-	// sql := `CREATE TENANT ? RESOURCE_POOL_LIST = ?, CHARSET = ?, PRIMARY_ZONE = ? set OB_TCP_INVITED_NODES = '%%' ;`
-	zones := "zone1,zone2,zone3"
-	sql = fmt.Sprintf(sql, "test", "test", "utf8mb4", zones)
-
-	sql = `drop tenant test;`
-	result, err = conn.Execute(sql)
-	asst.Nil(err, "execute sql failed")
-	t.Logf("result: %v", result)
 }

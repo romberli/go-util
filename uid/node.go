@@ -28,6 +28,11 @@ func NewNodeWithIP(ip string) (*Node, error) {
 	return NewNode(GetIPWorkerID(ip))
 }
 
+// GetNodeID returns the node id of the node
+func (n *Node) GetNodeID() int {
+	return int(n.GenerateID().Node())
+}
+
 // Generate generates a unique id
 func (n *Node) GenerateID() snowflake.ID {
 	return n.Node.Generate()

@@ -178,3 +178,17 @@ func TestRSA_DecryptWithPublicKey(t *testing.T) {
 	asst.Nil(err, "test RSA.DecryptWithPublicKey() failed")
 	asst.Equal(defaultMessage, message, "test RSA.DecryptWithPublicKey() failed")
 }
+
+func Test_Temp(t *testing.T) {
+	asst := assert.New(t)
+
+	r, err := newRSAWithKeySize(256)
+	asst.Nil(err, "test Temp failed")
+	privateKeyString, err := r.GetPrivateKey()
+	asst.Nil(err, "test Temp failed")
+	publicKeyString, err := r.GetPublicKey()
+	asst.Nil(err, "test Temp failed")
+
+	t.Logf("private key: %s", privateKeyString)
+	t.Logf("public key: %s", publicKeyString)
+}

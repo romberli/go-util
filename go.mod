@@ -7,6 +7,7 @@ require (
 	github.com/Shopify/sarama v1.38.1
 	github.com/agiledragon/gomonkey/v2 v2.11.0
 	github.com/buger/jsonparser v1.1.1
+	github.com/bwmarrin/snowflake v0.3.0
 	github.com/go-mysql-org/go-mysql v1.7.0
 	github.com/google/uuid v1.4.0
 	github.com/hnlq715/rsa v0.0.0-20180422013825-cf1887b20766

@@ -3,9 +3,9 @@ module github.com/romberli/go-util
 go 1.21
 
 require (
-	github.com/agiledragon/gomonkey/v2 v2.11.0
 	github.com/ClickHouse/clickhouse-go/v2 v2.15.0
 	github.com/Shopify/sarama v1.38.1
+	github.com/agiledragon/gomonkey/v2 v2.11.0
 	github.com/buger/jsonparser v1.1.1
 	github.com/go-mysql-org/go-mysql v1.7.0
 	github.com/google/uuid v1.4.0

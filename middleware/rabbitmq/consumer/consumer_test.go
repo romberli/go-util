@@ -42,26 +42,13 @@ var (
 )
 
 func init() {
-	testConn = testCreateConn(testAddr, testUser, testPass)
-	testConsumer = testCreateConsumer(testConn)
+	testConsumer = testCreateConsumer(testAddr, testUser, testPass, testVhost, testTag, testExchangeName, testQueueName, testKey)
 }
 
-// testCreateConn returns a new *Conn with given address, user and password
-func testCreateConn(addr, user, pass string) *client.Conn {
+func testCreateConsumer(addr, user, pass, vhost, tag, exchange, queue, key string) *Consumer {
 	var err error
 
-	testConn, err = client.NewConn(addr, user, pass, testVhost, testTag)
-	if err != nil {
-		log.Errorf("creating new Connection failed. %s", err)
-	}
-
-	return testConn
-}
-
-func testCreateConsumer(conn *client.Conn) *Consumer {
-	var err error
-
-	testConsumer, err = NewConsumerWithConn(conn)
+	testConsumer, err = NewConsumer(addr, user, pass, vhost, tag, exchange, queue, key)
 	if err != nil {
 		log.Errorf("creating new Consumer failed. %s", err)
 	}
@@ -90,9 +77,9 @@ func TestConsumer_ExchangeDeclare(t *testing.T) {
 func TestConsumer_QueueDeclare(t *testing.T) {
 	asst := assert.New(t)
 
-	queue, err := testConsumer.QueueDeclare(testQueueName)
+	err := testConsumer.QueueDeclare(testQueueName)
 	asst.Nil(err, common.CombineMessageWithError("test QueueDeclare() failed", err))
-	asst.Equal(testQueueName, queue.Name, "test QueueDeclare() failed")
+	asst.Equal(testQueueName, testConsumer.Queue.Name, "test QueueDeclare() failed")
 }
 
 func TestConsumer_QueueBind(t *testing.T) {
@@ -115,15 +102,24 @@ func TestConsumer_Consume(t *testing.T) {
 	deliveryChan, err := testConsumer.Consume(testQueueName, testExclusive)
 	asst.Nil(err, common.CombineMessageWithError("test Consume() failed", err))
 
+	expireTime := time.Now().Add(testMaxWaitTime)
+
 	for {
 		select {
 		case d := <-deliveryChan:
-			log.Infof("%s", d.Body)
+			t.Logf("%s", d.Body)
+			err = testConsumer.Ack(d.DeliveryTag, testMultiple)
+			asst.Nil(err, common.CombineMessageWithError("test Ack() failed", err))
 		default:
-			log.Infof("no message to consume, will exit now")
-			err = testConsumer.Cancel()
-			asst.Nil(err, common.CombineMessageWithError("test Consume() failed", err))
-			return
+			if time.Now().After(expireTime) {
+				t.Logf("no message to consume, will exit now")
+				err = testConsumer.Cancel()
+				asst.Nil(err, common.CombineMessageWithError("test Consume() failed", err))
+				return
+			}
+
+			t.Logf("no message to consume, will sleep 1 seconds and try again")
+			time.Sleep(1 * time.Second)
 		}
 	}
 }
@@ -142,35 +138,25 @@ func TestConsumer_Ack(t *testing.T) {
 
 	deliveryChan, err := testConsumer.Consume(testQueueName, testExclusive)
 	asst.Nil(err, common.CombineMessageWithError("test Ack() failed", err))
+
+	expireTime := time.Now().Add(testMaxWaitTime)
+
 	for {
 		select {
 		case d := <-deliveryChan:
-			log.Infof("%s", d.Body)
+			t.Logf("%s", d.Body)
 			err = testConsumer.Ack(d.DeliveryTag, testMultiple)
 			asst.Nil(err, common.CombineMessageWithError("test Ack() failed", err))
 		default:
-			log.Infof("no message to consume, will exit now")
-			err = testConsumer.Cancel()
-			asst.Nil(err, common.CombineMessageWithError("test Ack() failed", err))
-			return
-		}
-	}
-}
+			if time.Now().After(expireTime) {
+				t.Logf("no message to consume, will exit now")
+				err = testConsumer.Cancel()
+				asst.Nil(err, common.CombineMessageWithError("test Consume() failed", err))
+				return
+			}
 
-func TestConsumer_AckAndWait(t *testing.T) {
-	asst := assert.New(t)
-
-	deliveryChan, err := testConsumer.Consume(testQueueName, testExclusive)
-	asst.Nil(err, common.CombineMessageWithError("test Ack() failed", err))
-	for {
-		select {
-		case d := <-deliveryChan:
-			log.Infof("%s", d.Body)
-			err = testConsumer.Ack(d.DeliveryTag, testMultiple)
-			asst.Nil(err, common.CombineMessageWithError("test Ack() failed", err))
-		default:
-			log.Infof("no message to consume, will check later")
-			time.Sleep(time.Second * 3)
+			t.Logf("no message to consume, will sleep 1 seconds and try again")
+			time.Sleep(1 * time.Second)
 		}
 	}
 }
@@ -188,26 +174,23 @@ func TestConsumer_Nack(t *testing.T) {
 				continue
 			}
 		}
+
+		expireTime := time.Now().Add(testMaxWaitTime)
+
 		for {
 			select {
-			case d, ok := <-deliveryChan:
-				if !ok {
-					log.Infof("delivery chan has been closed")
-					time.Sleep(time.Second * 3)
-					continue
-				}
-				log.Infof("%s", d.Body)
-				// err = testConsumer.Nack(d.DeliveryTag, testMultiple, testRequeue)
-				asst.Nil(err, common.CombineMessageWithError("test Nack() failed", err))
-				time.Sleep(time.Second * 3)
+			case d := <-deliveryChan:
+				t.Logf("%s", d.Body)
 			default:
-				log.Infof("no message to consume...")
-				time.Sleep(time.Second * 3)
-				continue
-				// log.Infof("no message to consume, will exit now")
-				// err = testConsumer.Cancel()
-				// asst.Nil(err, common.CombineMessageWithError("test Nack() failed", err))
-				// return
+				if time.Now().After(expireTime) {
+					t.Logf("no message to consume, will exit now")
+					err = testConsumer.Cancel()
+					asst.Nil(err, common.CombineMessageWithError("test Consume() failed", err))
+					return
+				}
+
+				t.Logf("no message to consume, will sleep 1 seconds and try again")
+				time.Sleep(1 * time.Second)
 			}
 		}
 	}
@@ -229,33 +212,28 @@ func TestConsumer_Nack1(t *testing.T) {
 			if testConsumer.IsChannelOrConnectionClosedError(err) {
 				log.Infof("channel or connection is closed, will open connection and channel again")
 
-				testConn = testCreateConn(testAddr, testUser, testPass)
-				testConsumer = testCreateConsumer(testConn)
+				testConsumer = testCreateConsumer(testAddr, testUser, testPass, testVhost, testTag, testExchangeName, testQueueName, testKey)
 				time.Sleep(time.Second * 3)
 				continue
 			}
 		}
 
+		expireTime := time.Now().Add(testMaxWaitTime)
+
 		for {
 			select {
-			case d, ok := <-deliveryChan:
-				if !ok {
-					log.Infof("delivery chan has been closed")
-					time.Sleep(time.Second * 3)
-					continue
-				}
-				log.Infof("%s", d.Body)
-				// err = testConsumer.Nack(d.DeliveryTag, testMultiple, testRequeue)
-				asst.Nil(err, common.CombineMessageWithError("test Nack() failed", err))
-				time.Sleep(time.Second * 3)
+			case d := <-deliveryChan:
+				t.Logf("%s", d.Body)
 			default:
-				log.Infof("no message to consume...")
-				time.Sleep(time.Second * 3)
-				continue
-				// log.Infof("no message to consume, will exit now")
-				// err = testConsumer.Cancel()
-				// asst.Nil(err, common.CombineMessageWithError("test Nack() failed", err))
-				// return
+				if time.Now().After(expireTime) {
+					t.Logf("no message to consume, will exit now")
+					err = testConsumer.Cancel()
+					asst.Nil(err, common.CombineMessageWithError("test Consume() failed", err))
+					return
+				}
+
+				t.Logf("no message to consume, will sleep 1 seconds and try again")
+				time.Sleep(1 * time.Second)
 			}
 		}
 	}

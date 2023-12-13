@@ -19,13 +19,13 @@ var (
 )
 
 func init() {
-	testConsumerPool = testCreateConsumerPool(testAddr, testUser, testPass, testVhost, testTag)
+	testConsumerPool = testCreateConsumerPool(testAddr, testUser, testPass, testVhost, testTag, testExchangeName, testQueueName, testKey)
 }
 
-func testCreateConsumerPool(addr, user, pass, vhost, tag string) *Pool {
+func testCreateConsumerPool(addr, user, pass, vhost, tag, exchange, queue, key string) *Pool {
 	var err error
 
-	testConsumerPool, err = NewPoolWithDefault(addr, user, pass, vhost, tag)
+	testConsumerPool, err = NewPoolWithDefault(addr, user, pass, vhost, tag, exchange, queue, key)
 	if err != nil {
 		log.Errorf("creating new consumer pool failed. %s", err)
 	}
@@ -53,7 +53,7 @@ func TestPool_Consumer(t *testing.T) {
 	asst.Nil(err, "close pool consumer failed")
 
 	// create producer
-	p, err := producer.NewProducer(testAddr, testUser, testPass, testVhost, testTag)
+	p, err := producer.NewProducer(testAddr, testUser, testPass, testVhost, testTag, testExchangeName, testQueueName, testKey)
 	asst.Nil(err, common.CombineMessageWithError("create producer failed", err))
 	defer func() {
 		err = p.Disconnect()
@@ -62,7 +62,7 @@ func TestPool_Consumer(t *testing.T) {
 	// send message to the queue
 	for i := constant.ZeroInt; i < testPublishCount; i++ {
 		message := fmt.Sprintf(testMessageTemplate, i)
-		err = p.PublishWithContext(context.Background(), testExchangeName, testKey,
+		err = p.PublishWithContext(context.Background(),
 			p.BuildMessageWithExpiration(constant.DefaultJSONContentType, message, testExpiration))
 		asst.Nil(err, common.CombineMessageWithError("test Publish() failed", err))
 	}
@@ -83,7 +83,7 @@ func TestPool_Consumer(t *testing.T) {
 			err = pc.Ack(d.DeliveryTag, testMultiple)
 			asst.Nil(err, common.CombineMessageWithError("test Ack() failed", err))
 		default:
-			if time.Now().Sub(expireTime) > constant.ZeroInt {
+			if time.Now().After(expireTime) {
 				t.Logf("no message to consume, will exit now")
 				err = testConsumer.Cancel()
 				asst.Nil(err, common.CombineMessageWithError("test Consume() failed", err))

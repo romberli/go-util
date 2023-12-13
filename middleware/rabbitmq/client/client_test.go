@@ -22,7 +22,7 @@ func init() {
 func testCreateConn(addr, user, pass string) *Conn {
 	var err error
 
-	testConn, err = NewConn(addr, user, pass, testVhost, testTag)
+	testConn, err = NewConn(addr, user, pass, testVhost)
 	if err != nil {
 		log.Errorf("creating new Connection failed. %s", err)
 	}

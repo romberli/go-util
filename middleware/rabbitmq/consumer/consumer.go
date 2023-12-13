@@ -6,6 +6,7 @@ import (
 	"github.com/pingcap/errors"
 
 	"github.com/romberli/go-util/constant"
+	"github.com/romberli/go-util/middleware/rabbitmq"
 	"github.com/romberli/go-util/middleware/rabbitmq/client"
 
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -25,27 +26,17 @@ type Consumer struct {
 }
 
 // NewConsumer returns a new *Consumer
-func NewConsumer(addr, user, pass, vhost, tag string) (*Consumer, error) {
-	return NewConsumerWithConfig(client.NewConfig(addr, user, pass, vhost, tag))
-}
-
-// NewConsumerWithDefault returns a new *Consumer with default config
-func NewConsumerWithDefault(addr, user, pass string) (*Consumer, error) {
-	return NewConsumerWithConfig(client.NewConfigWithDefault(addr, user, pass))
+func NewConsumer(addr, user, pass, vhost, tag, exchange, queue, key string) (*Consumer, error) {
+	return NewConsumerWithConfig(rabbitmq.NewConfig(addr, user, pass, vhost, tag, exchange, queue, key))
 }
 
 // NewConsumerWithConfig returns a new *Consumer with given config
-func NewConsumerWithConfig(config *client.Config) (*Consumer, error) {
+func NewConsumerWithConfig(config *rabbitmq.Config) (*Consumer, error) {
 	conn, err := client.NewConnWithConfig(config)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewConsumerWithConn(conn)
-}
-
-// NewConsumerWithConn returns a new *Consumer with given connection
-func NewConsumerWithConn(conn *client.Conn) (*Consumer, error) {
 	channel, err := conn.Connection.Channel()
 	if err != nil {
 		return nil, errors.Trace(err)
@@ -55,11 +46,6 @@ func NewConsumerWithConn(conn *client.Conn) (*Consumer, error) {
 		Conn: conn,
 		Chan: channel,
 	}, nil
-}
-
-// GetQueue returns the queue
-func (c *Consumer) GetQueue() amqp.Queue {
-	return c.Queue
 }
 
 // Close disconnects the rabbitmq server
@@ -107,18 +93,20 @@ func (c *Consumer) ExchangeDeclare(name, kind string) error {
 }
 
 // QueueDeclare declares a queue
-func (c *Consumer) QueueDeclare(name string) (amqp.Queue, error) {
+func (c *Consumer) QueueDeclare(name string) error {
 	channel, err := c.Channel()
 	if err != nil {
-		return amqp.Queue{}, err
+		return err
 	}
 
 	queue, err := channel.QueueDeclare(name, true, false, false, false, nil)
 	if err != nil {
-		return amqp.Queue{}, errors.Trace(err)
+		return errors.Trace(err)
 	}
 
-	return queue, nil
+	c.Queue = queue
+
+	return nil
 }
 
 // QueueBind binds a queue to an exchange

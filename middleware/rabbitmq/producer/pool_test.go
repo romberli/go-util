@@ -19,13 +19,13 @@ var (
 )
 
 func init() {
-	testProducerPool = testCreateProducerPool(testAddr, testUser, testPass, testVhost, testTag)
+	testProducerPool = testCreateProducerPool(testAddr, testUser, testPass, testVhost, testTag, testExchangeName, testQueueName, testKey)
 }
 
-func testCreateProducerPool(addr, user, pass, vhost, tag string) *Pool {
+func testCreateProducerPool(addr, user, pass, vhost, tag, exchange, queue, key string) *Pool {
 	var err error
 
-	testProducerPool, err = NewPoolWithDefault(addr, user, pass, vhost, tag)
+	testProducerPool, err = NewPoolWithDefault(addr, user, pass, vhost, tag, exchange, queue, key)
 	if err != nil {
 		log.Errorf("creating new producer pool failed. %s", err)
 	}
@@ -62,13 +62,13 @@ func TestPool_Producer(t *testing.T) {
 	// send message to the queue
 	for i := constant.ZeroInt; i < testPublishCount; i++ {
 		message := fmt.Sprintf(testMessageTemplate, i)
-		err = pp.PublishWithContext(context.Background(), testExchangeName, testKey,
+		err = pp.PublishWithContext(context.Background(),
 			pp.BuildMessageWithExpiration(constant.DefaultJSONContentType, message, testExpiration))
 		asst.Nil(err, common.CombineMessageWithError("test Publish() failed", err))
 	}
 
 	// create consumer
-	c, err := consumer.NewConsumer(testAddr, testUser, testPass, testVhost, testTag)
+	c, err := consumer.NewConsumer(testAddr, testUser, testPass, testVhost, testTag, testExchangeName, testQueueName, testKey)
 	asst.Nil(err, common.CombineMessageWithError("create consumer failed", err))
 	defer func() {
 		err = c.Disconnect()

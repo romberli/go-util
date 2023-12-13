@@ -10,7 +10,7 @@ import (
 	"github.com/romberli/log"
 
 	"github.com/romberli/go-util/constant"
-	"github.com/romberli/go-util/middleware/rabbitmq/client"
+	"github.com/romberli/go-util/middleware/rabbitmq"
 	"github.com/romberli/go-util/uid"
 )
 
@@ -31,126 +31,45 @@ const (
 	DefaultDelayTime           = 5 // milliseconds
 )
 
-type PoolConfig struct {
-	*client.Config
-	MaxConnections     int
-	InitConnections    int
-	MaxIdleConnections int
-	MaxIdleTime        int
-	MaxWaitTime        int
-	MaxRetryCount      int
-	KeepAliveInterval  int
-}
-
-// NewPoolConfig returns a new PoolConfig
-func NewPoolConfig(addr, user, host, vhost, tag string,
-	maxConnections, initConnections, maxIdleConnections, maxIdleTime, maxWaitTime, maxRetryCount, keepAliveInterval int) *PoolConfig {
-	config := client.NewConfig(addr, user, host, vhost, tag)
-
-	return &PoolConfig{
-		Config:             config,
-		MaxConnections:     maxConnections,
-		InitConnections:    initConnections,
-		MaxIdleConnections: maxIdleConnections,
-		MaxIdleTime:        maxIdleTime,
-		MaxWaitTime:        maxWaitTime,
-		MaxRetryCount:      maxRetryCount,
-		KeepAliveInterval:  keepAliveInterval,
-	}
-}
-
-// NewPoolConfigWithConfig returns a new PoolConfig
-func NewPoolConfigWithConfig(config *client.Config, maxConnections, initConnections, maxIdleConnections,
-	maxIdleTime, maxWaitTime, maxRetryCount, keepAliveInterval int) *PoolConfig {
-	return &PoolConfig{
-		Config:             config,
-		MaxConnections:     maxConnections,
-		InitConnections:    initConnections,
-		MaxIdleConnections: maxIdleConnections,
-		MaxIdleTime:        maxIdleTime,
-		MaxWaitTime:        maxWaitTime,
-		MaxRetryCount:      maxRetryCount,
-		KeepAliveInterval:  keepAliveInterval,
-	}
-}
-
-// Validate validates pool config
-func (cfg *PoolConfig) Validate() error {
-	// validate MaxConnections
-	if cfg.MaxConnections <= constant.ZeroInt {
-		return errors.New("maximum connection argument should larger than 0")
-	}
-	// validate InitConnections
-	if cfg.InitConnections < constant.ZeroInt {
-		return errors.New("init connection argument should not be smaller than 0")
-	}
-	if cfg.InitConnections > cfg.MaxConnections {
-		return errors.Errorf("init connections should be less or equal than maximum connections. init_connections: %d, max_connections: %d",
-			cfg.InitConnections, cfg.MaxConnections)
-	}
-	// validate MaxIdleConnections
-	if cfg.MaxIdleConnections < constant.ZeroInt {
-		return errors.New("maximum idle connection argument should not be smaller than 0")
-	}
-	if cfg.MaxIdleConnections > cfg.MaxConnections {
-		return errors.New("maximum idle connection argument should not be larger than maximum connection argument")
-	}
-	// validate MaxIdleTime
-	if cfg.MaxIdleTime <= constant.ZeroInt {
-		return errors.New("maximum idle time argument should be larger than 0")
-	}
-	// validate MaxWaitTime
-	if cfg.MaxWaitTime < DefaultUnlimitedWaitTime {
-		return errors.New("maximum wait time argument should not be smaller than -1")
-	}
-	// validate MaxRetryCount
-	if cfg.MaxRetryCount < DefaultUnlimitedRetryCount {
-		return errors.New("maximum retry count argument should not be smaller than -1")
-	}
-	// validate KeepAliveInterval
-	if cfg.KeepAliveInterval <= constant.ZeroInt {
-		return errors.New("keep alive interval argument should be larger than 0")
-	}
-
-	return nil
-}
-
 type PoolProducer struct {
 	*Producer
 	Pool *Pool
 }
 
 // NewPoolProducer returns a new *PoolProducer
-func NewPoolProducer(addr, user, pass, vhost, tag string) (*PoolProducer, error) {
-	producer, err := NewProducer(addr, user, pass, vhost, tag)
+func NewPoolProducer(pool *Pool) (*PoolProducer, error) {
+	cfg := pool.PoolConfig.Config
+	if cfg.Tag != constant.EmptyString {
+		cfg = pool.PoolConfig.Config.Clone()
+		cfg.Tag = pool.GetFullTag()
+	}
+
+	p, err := NewProducerWithConfig(cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	return &PoolProducer{
-		Producer: producer,
-		Pool:     nil,
-	}, nil
+	pp := &PoolProducer{
+		Producer: p,
+		Pool:     pool,
+	}
+
+	if pp.IsValid() {
+		return pp, nil
+	}
+
+	err = pp.Disconnect()
+	if err != nil {
+		log.Warnf("disconnecting invalid connection failed when creating new pool producer. error:\n%+v", err)
+	}
+
+	return nil, errors.New("new created pool producer is not valid")
 }
 
-// NewPoolProducerWithPool returns a new *PoolProducer
-func NewPoolProducerWithPool(pool *Pool, addr, user, pass, vhost, tag string) (*PoolProducer, error) {
-	pc, err := NewPoolProducer(addr, user, pass, vhost, tag)
-	if err != nil {
-		return nil, err
-	}
-
-	if pc.IsValid() {
-		// set pool
-		pc.Pool = pool
-		return pc, nil
-	}
-
-	if pc != nil {
-		_ = pc.Disconnect()
-	}
-
-	return nil, errors.New("new created producer is not valid")
+// GetTag returns the tag of the pool producer, should use this method to get the tag instead of using the tag property of the pool config,
+// because the tag of the pool config is the prefix of the tag of the pool producer
+func (pp *PoolProducer) GetTag() string {
+	return pp.Producer.Conn.Config.Tag
 }
 
 // Close closes the channel and returns the producer back to the pool
@@ -190,7 +109,7 @@ func (pp *PoolProducer) IsValid() bool {
 
 type Pool struct {
 	sync.Mutex
-	*PoolConfig
+	*rabbitmq.PoolConfig
 	uidNode          *uid.Node
 	freeProducerChan chan *PoolProducer
 	usedConnections  int
@@ -200,46 +119,50 @@ type Pool struct {
 }
 
 // NewPool returns a new *Pool
-func NewPool(addr, user, host, vhost, tag string,
+func NewPool(addr, user, host, vhost, tag, exchange, queue, key string,
 	maxConnections, initConnections, maxIdleConnections, maxIdleTime, maxWaitTime, maxRetryCount, keepAliveInterval int) (*Pool, error) {
-	cfg := NewPoolConfig(addr, user, host, vhost, tag, maxConnections, initConnections, maxIdleConnections,
-		maxIdleTime, maxWaitTime, maxRetryCount, keepAliveInterval)
+	cfg := rabbitmq.NewPoolConfig(addr, user, host, vhost, tag, exchange, queue, key,
+		maxConnections, initConnections, maxIdleConnections, maxIdleTime, maxWaitTime, maxRetryCount, keepAliveInterval)
 
 	return NewPoolWithPoolConfig(cfg)
 }
 
 // NewPoolWithDefault returns a new *Pool with default configuration
-func NewPoolWithDefault(addr, user, host, vhost, tag string) (*Pool, error) {
-	return NewPool(addr, user, host, vhost, tag,
+func NewPoolWithDefault(addr, user, host, vhost, tag, exchange, queue, key string) (*Pool, error) {
+	return NewPool(addr, user, host, vhost, tag, exchange, queue, key,
 		DefaultMaxConnections, DefaultInitConnections, DefaultMaxIdleConnections,
 		DefaultMaxIdleTime, DefaultMaxWaitTime, DefaultMaxRetryCount, DefaultKeepAliveInterval)
 }
 
 // NewPoolWithConfig returns a new *Pool with a Config object
-func NewPoolWithConfig(config *client.Config, maxConnections, initConnections,
+func NewPoolWithConfig(config *rabbitmq.Config, maxConnections, initConnections,
 	maxIdleConnections, maxIdleTime, maxWaitTime, maxRetryCount, keepAliveInterval int) (*Pool, error) {
-	cfg := NewPoolConfigWithConfig(config, maxConnections, initConnections,
+	cfg := rabbitmq.NewPoolConfigWithConfig(config, maxConnections, initConnections,
 		maxIdleConnections, maxIdleTime, maxWaitTime, maxRetryCount, keepAliveInterval)
 
 	return NewPoolWithPoolConfig(cfg)
 }
 
 // NewPoolWithPoolConfig returns a new *Pool with a PoolConfig object
-func NewPoolWithPoolConfig(config *PoolConfig) (*Pool, error) {
+func NewPoolWithPoolConfig(config *rabbitmq.PoolConfig) (*Pool, error) {
 	// validate config
 	err := config.Validate()
 	if err != nil {
 		return nil, err
 	}
 
-	node, err := uid.NewNodeWithDefault()
-	if err != nil {
-		return nil, err
+	var uidNode *uid.Node
+
+	if config.Tag != constant.EmptyString {
+		uidNode, err = uid.NewNodeWithDefault()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	p := &Pool{
 		PoolConfig:       config,
-		uidNode:          node,
+		uidNode:          uidNode,
 		freeProducerChan: make(chan *PoolProducer, config.MaxConnections*DefaultFreeChanLengthTimes),
 		usedConnections:  constant.ZeroInt,
 		expireTime:       time.Now().Add(time.Duration(config.MaxIdleTime) * time.Second),
@@ -279,6 +202,17 @@ func (p *Pool) IsClosed() bool {
 	return p.isClosed
 }
 
+// GetFullTag gets the full tag
+func (p *Pool) GetFullTag() string {
+	var ft string
+
+	if p.PoolConfig.Config.Tag != constant.EmptyString {
+		ft = fmt.Sprintf("%s-%s", p.PoolConfig.Config.Tag, p.uidNode.Generate().Base36())
+	}
+
+	return ft
+}
+
 // Supply is an exported alias of supply() function with routine safe
 func (p *Pool) Supply(num int) error {
 	p.Lock()
@@ -301,12 +235,7 @@ func (p *Pool) supply(num int) error {
 
 	for i := constant.ZeroInt; i < num; i++ {
 		if len(p.freeProducerChan)+p.usedConnections < p.MaxConnections {
-			tag := p.Tag
-			if p.Tag != constant.EmptyString {
-				tag = fmt.Sprintf("%s-%s", p.Tag, p.uidNode.Generate().Base36())
-			}
-
-			pc, err := NewPoolProducerWithPool(p, p.Addr, p.User, p.Pass, p.Vhost, tag)
+			pc, err := NewPoolProducer(p)
 			if err != nil {
 				merr = multierror.Append(merr, err)
 				continue
@@ -427,7 +356,7 @@ func (p *Pool) get() (*PoolProducer, error) {
 	}
 
 	// there is no valid connection in the free connection channel, therefore create a new one
-	pc, err := NewPoolProducerWithPool(p, p.Addr, p.User, p.Pass, p.Vhost, p.Tag)
+	pc, err := NewPoolProducer(p)
 	if err != nil {
 		return nil, err
 	}

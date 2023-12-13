@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/pingcap/errors"
+	"golang.org/x/net/context"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -91,16 +92,16 @@ func (p *Producer) QueueBind(queue, exchange, key string) error {
 	return errors.Trace(p.GetChannel().QueueBind(queue, key, exchange, false, nil))
 }
 
-// BuildMessage builds an amqp.Publishing with given message and content type
-func (p *Producer) BuildMessage(message, contentType string) amqp.Publishing {
+// BuildMessage builds an amqp.Publishing with given content type and message
+func (p *Producer) BuildMessage(contentType, message string) amqp.Publishing {
 	return amqp.Publishing{
 		ContentType: contentType,
 		Body:        []byte(message),
 	}
 }
 
-// BuildMessageWithExpiration builds an amqp.Publishing with given message and content type and expiration
-func (p *Producer) BuildMessageWithExpiration(message, contentType string, expiration int) amqp.Publishing {
+// BuildMessageWithExpiration builds an amqp.Publishing with given content type and message and expiration
+func (p *Producer) BuildMessageWithExpiration(contentType, message string, expiration int) amqp.Publishing {
 	return amqp.Publishing{
 		ContentType: contentType,
 		Body:        []byte(message),
@@ -110,5 +111,15 @@ func (p *Producer) BuildMessageWithExpiration(message, contentType string, expir
 
 // Publish publishes a message to an exchange
 func (p *Producer) Publish(exchange, key string, msg amqp.Publishing) error {
-	return errors.Trace(p.GetChannel().Publish(exchange, key, false, false, msg))
+	return p.publishWithContext(context.Background(), exchange, key, msg)
+}
+
+// PublishWithContext publishes a message to an exchange with context
+func (p *Producer) PublishWithContext(ctx context.Context, exchange, key string, msg amqp.Publishing) error {
+	return p.publishWithContext(ctx, exchange, key, msg)
+}
+
+// Publish publishes a message to an exchange
+func (p *Producer) publishWithContext(ctx context.Context, exchange, key string, msg amqp.Publishing) error {
+	return errors.Trace(p.GetChannel().PublishWithContext(ctx, exchange, key, false, false, msg))
 }

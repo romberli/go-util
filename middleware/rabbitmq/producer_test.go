@@ -1,6 +1,7 @@
 package rabbitmq
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"testing"
@@ -64,14 +65,14 @@ func TestProducer_QueueBind(t *testing.T) {
 func TestProducer_BuildMessage(t *testing.T) {
 	asst := assert.New(t)
 
-	msg := testProducer.BuildMessage(testMessage, constant.DefaultJSONContentType)
+	msg := testProducer.BuildMessage(constant.DefaultJSONContentType, testMessage)
 	asst.Equal(testMessage, string(msg.Body), "test BuildMessage() failed")
 }
 
 func TestProducer_BuildMessageWithExpiration(t *testing.T) {
 	asst := assert.New(t)
 
-	msg := testProducer.BuildMessageWithExpiration(testMessage, constant.DefaultJSONContentType, testExpiration)
+	msg := testProducer.BuildMessageWithExpiration(constant.DefaultJSONContentType, testMessage, testExpiration)
 	asst.Equal(testMessage, string(msg.Body), "test BuildMessageWithExpiration() failed")
 	asst.Equal(strconv.Itoa(testExpiration), msg.Expiration, "test BuildMessageWithExpiration() failed")
 }
@@ -82,6 +83,16 @@ func TestProducer_Publish(t *testing.T) {
 	for i := constant.ZeroInt; i < testPublishCount; i++ {
 		message := fmt.Sprintf(testMessageTemplate, i)
 		err := testProducer.Publish(testExchangeName, testKey, testProducer.BuildMessageWithExpiration(message, constant.DefaultJSONContentType, testExpiration))
+		asst.Nil(err, common.CombineMessageWithError("test Publish() failed", err))
+	}
+}
+
+func TestProducer_PublishWithContext(t *testing.T) {
+	asst := assert.New(t)
+
+	for i := constant.ZeroInt; i < testPublishCount; i++ {
+		message := fmt.Sprintf(testMessageTemplate, i)
+		err := testProducer.PublishWithContext(context.Background(), testExchangeName, testKey, testProducer.BuildMessageWithExpiration(message, constant.DefaultJSONContentType, testExpiration))
 		asst.Nil(err, common.CombineMessageWithError("test Publish() failed", err))
 	}
 }

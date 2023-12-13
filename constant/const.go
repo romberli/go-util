@@ -119,10 +119,13 @@ const (
 	DefaultMySQLAddr = "127.0.0.1:3306"
 
 	DefaultRedisPort = 6379
+	DefaultRedisAddr = "127.0.0.1:6379"
 
 	DefaultRabbitmqPort  = 5672
+	DefaultRabbitmqAddr  = "127.0.0.1:5672"
 	DefaultGuestUserName = "guest"
 	DefaultGuestUserPass = "guest"
+	DefaultVhost         = "/"
 
 	HTTPSchemePrefix       = "http://"
 	HTTPSSchemePrefix      = "https://"

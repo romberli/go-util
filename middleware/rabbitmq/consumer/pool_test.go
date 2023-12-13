@@ -33,7 +33,7 @@ func testCreateConsumerPool(addr, user, pass, vhost, tag string) *Pool {
 	return testConsumerPool
 }
 
-func TestPool(t *testing.T) {
+func TestPool_Consumer(t *testing.T) {
 	var (
 		err error
 		pc  *PoolConsumer

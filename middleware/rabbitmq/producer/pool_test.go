@@ -33,7 +33,7 @@ func testCreateProducerPool(addr, user, pass, vhost, tag string) *Pool {
 	return testProducerPool
 }
 
-func TestPool(t *testing.T) {
+func TestPool_Producer(t *testing.T) {
 	var (
 		err error
 		pp  *PoolProducer
@@ -84,6 +84,8 @@ func TestPool(t *testing.T) {
 		select {
 		case d := <-deliveryChan:
 			t.Logf("%s", d.Body)
+			err = c.Ack(d.DeliveryTag, testMultiple)
+			asst.Nil(err, common.CombineMessageWithError("test Ack() failed", err))
 		default:
 			if time.Now().Sub(expireTime) > constant.ZeroInt {
 				t.Logf("no message to consume, will exit now")

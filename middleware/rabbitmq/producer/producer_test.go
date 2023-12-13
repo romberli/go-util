@@ -32,6 +32,7 @@ const (
 	testPublishCount    = 5
 
 	testExclusive = true
+	testMultiple  = true
 
 	testMaxWaitTime = 10 * time.Second
 )

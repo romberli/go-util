@@ -1,6 +1,7 @@
 package consumer
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 
 	"github.com/romberli/go-util/constant"
 	"github.com/romberli/go-util/middleware/rabbitmq/client"
+	"github.com/romberli/go-util/uid"
 )
 
 const (
@@ -189,6 +191,7 @@ func (pp *PoolConsumer) IsValid() bool {
 type Pool struct {
 	sync.Mutex
 	*PoolConfig
+	uidNode          *uid.Node
 	freeConsumerChan chan *PoolConsumer
 	usedConnections  int
 	expireTime       time.Time
@@ -197,9 +200,9 @@ type Pool struct {
 }
 
 // NewPool returns a new *Pool
-func NewPool(addr, user, host, vhost, tag string,
+func NewPool(addr, user, host, vhost, tagPrefix string,
 	maxConnections, initConnections, maxIdleConnections, maxIdleTime, maxWaitTime, maxRetryCount, keepAliveInterval int) (*Pool, error) {
-	cfg := NewPoolConfig(addr, user, host, vhost, tag, maxConnections, initConnections, maxIdleConnections,
+	cfg := NewPoolConfig(addr, user, host, vhost, tagPrefix, maxConnections, initConnections, maxIdleConnections,
 		maxIdleTime, maxWaitTime, maxRetryCount, keepAliveInterval)
 
 	return NewPoolWithPoolConfig(cfg)
@@ -229,8 +232,19 @@ func NewPoolWithPoolConfig(config *PoolConfig) (*Pool, error) {
 		return nil, err
 	}
 
+	var uidNode *uid.Node
+
+	if config.Tag != constant.EmptyString {
+		// create uid node
+		uidNode, err = uid.NewNodeWithDefault()
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	p := &Pool{
 		PoolConfig:       config,
+		uidNode:          uidNode,
 		freeConsumerChan: make(chan *PoolConsumer, config.MaxConnections*DefaultFreeChanLengthTimes),
 		usedConnections:  constant.ZeroInt,
 		expireTime:       time.Now().Add(time.Duration(config.MaxIdleTime) * time.Second),
@@ -290,9 +304,14 @@ func (p *Pool) supply(num int) error {
 
 	merr := &multierror.Error{}
 
-	for i := 0; i < num; i++ {
+	for i := constant.ZeroInt; i < num; i++ {
 		if len(p.freeConsumerChan)+p.usedConnections < p.MaxConnections {
-			pc, err := NewPoolConsumerWithPool(p, p.Addr, p.User, p.Pass, p.Vhost, p.Tag)
+			tag := p.Tag
+			if p.Tag != constant.EmptyString {
+				tag = fmt.Sprintf("%s-%s", p.Tag, p.uidNode.Generate().Base36())
+			}
+
+			pc, err := NewPoolConsumerWithPool(p, p.Addr, p.User, p.Pass, p.Vhost, tag)
 			if err != nil {
 				merr = multierror.Append(merr, err)
 				continue

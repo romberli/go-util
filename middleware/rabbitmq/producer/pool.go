@@ -1,6 +1,7 @@
 package producer
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 
 	"github.com/romberli/go-util/constant"
 	"github.com/romberli/go-util/middleware/rabbitmq/client"
+	"github.com/romberli/go-util/uid"
 )
 
 const (
@@ -189,6 +191,7 @@ func (pp *PoolProducer) IsValid() bool {
 type Pool struct {
 	sync.Mutex
 	*PoolConfig
+	uidNode          *uid.Node
 	freeProducerChan chan *PoolProducer
 	usedConnections  int
 	expireTime       time.Time
@@ -229,8 +232,14 @@ func NewPoolWithPoolConfig(config *PoolConfig) (*Pool, error) {
 		return nil, err
 	}
 
+	node, err := uid.NewNodeWithDefault()
+	if err != nil {
+		return nil, err
+	}
+
 	p := &Pool{
 		PoolConfig:       config,
+		uidNode:          node,
 		freeProducerChan: make(chan *PoolProducer, config.MaxConnections*DefaultFreeChanLengthTimes),
 		usedConnections:  constant.ZeroInt,
 		expireTime:       time.Now().Add(time.Duration(config.MaxIdleTime) * time.Second),
@@ -290,9 +299,14 @@ func (p *Pool) supply(num int) error {
 
 	merr := &multierror.Error{}
 
-	for i := 0; i < num; i++ {
+	for i := constant.ZeroInt; i < num; i++ {
 		if len(p.freeProducerChan)+p.usedConnections < p.MaxConnections {
-			pc, err := NewPoolProducerWithPool(p, p.Addr, p.User, p.Pass, p.Vhost, p.Tag)
+			tag := p.Tag
+			if p.Tag != constant.EmptyString {
+				tag = fmt.Sprintf("%s-%s", p.Tag, p.uidNode.Generate().Base36())
+			}
+
+			pc, err := NewPoolProducerWithPool(p, p.Addr, p.User, p.Pass, p.Vhost, tag)
 			if err != nil {
 				merr = multierror.Append(merr, err)
 				continue

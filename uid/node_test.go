@@ -35,6 +35,11 @@ func TestNode_GenerateID(t *testing.T) {
 	asst.NotNil(id2, "test Node.GenerateID() failed")
 	asst.NotEqual(id1, id2, "test Node.GenerateID() failed")
 	t.Logf("id1: %d, id2: %d", id1, id2)
+	t.Logf("id1 base2: %s, id2 base2: %s", id1.Base2(), id2.Base2())
+	t.Logf("id1 base32: %s, id2 base32: %s", id1.Base32(), id2.Base32())
+	t.Logf("id1 base36: %s, id2 base2: %s", id1.Base36(), id2.Base36())
+	t.Logf("id1 base58: %s, id2 base2: %s", id1.Base58(), id2.Base58())
+	t.Logf("id1 base64: %s, id2 base2: %s", id1.Base64(), id2.Base64())
 }
 
 func TestNode_GenerateInt(t *testing.T) {

@@ -147,6 +147,13 @@ func (p *Producer) BuildMessageWithExpiration(contentType, message string, expir
 
 // PublishMessage publishes a json message to an exchange
 func (p *Producer) PublishJSON(message string) error {
+	if p.exchange == constant.EmptyString {
+		return errors.Errorf("Producer.PublishJSON: exchange is empty")
+	}
+	if p.key == constant.EmptyString {
+		return errors.Errorf("Producer.PublishJSON: key is empty")
+	}
+
 	return p.publishWithContext(context.Background(), p.exchange, p.key, p.BuildMessage(constant.DefaultJSONContentType, message))
 }
 

@@ -11,7 +11,15 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-const DefaultRabbitmqVhost = "/"
+const (
+	DefaultVhost = "/"
+
+	ExchangeTyeDirect   = "direct"
+	ExchangeTypeFanout  = "fanout"
+	ExchangeTypeTopic   = "topic"
+	ExchangeTypeHeaders = "headers"
+	DefaultExchangeType = ExchangeTypeTopic
+)
 
 type Config struct {
 	Addr  string
@@ -28,7 +36,7 @@ func NewConfig(addr, user, pass, vhost, tag string) *Config {
 
 // NewConfigWithDefault returns a new *Config with default values
 func NewConfigWithDefault(addr, user, pass string) *Config {
-	return NewConfig(addr, user, pass, DefaultRabbitmqVhost, uuid.New().String())
+	return NewConfig(addr, user, pass, DefaultVhost, uuid.New().String())
 }
 
 // newConfig returns a new *Config

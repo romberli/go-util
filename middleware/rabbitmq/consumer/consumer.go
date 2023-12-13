@@ -1,4 +1,4 @@
-package rabbitmq
+package consumer
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 	"github.com/pingcap/errors"
 
 	"github.com/romberli/go-util/constant"
+	"github.com/romberli/go-util/middleware/rabbitmq/client"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -18,24 +19,24 @@ const (
 )
 
 type Consumer struct {
-	Conn  *Conn
+	Conn  *client.Conn
 	Chan  *amqp.Channel
 	Queue amqp.Queue
 }
 
 // NewConsumer returns a new *Consumer
 func NewConsumer(addr, user, pass, vhost, tag string) (*Consumer, error) {
-	return NewConsumerWithConfig(NewConfig(addr, user, pass, vhost, tag))
+	return NewConsumerWithConfig(client.NewConfig(addr, user, pass, vhost, tag))
 }
 
 // NewConsumerWithDefault returns a new *Consumer with default config
 func NewConsumerWithDefault(addr, user, pass string) (*Consumer, error) {
-	return NewConsumerWithConfig(NewConfigWithDefault(addr, user, pass))
+	return NewConsumerWithConfig(client.NewConfigWithDefault(addr, user, pass))
 }
 
 // NewConsumerWithConfig returns a new *Consumer with given config
-func NewConsumerWithConfig(config *Config) (*Consumer, error) {
-	conn, err := NewConnWithConfig(config)
+func NewConsumerWithConfig(config *client.Config) (*Consumer, error) {
+	conn, err := client.NewConnWithConfig(config)
 	if err != nil {
 		return nil, err
 	}
@@ -44,8 +45,8 @@ func NewConsumerWithConfig(config *Config) (*Consumer, error) {
 }
 
 // NewConsumerWithConn returns a new *Consumer with given connection
-func NewConsumerWithConn(conn *Conn) (*Consumer, error) {
-	channel, err := conn.GetConnection().Channel()
+func NewConsumerWithConn(conn *client.Conn) (*Consumer, error) {
+	channel, err := conn.Connection.Channel()
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
@@ -56,51 +57,43 @@ func NewConsumerWithConn(conn *Conn) (*Consumer, error) {
 	}, nil
 }
 
-// GetConn returns the connection
-func (c *Consumer) GetConn() *Conn {
-	return c.Conn
-}
-
-// GetChannel returns the channel
-func (c *Consumer) GetChannel() *amqp.Channel {
-	return c.Chan
-}
-
 // GetQueue returns the queue
 func (c *Consumer) GetQueue() amqp.Queue {
 	return c.Queue
 }
 
-// CloseChannel closes the channel
-func (c *Consumer) CloseChannel() error {
-	return errors.Trace(c.GetChannel().Close())
-}
-
 // Close disconnects the rabbitmq server
 func (c *Consumer) Close() error {
-	if c.GetChannel() != nil && !c.GetChannel().IsClosed() {
-		err := c.CloseChannel()
-		if err != nil {
-			return err
-		}
+	if c.Chan != nil && !c.Chan.IsClosed() {
+		return errors.Trace(c.Chan.Close())
 	}
 
-	return c.GetConn().Close()
+	return nil
+}
+
+// Disconnect disconnects the rabbitmq server
+func (c *Consumer) Disconnect() error {
+	err := c.Close()
+	if err != nil {
+		return err
+	}
+
+	return c.Conn.Close()
 }
 
 // Channel returns the amqp channel,
 // if the channel of the consumer is nil or had been closed, a new channel will be opened,
 // otherwise the existing channel will be returned
 func (c *Consumer) Channel() (*amqp.Channel, error) {
-	if c.GetChannel() == nil || c.GetChannel().IsClosed() {
+	if c.Chan == nil || c.Chan.IsClosed() {
 		var err error
-		c.Chan, err = c.GetConn().Channel()
+		c.Chan, err = c.Conn.Channel()
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return c.GetChannel(), nil
+	return c.Chan, nil
 }
 
 // ExchangeDeclare declares an exchange
@@ -156,7 +149,7 @@ func (c *Consumer) Consume(queue string, exclusive bool) (<-chan amqp.Delivery, 
 		return nil, err
 	}
 
-	deliveryChan, err := channel.Consume(queue, c.GetConn().GetConfig().GetTag(), false, exclusive, false, false, nil)
+	deliveryChan, err := channel.Consume(queue, c.Conn.Config.Tag, false, exclusive, false, false, nil)
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
@@ -171,7 +164,7 @@ func (c *Consumer) Cancel() error {
 		return err
 	}
 
-	return errors.Trace(channel.Cancel(c.GetConn().GetConfig().GetTag(), false))
+	return errors.Trace(channel.Cancel(c.Conn.Config.Tag, false))
 }
 
 // Ack acknowledges a delivery
@@ -205,7 +198,7 @@ func (c *Consumer) IsExclusiveUseError(queue string, err error) bool {
 		return false
 	}
 
-	message := fmt.Sprintf(ErrQueueExclusiveUseReasonTemplate, queue, c.GetConn().GetConfig().GetVhost())
+	message := fmt.Sprintf(ErrQueueExclusiveUseReasonTemplate, queue, c.Conn.Config.Vhost)
 
 	return e.Code == ErrQueueExclusiveUseCode && e.Reason == message
 }

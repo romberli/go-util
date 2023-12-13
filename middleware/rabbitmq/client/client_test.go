@@ -1,4 +1,4 @@
-package rabbitmq
+package client
 
 import (
 	"github.com/romberli/log"
@@ -10,21 +10,6 @@ const (
 	testPass  = "guest"
 	testVhost = "/"
 	testTag   = "test_consumer"
-
-	testExchangeName    = "test_exchange"
-	testExchangeType    = "topic"
-	testQueueName       = "test_queue"
-	testKey             = "test_key"
-	testMessage         = `{"dbs": {"id": 1, "db_name": "test_db", "cluster_id": 1}}`
-	testMessageTemplate = `{"dbs": {"id": %d, "db_name": "test_db", "cluster_id": 1}}`
-	testExpiration      = 1000 * 60 * 60 * 5 // 5 minutes
-	testPublishCount    = 5
-
-	testPrefetchCount = 3
-	testGlobal        = true
-	testExclusive     = true
-	testMultiple      = true
-	testRequeue       = true
 )
 
 var testConn *Conn

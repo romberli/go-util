@@ -1,4 +1,4 @@
-package rabbitmq
+package consumer
 
 import (
 	"testing"
@@ -8,16 +8,57 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/romberli/go-util/common"
+	"github.com/romberli/go-util/middleware/rabbitmq/client"
 )
 
-var testConsumer *Consumer
+const (
+	testAddr  = "192.168.137.11:5672"
+	testUser  = "guest"
+	testPass  = "guest"
+	testVhost = "/"
+	testTag   = "test_consumer"
+
+	testExchangeName    = "test_exchange"
+	testExchangeType    = "topic"
+	testQueueName       = "test_queue"
+	testKey             = "test_key"
+	testMessage         = `{"dbs": {"id": 1, "db_name": "test_db", "cluster_id": 1}}`
+	testMessageTemplate = `{"dbs": {"id": %d, "db_name": "test_db", "cluster_id": 1}}`
+	testExpiration      = 1000 * 60 * 60 * 5 // 5 minutes
+	testPublishCount    = 5
+
+	testPrefetchCount = 3
+	testGlobal        = true
+	testExclusive     = true
+	testMultiple      = true
+	testRequeue       = true
+
+	testMaxWaitTime = 10 * time.Second
+)
+
+var (
+	testConn     *client.Conn
+	testConsumer *Consumer
+)
 
 func init() {
 	testConn = testCreateConn(testAddr, testUser, testPass)
 	testConsumer = testCreateConsumer(testConn)
 }
 
-func testCreateConsumer(conn *Conn) *Consumer {
+// testCreateConn returns a new *Conn with given address, user and password
+func testCreateConn(addr, user, pass string) *client.Conn {
+	var err error
+
+	testConn, err = client.NewConn(addr, user, pass, testVhost, testTag)
+	if err != nil {
+		log.Errorf("creating new Connection failed. %s", err)
+	}
+
+	return testConn
+}
+
+func testCreateConsumer(conn *client.Conn) *Consumer {
 	var err error
 
 	testConsumer, err = NewConsumerWithConn(conn)
@@ -112,6 +153,24 @@ func TestConsumer_Ack(t *testing.T) {
 			err = testConsumer.Cancel()
 			asst.Nil(err, common.CombineMessageWithError("test Ack() failed", err))
 			return
+		}
+	}
+}
+
+func TestConsumer_AckAndWait(t *testing.T) {
+	asst := assert.New(t)
+
+	deliveryChan, err := testConsumer.Consume(testQueueName, testExclusive)
+	asst.Nil(err, common.CombineMessageWithError("test Ack() failed", err))
+	for {
+		select {
+		case d := <-deliveryChan:
+			log.Infof("%s", d.Body)
+			err = testConsumer.Ack(d.DeliveryTag, testMultiple)
+			asst.Nil(err, common.CombineMessageWithError("test Ack() failed", err))
+		default:
+			log.Infof("no message to consume, will check later")
+			time.Sleep(time.Second * 3)
 		}
 	}
 }

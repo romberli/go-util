@@ -1,4 +1,4 @@
-package rabbitmq
+package producer
 
 import (
 	"strconv"
@@ -7,13 +7,14 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/romberli/go-util/constant"
+	"github.com/romberli/go-util/middleware/rabbitmq/client"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type Producer struct {
-	Conn     *Conn
-	Channel  *amqp.Channel
+	Conn     *client.Conn
+	Chan     *amqp.Channel
 	exchange string
 	queue    string
 	key      string
@@ -21,17 +22,17 @@ type Producer struct {
 
 // NewProducer returns a new *Producer
 func NewProducer(addr, user, pass, vhost, tag string) (*Producer, error) {
-	return NewProducerWithConfig(NewConfig(addr, user, pass, vhost, tag))
+	return NewProducerWithConfig(client.NewConfig(addr, user, pass, vhost, tag))
 }
 
 // NewProducerWithDefault returns a new *Producer with default config
 func NewProducerWithDefault(addr, user, pass string) (*Producer, error) {
-	return NewProducerWithConfig(NewConfigWithDefault(addr, user, pass))
+	return NewProducerWithConfig(client.NewConfigWithDefault(addr, user, pass))
 }
 
 // NewProducerWithConfig returns a new *Producer with given config
-func NewProducerWithConfig(config *Config) (*Producer, error) {
-	conn, err := NewConnWithConfig(config)
+func NewProducerWithConfig(config *client.Config) (*Producer, error) {
+	conn, err := client.NewConnWithConfig(config)
 	if err != nil {
 		return nil, err
 	}
@@ -40,26 +41,21 @@ func NewProducerWithConfig(config *Config) (*Producer, error) {
 }
 
 // NewProducerWithConn returns a new *Producer with given connection
-func NewProducerWithConn(conn *Conn) (*Producer, error) {
-	channel, err := conn.GetConnection().Channel()
+func NewProducerWithConn(conn *client.Conn) (*Producer, error) {
+	channel, err := conn.Connection.Channel()
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
 
 	return &Producer{
-		Conn:    conn,
-		Channel: channel,
+		Conn: conn,
+		Chan: channel,
 	}, nil
 }
 
 // GetConn returns the connection
-func (p *Producer) GetConn() *Conn {
+func (p *Producer) GetConn() *client.Conn {
 	return p.Conn
-}
-
-// GetChannel returns the channel
-func (p *Producer) GetChannel() *amqp.Channel {
-	return p.Channel
 }
 
 // SetExchange sets the exchange
@@ -79,7 +75,11 @@ func (p *Producer) SetKey(key string) {
 
 // Close closes the channel
 func (p *Producer) Close() error {
-	return errors.Trace(p.GetChannel().Close())
+	if p.Chan != nil && !p.Chan.IsClosed() {
+		return errors.Trace(p.Chan.Close())
+	}
+
+	return nil
 }
 
 // Disconnect disconnects the rabbitmq server
@@ -92,9 +92,28 @@ func (p *Producer) Disconnect() error {
 	return p.Conn.Close()
 }
 
+// Channel returns the channel, it the channel of the producer is nil or had been closed, a new channel will be opened
+func (p *Producer) Channel() (*amqp.Channel, error) {
+	if p.Chan == nil || p.Chan.IsClosed() {
+		channel, err := p.Conn.Connection.Channel()
+		if err != nil {
+			return nil, errors.Trace(err)
+		}
+
+		p.Chan = channel
+	}
+
+	return p.Chan, nil
+}
+
 // ExchangeDeclare declares an exchange
 func (p *Producer) ExchangeDeclare(name, kind string) error {
-	err := p.GetChannel().ExchangeDeclare(name, kind, true, false, false, false, nil)
+	channel, err := p.Channel()
+	if err != nil {
+		return err
+	}
+
+	err = channel.ExchangeDeclare(name, kind, true, false, false, false, nil)
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -106,7 +125,12 @@ func (p *Producer) ExchangeDeclare(name, kind string) error {
 
 // QueueDeclare declares a queue
 func (p *Producer) QueueDeclare(name string) (amqp.Queue, error) {
-	queue, err := p.GetChannel().QueueDeclare(name, true, false, false, false, nil)
+	channel, err := p.Channel()
+	if err != nil {
+		return amqp.Queue{}, err
+	}
+
+	queue, err := channel.QueueDeclare(name, true, false, false, false, nil)
 	if err != nil {
 		return amqp.Queue{}, errors.Trace(err)
 	}
@@ -118,7 +142,12 @@ func (p *Producer) QueueDeclare(name string) (amqp.Queue, error) {
 
 // QueueBind binds a queue to an exchange
 func (p *Producer) QueueBind(queue, exchange, key string) error {
-	err := p.GetChannel().QueueBind(queue, key, exchange, false, nil)
+	channel, err := p.Channel()
+	if err != nil {
+		return err
+	}
+
+	err = channel.QueueBind(queue, key, exchange, false, nil)
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -169,5 +198,10 @@ func (p *Producer) PublishWithContext(ctx context.Context, exchange, key string,
 
 // Publish publishes a message to an exchange
 func (p *Producer) publishWithContext(ctx context.Context, exchange, key string, msg amqp.Publishing) error {
-	return errors.Trace(p.GetChannel().PublishWithContext(ctx, exchange, key, false, false, msg))
+	channel, err := p.Channel()
+	if err != nil {
+		return err
+	}
+
+	return errors.Trace(channel.PublishWithContext(ctx, exchange, key, false, false, msg))
 }

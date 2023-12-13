@@ -1,4 +1,4 @@
-package rabbitmq
+package client
 
 import (
 	"fmt"
@@ -54,34 +54,9 @@ func newConfig(addr, user, pass, vhost, tag string) *Config {
 	}
 }
 
-// GetAddr returns the address
-func (c *Config) GetAddr() string {
-	return c.Addr
-}
-
-// GetUser returns the user
-func (c *Config) GetUser() string {
-	return c.User
-}
-
-// GetPass returns the password
-func (c *Config) GetPass() string {
-	return c.Pass
-}
-
-// GetVhost returns the vhost
-func (c *Config) GetVhost() string {
-	return c.Vhost
-}
-
-// GetTag returns the tag
-func (c *Config) GetTag() string {
-	return c.Tag
-}
-
 // GetURL returns the URL
 func (c *Config) GetURL() string {
-	return fmt.Sprintf("amqp://%s:%s@%s%s", c.GetUser(), c.GetPass(), c.GetAddr(), c.GetVhost())
+	return fmt.Sprintf("amqp://%s:%s@%s%s", c.User, c.Pass, c.Addr, c.Vhost)
 }
 
 type Conn struct {
@@ -114,17 +89,7 @@ func NewConnWithConfig(config *Config) (*Conn, error) {
 	}, nil
 }
 
-// GetConfig returns the config
-func (c *Conn) GetConfig() *Config {
-	return c.Config
-}
-
-// GetConnection returns the connection
-func (c *Conn) GetConnection() *amqp.Connection {
-	return c.Connection
-}
-
 // Close closes the connection
 func (c *Conn) Close() error {
-	return errors.Trace(c.GetConnection().Close())
+	return errors.Trace(c.Connection.Close())
 }

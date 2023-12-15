@@ -372,7 +372,7 @@ func (c *Client) sendRequestWithBasicAuth(method, url string, body []byte, user,
 		return nil, errors.Trace(err)
 	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.Errorf("metadata Repository.SendOCPRequest(): request failed. statusCode: %d, respBody: %s", resp.StatusCode, string(respBody))
+		return nil, errors.Errorf("Client.sendRequestWithBasicAuth(): request failed. statusCode: %d, respBody: %s", resp.StatusCode, string(respBody))
 	}
 
 	return respBody, nil
@@ -400,7 +400,7 @@ func (c *Client) sendRequestWithHeaderAndBody(method, url string, header map[str
 		return nil, errors.Trace(err)
 	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.Errorf("metadata Repository.SendOCPRequest(): request failed. statusCode: %d, header: %v, respBody: %s", resp.StatusCode, header, string(respBody))
+		return nil, errors.Errorf("Client.sendRequestWithBasicAuth(): request failed. statusCode: %d, header: %v, respBody: %s", resp.StatusCode, header, string(respBody))
 	}
 
 	return respBody, nil

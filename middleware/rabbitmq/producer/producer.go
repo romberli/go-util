@@ -1,10 +1,10 @@
 package producer
 
 import (
+	"context"
 	"strconv"
 
 	"github.com/pingcap/errors"
-	"golang.org/x/net/context"
 
 	"github.com/romberli/go-util/constant"
 	"github.com/romberli/go-util/middleware/rabbitmq"

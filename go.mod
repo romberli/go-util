@@ -3,13 +3,12 @@ module github.com/romberli/go-util
 go 1.21
 
 require (
-	github.com/ClickHouse/clickhouse-go/v2 v2.15.0
+	github.com/ClickHouse/clickhouse-go/v2 v2.17.0
 	github.com/Shopify/sarama v1.38.1
 	github.com/agiledragon/gomonkey/v2 v2.11.0
 	github.com/buger/jsonparser v1.1.1
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/go-mysql-org/go-mysql v1.7.0
-	github.com/google/uuid v1.4.0
 	github.com/hnlq715/rsa v0.0.0-20180422013825-cf1887b20766
 	github.com/json-iterator/go v1.1.12
 	github.com/percona/go-mysql v0.0.0-20210427141028-73d29c6da78c
@@ -27,7 +26,7 @@ require (
 	github.com/stretchr/testify v1.8.4
 	go.etcd.io/etcd/client/v3 v3.5.10
 	go.uber.org/zap v1.26.0
-	golang.org/x/crypto v0.15.0
+	golang.org/x/crypto v0.17.0
 	k8s.io/apimachinery v0.28.3
 )
 
@@ -50,6 +49,7 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
+	github.com/google/uuid v1.5.0 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
@@ -90,9 +90,9 @@ require (
 	go.opentelemetry.io/otel/trace v1.19.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/net v0.17.0 // indirect
+	golang.org/x/net v0.19.0 // indirect
 	golang.org/x/oauth2 v0.12.0 // indirect
-	golang.org/x/sys v0.14.0 // indirect
+	golang.org/x/sys v0.15.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230711160842-782d3b101e98 // indirect

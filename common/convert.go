@@ -17,15 +17,12 @@ import (
 
 // StringToBytes converts string type to byte slice
 func StringToBytes(s string) []byte {
-	x := (*[2]uintptr)(unsafe.Pointer(&s))
-	h := [3]uintptr{x[0], x[1], x[1]}
-
-	return *(*[]byte)(unsafe.Pointer(&h))
+	return unsafe.Slice(unsafe.StringData(s), len(s))
 }
 
 // BytesToString converts byte slice type to string
 func BytesToString(b []byte) string {
-	return *(*string)(unsafe.Pointer(&b))
+	return unsafe.String(unsafe.SliceData(b), len(b))
 }
 
 // ConvertNumberToString tries to convert number to string,

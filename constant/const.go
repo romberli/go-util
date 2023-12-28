@@ -47,6 +47,7 @@ const (
 	NoneString              = "none"
 	NanString               = "nan"
 	EmptyListString         = "[]"
+	EmptyMapString          = "{}"
 
 	LogWithStackString = "%+v"
 

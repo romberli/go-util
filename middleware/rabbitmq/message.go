@@ -19,6 +19,7 @@ const (
 )
 
 type Message struct {
+	ID        int                      `json:"id"`
 	SQLType   string                   `json:"type"`
 	IsDDL     bool                     `json:"isDdl"`
 	DBName    string                   `json:"database"`

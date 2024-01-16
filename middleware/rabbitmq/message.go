@@ -31,15 +31,16 @@ type Message struct {
 }
 
 // NewMessage returns a new *Message
-func NewMessage(sqlType string, isDDL bool, dbName string, tableName string, pkNames []string,
+func NewMessage(id int, sqlType string, isDDL bool, dbName string, tableName string, pkNames []string,
 	columns map[string]string, data, old []map[string]interface{}) *Message {
-	return newMessage(sqlType, isDDL, dbName, tableName, pkNames, columns, data, old)
+	return newMessage(id, sqlType, isDDL, dbName, tableName, pkNames, columns, data, old)
 }
 
 // newMessage returns a new *Message
-func newMessage(sqlType string, isDDL bool, dbName string, tableName string, pkNames []string,
+func newMessage(id int, sqlType string, isDDL bool, dbName string, tableName string, pkNames []string,
 	columns map[string]string, data, old []map[string]interface{}) *Message {
 	return &Message{
+		ID:        id,
 		SQLType:   sqlType,
 		IsDDL:     isDDL,
 		DBName:    dbName,
@@ -116,7 +117,7 @@ func (m *Message) Split() []*Message {
 		if m.GetSQLType() == SQLTypeUpdate {
 			old = m.GetOld()[i]
 		}
-		messages = append(messages, NewMessage(m.GetSQLType(), m.GetIsDDL(), m.GetDBName(), m.GetTableName(),
+		messages = append(messages, NewMessage(m.ID, m.GetSQLType(), m.GetIsDDL(), m.GetDBName(), m.GetTableName(),
 			m.GetPKNames(), m.GetColumns(), []map[string]interface{}{data}, []map[string]interface{}{old}))
 	}
 

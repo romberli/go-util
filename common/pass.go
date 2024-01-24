@@ -15,7 +15,7 @@ const (
 	DefaultUpperCaseCharString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	DefaultLowerCaseCharString = "abcdefghijklmnopqrstuvwxyz"
 	DefaultDigitalCharString   = "0123456789"
-	DefaultSpecialCharString   = "+-,.?_"
+	DefaultSpecialCharString   = "@#$%-,._"
 
 	DefaultNormalCharNum    = 6
 	DefaultUpperCaseCharNum = 2

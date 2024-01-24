@@ -2,6 +2,7 @@ package rabbitmq
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -17,7 +18,7 @@ const (
         {
             "data": [
                 {
-                    "pk1": 1,
+                    "pk1": 88888888888888888888,
                     "pk2": "a",
                     "col1": "test_new_col1_a",
                     "col2": "test_new_col2_a"
@@ -30,7 +31,7 @@ const (
                 }
             ],
             "database": "test_db",
-            "es": 1656315780000,
+            "es": 1750061771504201728,
             "id": 1383,
             "isDdl": false,
             "mysqlType": {
@@ -181,8 +182,16 @@ func TestMessage_GetColumnNames(t *testing.T) {
 	asst := assert.New(t)
 
 	testMessage := NewEmptyMessage()
-	err := json.Unmarshal([]byte(testMessageInsertJSONString), &testMessage)
+	// do not use json.Unmarshal() here, because it will unmarshal int to float64,
+	// and that will cause the incorrect result, use json.Decode() instead
+	// err := json.Unmarshal([]byte(testMessageInsertJSONString), &testMessage)
+	decoder := json.NewDecoder(strings.NewReader(testMessageInsertJSONString))
+	decoder.UseNumber()
+	err := decoder.Decode(&testMessage)
 	asst.Nil(err, common.CombineMessageWithError("test GetColumnNames() failed", err))
+	b, err := json.Marshal(testMessage)
+	asst.Nil(err, common.CombineMessageWithError("test GetColumnNames() failed", err))
+	t.Logf("testMessage:\t%s", b)
 
 	columnNames := testMessage.GetColumnNames()
 	asst.Equal(len(testMessageColumns), len(columnNames), "test GetColumnNames() failed")
@@ -195,8 +204,16 @@ func TestMessage_Split(t *testing.T) {
 	asst := assert.New(t)
 
 	testMessage := NewEmptyMessage()
-	err := json.Unmarshal([]byte(testMessageInsertJSONString), &testMessage)
+	// do not use json.Unmarshal() here, because it will unmarshal int to float64,
+	// and that will cause the incorrect result, use json.Decode() instead
+	// err := json.Unmarshal([]byte(testMessageInsertJSONString), &testMessage)
+	decoder := json.NewDecoder(strings.NewReader(testMessageInsertJSONString))
+	decoder.UseNumber()
+	err := decoder.Decode(&testMessage)
 	asst.Nil(err, common.CombineMessageWithError("test Split() failed", err))
+	b, err := json.Marshal(testMessage)
+	asst.Nil(err, common.CombineMessageWithError("test Split() failed", err))
+	t.Logf("testMessage:\t%s", b)
 
 	messages := testMessage.Split()
 	asst.Equal(len(testMessage.GetData()), len(messages), "test Split() failed")
@@ -212,8 +229,16 @@ func TestMessage_convertToInsertSQL(t *testing.T) {
 	asst := assert.New(t)
 
 	testMessage := NewEmptyMessage()
-	err := json.Unmarshal([]byte(testMessageInsertJSONString), &testMessage)
+	// do not use json.Unmarshal() here, because it will unmarshal int to float64,
+	// and that will cause the incorrect result, use json.Decode() instead
+	// err := json.Unmarshal([]byte(testMessageInsertJSONString), &testMessage)
+	decoder := json.NewDecoder(strings.NewReader(testMessageInsertJSONString))
+	decoder.UseNumber()
+	err := decoder.Decode(&testMessage)
 	asst.Nil(err, common.CombineMessageWithError("test convertToInsertSQL() failed", err))
+	b, err := json.Marshal(testMessage)
+	asst.Nil(err, common.CombineMessageWithError("test convertToInsertSQL() failed", err))
+	t.Logf("testMessage:\t%s", b)
 
 	// useReplace is true
 	statements, err := testMessage.ConvertToSQL(true, true)
@@ -254,8 +279,16 @@ func TestMessage_convertToUpdateSQL(t *testing.T) {
 	asst := assert.New(t)
 
 	testMessage := NewEmptyMessage()
-	err := json.Unmarshal([]byte(testMessageUpdateJSONString), &testMessage)
+	// do not use json.Unmarshal() here, because it will unmarshal int to float64,
+	// and that will cause the incorrect result, use json.Decode() instead
+	// err := json.Unmarshal([]byte(testMessageInsertJSONString), &testMessage)
+	decoder := json.NewDecoder(strings.NewReader(testMessageUpdateJSONString))
+	decoder.UseNumber()
+	err := decoder.Decode(&testMessage)
 	asst.Nil(err, common.CombineMessageWithError("test convertToUpdateSQL() failed", err))
+	b, err := json.Marshal(testMessage)
+	asst.Nil(err, common.CombineMessageWithError("test convertToUpdateSQL() failed", err))
+	t.Logf("testMessage:\t%s", b)
 
 	// useReplace is true
 	statements, err := testMessage.ConvertToSQL(true, true)

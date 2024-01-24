@@ -1,6 +1,7 @@
 package rabbitmq
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -55,6 +56,25 @@ func newMessage(id int, sqlType string, isDDL bool, dbName string, tableName str
 // NewEmptyMessage returns a new empty *Message
 func NewEmptyMessage() *Message {
 	return &Message{}
+}
+
+// UnmarshalJSON implements the Unmarshaler interface
+func (m *Message) UnmarshalJSON(data []byte) error {
+	type Alias Message
+
+	alias := (*Alias)(m)
+
+	decoder := json.NewDecoder(strings.NewReader(common.BytesToString(data)))
+	decoder.UseNumber()
+
+	err := decoder.Decode(&alias)
+	if err != nil {
+		return err
+	}
+
+	m = (*Message)(alias)
+
+	return nil
 }
 
 // GetSQLType returns the SQLType

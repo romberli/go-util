@@ -2,7 +2,6 @@ package rabbitmq
 
 import (
 	"encoding/json"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -182,12 +181,7 @@ func TestMessage_GetColumnNames(t *testing.T) {
 	asst := assert.New(t)
 
 	testMessage := NewEmptyMessage()
-	// do not use json.Unmarshal() here, because it will unmarshal int to float64,
-	// and that will cause the incorrect result, use json.Decode() instead
-	// err := json.Unmarshal([]byte(testMessageInsertJSONString), &testMessage)
-	decoder := json.NewDecoder(strings.NewReader(testMessageInsertJSONString))
-	decoder.UseNumber()
-	err := decoder.Decode(&testMessage)
+	err := json.Unmarshal([]byte(testMessageInsertJSONString), &testMessage)
 	asst.Nil(err, common.CombineMessageWithError("test GetColumnNames() failed", err))
 	b, err := json.Marshal(testMessage)
 	asst.Nil(err, common.CombineMessageWithError("test GetColumnNames() failed", err))
@@ -204,12 +198,7 @@ func TestMessage_Split(t *testing.T) {
 	asst := assert.New(t)
 
 	testMessage := NewEmptyMessage()
-	// do not use json.Unmarshal() here, because it will unmarshal int to float64,
-	// and that will cause the incorrect result, use json.Decode() instead
-	// err := json.Unmarshal([]byte(testMessageInsertJSONString), &testMessage)
-	decoder := json.NewDecoder(strings.NewReader(testMessageInsertJSONString))
-	decoder.UseNumber()
-	err := decoder.Decode(&testMessage)
+	err := json.Unmarshal([]byte(testMessageInsertJSONString), &testMessage)
 	asst.Nil(err, common.CombineMessageWithError("test Split() failed", err))
 	b, err := json.Marshal(testMessage)
 	asst.Nil(err, common.CombineMessageWithError("test Split() failed", err))
@@ -229,12 +218,7 @@ func TestMessage_convertToInsertSQL(t *testing.T) {
 	asst := assert.New(t)
 
 	testMessage := NewEmptyMessage()
-	// do not use json.Unmarshal() here, because it will unmarshal int to float64,
-	// and that will cause the incorrect result, use json.Decode() instead
-	// err := json.Unmarshal([]byte(testMessageInsertJSONString), &testMessage)
-	decoder := json.NewDecoder(strings.NewReader(testMessageInsertJSONString))
-	decoder.UseNumber()
-	err := decoder.Decode(&testMessage)
+	err := json.Unmarshal([]byte(testMessageInsertJSONString), &testMessage)
 	asst.Nil(err, common.CombineMessageWithError("test convertToInsertSQL() failed", err))
 	b, err := json.Marshal(testMessage)
 	asst.Nil(err, common.CombineMessageWithError("test convertToInsertSQL() failed", err))
@@ -279,12 +263,7 @@ func TestMessage_convertToUpdateSQL(t *testing.T) {
 	asst := assert.New(t)
 
 	testMessage := NewEmptyMessage()
-	// do not use json.Unmarshal() here, because it will unmarshal int to float64,
-	// and that will cause the incorrect result, use json.Decode() instead
-	// err := json.Unmarshal([]byte(testMessageInsertJSONString), &testMessage)
-	decoder := json.NewDecoder(strings.NewReader(testMessageUpdateJSONString))
-	decoder.UseNumber()
-	err := decoder.Decode(&testMessage)
+	err := json.Unmarshal([]byte(testMessageUpdateJSONString), &testMessage)
 	asst.Nil(err, common.CombineMessageWithError("test convertToUpdateSQL() failed", err))
 	b, err := json.Marshal(testMessage)
 	asst.Nil(err, common.CombineMessageWithError("test convertToUpdateSQL() failed", err))

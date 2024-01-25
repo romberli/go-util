@@ -67,14 +67,7 @@ func (m *Message) UnmarshalJSON(data []byte) error {
 	decoder := json.NewDecoder(strings.NewReader(common.BytesToString(data)))
 	decoder.UseNumber()
 
-	err := decoder.Decode(&alias)
-	if err != nil {
-		return err
-	}
-
-	m = (*Message)(alias)
-
-	return nil
+	return decoder.Decode(&alias)
 }
 
 // GetSQLType returns the SQLType

@@ -77,6 +77,12 @@ const (
 	EightInt                            = 8
 	NineInt                             = 9
 	TenInt                              = 10
+	KInt                                = 1024
+	MInt                                = KInt * KInt
+	GInt                                = KInt * MInt
+	TInt                                = KInt * GInt
+	PInt                                = KInt * TInt
+	EInt                                = KInt * PInt
 
 	MinUInt uint = 0
 	MaxUInt      = ^uint(0)

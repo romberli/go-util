@@ -77,12 +77,18 @@ const (
 	EightInt                            = 8
 	NineInt                             = 9
 	TenInt                              = 10
-	KInt                                = 1024
-	MInt                                = KInt * KInt
-	GInt                                = KInt * MInt
-	TInt                                = KInt * GInt
-	PInt                                = KInt * TInt
-	EInt                                = KInt * PInt
+	HundredInt                          = 100
+	ThousandInt                         = 1000
+	MillionInt                          = 1000000
+	BillionInt                          = 1000000000
+	TrillionInt                         = 1000000000000
+	QuadrillionInt                      = 1000000000000000
+	KiloInt                             = 1024
+	MegaInt                             = KiloInt * KiloInt
+	GigaInt                             = KiloInt * MegaInt
+	TeraInt                             = KiloInt * GigaInt
+	PetaInt                             = KiloInt * TeraInt
+	ExaInt                              = KiloInt * PetaInt
 
 	MinUInt uint = 0
 	MaxUInt      = ^uint(0)

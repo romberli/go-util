@@ -111,7 +111,8 @@ const (
 	TimeLayoutSecondDash             = "20060102-150405"
 	TimeLayoutYYYYMMDDHHMISS         = "20060102150405"
 	TimeLayoutYYMMDDHHMISS           = "060102150405"
-	TimeLayoutMMDDHHMISS             = "0102150405"
+	TimeLayoutYYYYMMDD               = "20060102"
+	TimeLayoutHHMISS                 = "150405"
 	DefaultTimeLayout                = TimeLayoutMicrosecond
 	Day                              = 24 * time.Hour
 	Week                             = 7 * Day

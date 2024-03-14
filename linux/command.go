@@ -3,8 +3,11 @@ package linux
 import (
 	"bytes"
 	"os/exec"
+	"strings"
 
 	"github.com/pingcap/errors"
+
+	"github.com/romberli/go-util/constant"
 )
 
 // ExecuteCommand is an alias of ExecuteCommandAndWait
@@ -16,7 +19,8 @@ func ExecuteCommand(command string) (output string, err error) {
 func ExecuteCommandAndWait(command string) (output string, err error) {
 	var stdoutBuffer bytes.Buffer
 
-	cmd := exec.Command("sh", "-c", command)
+	c := strings.Split(command, constant.SpaceString)
+	cmd := exec.Command(c[constant.ZeroInt], c[constant.OneInt:]...)
 	cmd.Stdout = &stdoutBuffer
 	cmd.Stderr = &stdoutBuffer
 

@@ -39,7 +39,7 @@ const (
 var testSSHConn *SSHConn
 
 func init() {
-	testInitSSHConn()
+	// testInitSSHConn()
 }
 
 func testInitSSHConn() {

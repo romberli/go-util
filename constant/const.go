@@ -113,6 +113,7 @@ const (
 	TimeLayoutYYMMDDHHMISS           = "060102150405"
 	TimeLayoutYYYYMMDD               = "20060102"
 	TimeLayoutHHMISS                 = "150405"
+	TimeLayoutHHMISSFFF              = "150405.999"
 	DefaultTimeLayout                = TimeLayoutMicrosecond
 	Day                              = 24 * time.Hour
 	Week                             = 7 * Day

@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap/zapcore"
 
+	"github.com/romberli/go-util/common"
 	"github.com/romberli/go-util/constant"
 	"github.com/romberli/go-util/middleware"
 )
@@ -89,4 +90,31 @@ func TestResult(t *testing.T) {
 	asst.True(valueB, "execute sql failed")
 	err = result.MapToStructSlice(testStructList, constant.DefaultMiddlewareTag)
 	asst.Nil(err, "map to struct failed")
+}
+
+func TestResult_Tmp(t *testing.T) {
+	asst := assert.New(t)
+
+	type ServerInfo struct {
+		ServerID    int      `middleware:"server_id"`
+		HostTags    string   `middleware:"host_tags"`
+		HostTagList []string `middleware:"host_tag_list"`
+	}
+
+	addr := "192.168.137.11:3306"
+	dbName := "gp"
+	dbUser := "root"
+	dbPass := "root"
+
+	sql := `select server_id, host_tags, host_tags as host_tag_list from t_meta_server_info;`
+	serverInfo := &ServerInfo{}
+
+	conn, err := NewConn(addr, dbName, dbUser, dbPass)
+	asst.Nil(err, common.CombineMessageWithError("create connection failed", err))
+	result, err := conn.Execute(sql)
+	asst.Nil(err, common.CombineMessageWithError("execute sql failed", err))
+	err = result.MapToStructByRowIndex(serverInfo, 0, constant.DefaultMiddlewareTag)
+	asst.Nil(err, common.CombineMessageWithError("map to struct failed", err))
+	t.Logf(serverInfo.HostTags)
+	t.Logf("%v", serverInfo.HostTagList)
 }

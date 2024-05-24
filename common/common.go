@@ -571,7 +571,53 @@ func SetValueOfStructByKind(in interface{}, field string, value interface{}, kin
 			return errors.Errorf("field %s does not exist", field)
 		}
 
-		v, err := ConvertToSlice(value, fieldType.Type.Elem().Kind())
+		k := fieldType.Type.Elem().Kind()
+		b, ok := value.([]uint8)
+		if ok && json.Valid(b) {
+			switch k {
+			case reflect.Bool:
+				result := make([]bool, constant.ZeroInt)
+				// unmarshal
+				err := json.Unmarshal(b, &result)
+				if err != nil {
+					return errors.Trace(err)
+				}
+
+				return SetValueOfStruct(in, field, result)
+			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+				reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+				result := make([]int, constant.ZeroInt)
+				// unmarshal
+				err := json.Unmarshal(b, &result)
+				if err != nil {
+					return errors.Trace(err)
+				}
+
+				return SetValueOfStruct(in, field, result)
+			case reflect.Float32, reflect.Float64:
+				result := make([]float64, constant.ZeroInt)
+				// unmarshal
+				err := json.Unmarshal(b, &result)
+				if err != nil {
+					return errors.Trace(err)
+				}
+
+				return SetValueOfStruct(in, field, result)
+			case reflect.String:
+				result := make([]string, constant.ZeroInt)
+				// unmarshal
+				err := json.Unmarshal(b, &result)
+				if err != nil {
+					return errors.Trace(err)
+				}
+
+				return SetValueOfStruct(in, field, result)
+			default:
+				return errors.Errorf("unsupported data type: %s", k.String())
+			}
+		}
+
+		v, err := ConvertToSlice(value, k)
 		if err != nil {
 			return err
 		}

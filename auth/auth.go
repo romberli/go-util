@@ -22,6 +22,11 @@ func NewAuth(secretKey []byte) *Auth {
 	}
 }
 
+// NewAuthWithDefault returns a new *Auth with empty secret key
+func NewAuthWithDefault() *Auth {
+	return NewAuth([]byte{})
+}
+
 // Sign signs with the default method and claims
 func (a *Auth) Sign() (string, error) {
 	return a.SignWithMethodAndClaims(DefaultSignMethod, jwt.MapClaims{}, nil)

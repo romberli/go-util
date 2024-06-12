@@ -47,17 +47,7 @@ func (a *Auth) Parse(tokenString string, in interface{}) error {
 		return err
 	}
 
-	bytes, err := json.Marshal(token.Claims)
-	if err != nil {
-		return errors.Trace(err)
-	}
-
-	err = json.Unmarshal(bytes, in)
-	if err != nil {
-		return errors.Trace(err)
-	}
-
-	return nil
+	return a.unmarshal(token, in)
 }
 
 // ParseUnverified parses the payload from the token, it does not verify the signature
@@ -68,6 +58,10 @@ func (a *Auth) ParseUnverified(tokenString string, in interface{}) error {
 		return err
 	}
 
+	return a.unmarshal(token, in)
+}
+
+func (a *Auth) unmarshal(token *Token, in interface{}) error {
 	bytes, err := json.Marshal(token.Claims)
 	if err != nil {
 		return errors.Trace(err)

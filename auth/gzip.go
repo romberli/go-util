@@ -40,29 +40,3 @@ func NewGZIPEncodeFunc() EncodeFunc {
 		return base64.RawURLEncoding.EncodeToString(buffer.Bytes()), nil
 	}
 }
-
-// NewGZIPDecodeFunc returns a new DecodeFunc with gzip decompression, it only decompresses the payload
-func NewGZIPDecodeFunc() DecodeFunc {
-	return func(token *Token, payload string) ([]byte, error) {
-		decoded, err := base64.RawURLEncoding.DecodeString(payload)
-		if err != nil {
-			return nil, err
-		}
-
-		r, err := gzip.NewReader(bytes.NewReader(decoded))
-		if err != nil {
-			return nil, errors.Trace(err)
-		}
-		defer func() {
-			_ = r.Close()
-		}()
-
-		var buffer bytes.Buffer
-		_, err = buffer.ReadFrom(r)
-		if err != nil {
-			return nil, errors.Trace(err)
-		}
-
-		return buffer.Bytes(), nil
-	}
-}

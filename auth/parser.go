@@ -2,6 +2,7 @@ package auth
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/base64"
 	"encoding/json"
 	"strings"
@@ -30,7 +31,7 @@ func NewParserWithDefault() *Parser {
 }
 
 // Parse parses the token string and verifies the signature
-func (p *Parser) Parse(tokenString, key string) (*Token, error) {
+func (p *Parser) Parse(tokenString string, key []byte) (*Token, error) {
 	token, err := p.ParseUnverified(tokenString)
 	if err != nil {
 		return nil, errors.Trace(err)
@@ -69,14 +70,14 @@ func (p *Parser) ParseUnverified(tokenString string) (*Token, error) {
 	// header
 	headerBytes, err := base64.RawURLEncoding.DecodeString(parts[constant.ZeroInt])
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 	err = json.Unmarshal(headerBytes, &token.Header)
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
 	if token.Header == nil {
-		return nil, errors.New("could not decode token header")
+		return nil, errors.Errorf("could not decode token header, tokenString: %s", tokenString)
 	}
 	// payload
 	var payloadBytes []byte
@@ -88,7 +89,7 @@ func (p *Parser) ParseUnverified(tokenString string) (*Token, error) {
 
 		payloadBytes, err = base64.RawURLEncoding.DecodeString(parts[constant.OneInt])
 		if err != nil {
-			return nil, err
+			return nil, errors.Trace(err)
 		}
 	} else {
 		gzipType, ok := token.Header[tokenZIPHeader]
@@ -97,10 +98,28 @@ func (p *Parser) ParseUnverified(tokenString string) (*Token, error) {
 				return nil, errors.Errorf("unsupported token type. key: %s, value: %s", tokenZIPHeader, gzipType)
 			}
 
-			payloadBytes, err = NewGZIPDecodeFunc()(token, parts[constant.OneInt])
+			decoded, err := base64.RawURLEncoding.DecodeString(parts[constant.OneInt])
 			if err != nil {
-				return nil, err
+				return nil, errors.Trace(err)
 			}
+
+			r, err := gzip.NewReader(bytes.NewReader(decoded))
+			if err != nil {
+				return nil, errors.Trace(err)
+			}
+
+			err = r.Close()
+			if err != nil {
+				return nil, errors.Trace(err)
+			}
+
+			var buffer bytes.Buffer
+			_, err = buffer.ReadFrom(r)
+			if err != nil {
+				return nil, errors.Trace(err)
+			}
+
+			payloadBytes = buffer.Bytes()
 		} else {
 			return nil, errors.Errorf("unsupported token type. header: %s", token.Header)
 		}

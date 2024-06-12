@@ -19,7 +19,6 @@ const (
 )
 
 type EncodeFunc func(*Token, []byte) (string, error)
-type DecodeFunc func(*Token, string) ([]byte, error)
 
 type Token struct {
 	Raw       string
@@ -102,23 +101,4 @@ func (t *Token) EncodeSegment(seg []byte, ef EncodeFunc) (string, error) {
 	}
 
 	return base64.RawURLEncoding.EncodeToString(seg), nil
-}
-
-// DecodeSegment decodes a JWT segment, this is the place that the DecodeFunc are applied.
-func (t *Token) DecodeSegment(seg string, df DecodeFunc) ([]byte, error) {
-	if df != nil {
-		decoded, err := df(t, seg)
-		if err != nil {
-			return nil, errors.Trace(err)
-		}
-
-		return decoded, nil
-	}
-
-	decoded, err := base64.RawURLEncoding.DecodeString(seg)
-	if err != nil {
-		return nil, errors.Trace(err)
-	}
-
-	return decoded, nil
 }

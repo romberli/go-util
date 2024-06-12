@@ -22,13 +22,6 @@ func NewAuth(secretKey []byte) *Auth {
 	}
 }
 
-// GetKeyFunc returns the key function
-func (a *Auth) GetKeyFunc() jwt.Keyfunc {
-	return func(token *jwt.Token) (interface{}, error) {
-		return a.secretKey, nil
-	}
-}
-
 // Sign signs with the default method and claims
 func (a *Auth) Sign() (string, error) {
 	return a.SignWithMethodAndClaims(DefaultSignMethod, jwt.MapClaims{}, nil)
@@ -41,8 +34,29 @@ func (a *Auth) SignWithMethodAndClaims(method jwt.SigningMethod, claims jwt.MapC
 	return token.SignedString(a.secretKey, ef)
 }
 
-// ParsePayload parses the payload from the token
-func (a *Auth) ParsePayload(tokenString string, in interface{}) error {
+// Parse parses the payload from the token, it verifies the signature
+func (a *Auth) Parse(tokenString string, in interface{}) error {
+	parser := NewParserWithDefault()
+	token, err := parser.Parse(tokenString, a.secretKey)
+	if err != nil {
+		return err
+	}
+
+	bytes, err := json.Marshal(token.Claims)
+	if err != nil {
+		return errors.Trace(err)
+	}
+
+	err = json.Unmarshal(bytes, in)
+	if err != nil {
+		return errors.Trace(err)
+	}
+
+	return nil
+}
+
+// ParseUnverified parses the payload from the token, it does not verify the signature
+func (a *Auth) ParseUnverified(tokenString string, in interface{}) error {
 	parser := NewParserWithDefault()
 	token, err := parser.ParseUnverified(tokenString)
 	if err != nil {

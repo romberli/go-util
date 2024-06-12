@@ -39,7 +39,7 @@ func TestAuth_SignWithClaims(t *testing.T) {
 	t.Log(jwtToken)
 }
 
-func TestAuth_ParsePayload(t *testing.T) {
+func TestAuth_ParseUnverified(t *testing.T) {
 	asst := assert.New(t)
 
 	claims := jwt.MapClaims{
@@ -47,14 +47,14 @@ func TestAuth_ParsePayload(t *testing.T) {
 		"password": "test",
 	}
 	token, err := testAuth.SignWithMethodAndClaims(DefaultSignMethod, claims, NewGZIPEncodeFunc())
-	asst.Nil(err, common.CombineMessageWithError("test ParsePayload() failed", err))
+	asst.Nil(err, common.CombineMessageWithError("test ParseUnverified() failed", err))
 
 	u := &struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
 	}{}
 
-	err = testAuth.ParsePayload(token, &u)
-	asst.Nil(err, common.CombineMessageWithError("test ParsePayload() failed", err))
-	t.Logf("%v", u)
+	err = testAuth.ParseUnverified(token, &u)
+	asst.Nil(err, common.CombineMessageWithError("test ParseUnverified() failed", err))
+	t.Logf("%+v", u)
 }

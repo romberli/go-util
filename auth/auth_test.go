@@ -38,3 +38,23 @@ func TestAuth_SignWithClaims(t *testing.T) {
 	asst.Nil(err, common.CombineMessageWithError("test SignWithMethodAndClaims() failed", err))
 	t.Log(jwtToken)
 }
+
+func TestAuth_ParsePayload(t *testing.T) {
+	asst := assert.New(t)
+
+	claims := jwt.MapClaims{
+		"username": "test",
+		"password": "test",
+	}
+	token, err := testAuth.SignWithMethodAndClaims(DefaultSignMethod, claims, NewGZIPEncodeFunc())
+	asst.Nil(err, common.CombineMessageWithError("test ParsePayload() failed", err))
+
+	u := &struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}{}
+
+	err = testAuth.ParsePayload(token, &u)
+	asst.Nil(err, common.CombineMessageWithError("test ParsePayload() failed", err))
+	t.Logf("%v", u)
+}

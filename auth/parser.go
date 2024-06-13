@@ -47,7 +47,8 @@ func (p *Parser) Parse(tokenString string, key []byte) (*Token, error) {
 	}
 	token.Signature = decoded
 
-	parts := strings.Split(tokenString, constant.DotString)
+	tokenStr := strings.TrimSpace(strings.TrimPrefix(tokenString, tokenPrefix))
+	parts := strings.Split(tokenStr, constant.DotString)
 	if len(parts) != constant.ThreeInt {
 		return nil, errors.Errorf("token contains an invalid number of segments, expected 3, actual: %d", len(parts))
 	}
@@ -65,7 +66,7 @@ func (p *Parser) Parse(tokenString string, key []byte) (*Token, error) {
 // ParseUnverified parses the token string without verifying the signature
 func (p *Parser) ParseUnverified(tokenString string) (*Token, error) {
 	tokenStr := strings.TrimSpace(strings.TrimPrefix(tokenString, tokenPrefix))
-	parts := strings.Split(tokenString, constant.DotString)
+	parts := strings.Split(tokenStr, constant.DotString)
 	if len(parts) != constant.ThreeInt {
 		return nil, errors.Errorf("token contains an invalid number of segments, expected 3, actual: %d", len(parts))
 	}

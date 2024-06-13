@@ -14,6 +14,10 @@ import (
 	"github.com/romberli/go-util/constant"
 )
 
+const (
+	tokenPrefix = "Bearer"
+)
+
 type Parser struct {
 	useJSONNumber bool
 }
@@ -60,12 +64,13 @@ func (p *Parser) Parse(tokenString string, key []byte) (*Token, error) {
 
 // ParseUnverified parses the token string without verifying the signature
 func (p *Parser) ParseUnverified(tokenString string) (*Token, error) {
+	tokenStr := strings.TrimSpace(strings.TrimPrefix(tokenString, tokenPrefix))
 	parts := strings.Split(tokenString, constant.DotString)
 	if len(parts) != constant.ThreeInt {
 		return nil, errors.Errorf("token contains an invalid number of segments, expected 3, actual: %d", len(parts))
 	}
 	// init token
-	token := NewTokenWithRawString(tokenString)
+	token := NewTokenWithRawString(tokenStr)
 	token.Signature = common.StringToBytes(parts[constant.TwoInt])
 	// header
 	headerBytes, err := base64.RawURLEncoding.DecodeString(parts[constant.ZeroInt])

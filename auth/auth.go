@@ -41,24 +41,24 @@ func (a *Auth) Sign() (string, error) {
 func (a *Auth) SignWithMethodAndClaims(method jwt.SigningMethod, claims jwt.MapClaims, ef EncodeFunc) (string, error) {
 	token := NewTokenWithClaims(method, claims)
 
-	var privateKey interface{}
+	var key interface{}
 
 	switch method {
 	case jwt.SigningMethodRS256, jwt.SigningMethodRS384, jwt.SigningMethodRS512:
-		key, err := base64.StdEncoding.DecodeString(common.BytesToString(a.secretKey))
+		secretKey, err := base64.StdEncoding.DecodeString(common.BytesToString(a.secretKey))
 		if err != nil {
 			return constant.EmptyString, errors.Trace(err)
 		}
 
-		privateKey, err = x509.ParsePKCS1PrivateKey(key)
+		key, err = x509.ParsePKCS1PrivateKey(secretKey)
 		if err != nil {
 			return constant.EmptyString, errors.Trace(err)
 		}
 	default:
-		privateKey = a.secretKey
+		key = a.secretKey
 	}
 
-	return token.SignedString(privateKey, ef)
+	return token.SignedString(key, ef)
 }
 
 // Parse parses the payload from the token, it verifies the signature

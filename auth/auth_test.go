@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	testSecretKey = "test_secret_key"
+	testSecretKey = "MIIBOwIBAAJBAMlVXSjfNKcUgmeqzbHON8ASYDZE0zyEsa8l8j0r2NPhggMC4VJEazJEOqrCq0kuERW+zK0AwpfbYBHth6r3lN0CAwEAAQJBALtM3/sLE6ewK9UXkH6usyzLq5gxFTcC125y5dXEudX6GDkQ7+c9WCMutDBF40D9xCvYfSVlNInBAGZVcC33WcECIQDRcFBwXIdXzj0lecjhkepkJHdC7+3zcDKx3lvj6rKxzQIhAPYXwhHL27AhvJ931dXL5tJGsajx5/xANAGZAn14+59RAiBbjfaL99buamjOfhtziB7nog1EhLAHcC+pE6Ql0Q5GrQIgUKSQcAyBvUIQ8aDvbdQXm6iW52n+P2c6o5tkeYF/00ECIQCyeOPbrbD8QMDkZzrvgKBMIG6ZW/hBTNXoTet0y3GB+Q=="
 )
 
 var testAuth *Auth
@@ -34,7 +34,7 @@ func TestAuth_SignWithClaims(t *testing.T) {
 		"username": "test",
 		"password": "test",
 	}
-	jwtToken, err := testAuth.SignWithMethodAndClaims(DefaultSignMethod, claims, NewGZIPEncodeFunc())
+	jwtToken, err := testAuth.SignWithMethodAndClaims(DefaultSignMethod, claims, nil)
 	asst.Nil(err, common.CombineMessageWithError("test SignWithMethodAndClaims() failed", err))
 	t.Log(jwtToken)
 }
@@ -46,7 +46,7 @@ func TestAuth_ParseUnverified(t *testing.T) {
 		"username": "test",
 		"password": "test",
 	}
-	token, err := testAuth.SignWithMethodAndClaims(DefaultSignMethod, claims, NewGZIPEncodeFunc())
+	token, err := testAuth.SignWithMethodAndClaims(DefaultSignMethod, claims, nil)
 	asst.Nil(err, common.CombineMessageWithError("test ParseUnverified() failed", err))
 
 	u := &struct {

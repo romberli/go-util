@@ -1,14 +1,19 @@
 package auth
 
 import (
+	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/pingcap/errors"
+
+	"github.com/romberli/go-util/common"
+	"github.com/romberli/go-util/constant"
 )
 
 var (
-	DefaultSignMethod = jwt.SigningMethodHS512
+	DefaultSignMethod = jwt.SigningMethodRS256
 )
 
 type Auth struct {
@@ -36,7 +41,24 @@ func (a *Auth) Sign() (string, error) {
 func (a *Auth) SignWithMethodAndClaims(method jwt.SigningMethod, claims jwt.MapClaims, ef EncodeFunc) (string, error) {
 	token := NewTokenWithClaims(method, claims)
 
-	return token.SignedString(a.secretKey, ef)
+	var privateKey interface{}
+
+	switch method {
+	case jwt.SigningMethodRS256, jwt.SigningMethodRS384, jwt.SigningMethodRS512:
+		key, err := base64.StdEncoding.DecodeString(common.BytesToString(a.secretKey))
+		if err != nil {
+			return constant.EmptyString, errors.Trace(err)
+		}
+
+		privateKey, err = x509.ParsePKCS1PrivateKey(key)
+		if err != nil {
+			return constant.EmptyString, errors.Trace(err)
+		}
+	default:
+		privateKey = a.secretKey
+	}
+
+	return token.SignedString(privateKey, ef)
 }
 
 // Parse parses the payload from the token, it verifies the signature

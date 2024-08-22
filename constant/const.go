@@ -49,6 +49,9 @@ const (
 	EmptyListString         = "[]"
 	EmptyMapString          = "{}"
 
+	OnString  = "ON"
+	OffString = "OFF"
+
 	LogWithStackString = "%+v"
 
 	TransportProtocolTCP                = "tcp"

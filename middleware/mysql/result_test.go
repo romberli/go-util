@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/buger/jsonparser"
 	"github.com/romberli/log"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap/zapcore"
@@ -25,6 +26,11 @@ type EnvInfo struct {
 
 type TestStruct struct {
 	OK bool `middleware:"ok"`
+}
+
+type Resp struct {
+	Code   int               `json:"code"`
+	Result middleware.Result `json:"result"`
 }
 
 func TestResult(t *testing.T) {
@@ -133,9 +139,19 @@ func TestResult_Marshal(t *testing.T) {
 	asst.Nil(err, common.CombineMessageWithError("create connection failed", err))
 	result, err := c.Execute(sql)
 	asst.Nil(err, common.CombineMessageWithError("execute sql failed", err))
-	resultBytes, err := json.Marshal(result)
-	asst.Nil(err, common.CombineMessageWithError("marshal result failed", err))
-	t.Logf(string(resultBytes))
+	resp := &Resp{
+		Code:   constant.ZeroInt,
+		Result: result,
+	}
+	respBytes, err := json.Marshal(resp)
+	asst.Nil(err, common.CombineMessageWithError("marshal response failed", err))
+	t.Logf(string(respBytes))
+
+	resultBytes, _, _, err := jsonparser.Get(respBytes, "result")
+	asst.Nil(err, common.CombineMessageWithError("get result failed", err))
+	result = &Result{}
+	err = result.UnmarshalJSON(resultBytes)
+	asst.Nil(err, common.CombineMessageWithError("unmarshal result failed", err))
 
 	type ServerInfo struct {
 		ServerID    int      `middleware:"server_id"`

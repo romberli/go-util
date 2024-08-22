@@ -18,7 +18,7 @@ const middlewareType = "mysql"
 var _ middleware.Result = (*Result)(nil)
 
 type Result struct {
-	Raw          *mysql.Result `json:"-"`
+	Raw          *mysql.Result `json:"raw"`
 	*result.Rows `json:"rows"`
 	result.Map   `json:"-"`
 }

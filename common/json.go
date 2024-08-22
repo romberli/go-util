@@ -54,7 +54,10 @@ func SerializeBytes(v interface{}) interface{} {
 		serialized := make(map[string]interface{})
 		for i := 0; i < val.NumField(); i++ {
 			field := val.Type().Field(i)
-
+			if !val.Field(i).CanInterface() {
+				// TODO: for now, simply skip the field that cannot be set
+				continue
+			}
 			// get json tag
 			tag := field.Tag.Get(constant.DefaultJSONTag)
 			// if tag is "-", skip this field
@@ -114,7 +117,10 @@ func DeserializeBytes(v interface{}, t reflect.Type) interface{} {
 		structValue := reflect.New(t).Elem()
 		for i := 0; i < t.NumField(); i++ {
 			field := t.Field(i)
-
+			if !structValue.Field(i).CanSet() {
+				// TODO: for now, simply skip the field that cannot be set
+				continue
+			}
 			// get json tag
 			tag := field.Tag.Get(constant.DefaultJSONTag)
 			// if tag is "-", skip this field
@@ -130,7 +136,8 @@ func DeserializeBytes(v interface{}, t reflect.Type) interface{} {
 			}
 
 			fieldValue := DeserializeBytes(val.MapIndex(reflect.ValueOf(key)).Interface(), field.Type)
-			structValue.Field(i).Set(reflect.ValueOf(fieldValue))
+			convertedValue := reflect.ValueOf(fieldValue).Convert(field.Type)
+			structValue.Field(i).Set(convertedValue)
 		}
 		return structValue.Interface()
 	case reflect.Slice:

@@ -1,6 +1,7 @@
 package common
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -69,7 +70,7 @@ func ConvertInterfaceToSliceInterface(in interface{}) ([]interface{}, error) {
 	return sliceInterface, nil
 }
 
-// ConvertInterfaceToMapInterfaceInterface converts input data which must be map type to map interface interface,
+// ConvertInterfaceToMapInterfaceInterface converts input data which must be map type to map[interface]interface,
 // it means each pair of key and value in the map will be interface type
 func ConvertInterfaceToMapInterfaceInterface(in interface{}) (map[interface{}]interface{}, error) {
 	inType := reflect.TypeOf(in)
@@ -87,6 +88,46 @@ func ConvertInterfaceToMapInterfaceInterface(in interface{}) (map[interface{}]in
 	}
 
 	return mapInterface, nil
+}
+
+func ConvertBytesToSlice(bytes []byte, kind reflect.Kind) (interface{}, error) {
+	switch kind {
+	case reflect.Bool:
+		result := make([]bool, constant.ZeroInt)
+		err := json.Unmarshal(bytes, &result)
+		if err != nil {
+			return nil, errors.Trace(err)
+		}
+
+		return result, nil
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		result := make([]int, constant.ZeroInt)
+		err := json.Unmarshal(bytes, &result)
+		if err != nil {
+			return nil, errors.Trace(err)
+		}
+
+		return result, nil
+	case reflect.Float32, reflect.Float64:
+		result := make([]float64, constant.ZeroInt)
+		err := json.Unmarshal(bytes, &result)
+		if err != nil {
+			return nil, errors.Trace(err)
+		}
+
+		return result, nil
+	case reflect.String:
+		result := make([]string, constant.ZeroInt)
+		err := json.Unmarshal(bytes, &result)
+		if err != nil {
+			return nil, errors.Trace(err)
+		}
+
+		return result, nil
+	default:
+		return nil, errors.Errorf("unsupported data type: %s", kind.String())
+	}
 }
 
 func ConvertToBool(in interface{}) (bool, error) {
@@ -265,8 +306,26 @@ func ConvertToString(in interface{}) (string, error) {
 
 func ConvertToSlice(in interface{}, kind reflect.Kind) (interface{}, error) {
 	inKind := reflect.TypeOf(in).Kind()
-	if inKind != reflect.Slice {
-		return nil, errors.Errorf("value must be a slice, not %s", inKind.String())
+	if inKind != reflect.String && inKind != reflect.Slice {
+		return nil, errors.Errorf("value must be a string or a slice, not %s", inKind.String())
+	}
+
+	if inKind == reflect.String {
+		inStr, ok := in.(string)
+		if !ok {
+			return nil, errors.New("convert to string failed")
+		}
+		inBytes := []byte(inStr)
+		if json.Valid(inBytes) {
+			val, err := ConvertBytesToSlice(inBytes, kind)
+			if err != nil {
+				return nil, err
+			}
+
+			return val, nil
+		} else {
+			return nil, errors.New("invalid json string")
+		}
 	}
 
 	inVal := reflect.ValueOf(in)

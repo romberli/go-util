@@ -2,9 +2,12 @@ package mysql
 
 import (
 	"database/sql/driver"
+	"encoding/json"
+	"reflect"
 
 	"github.com/go-mysql-org/go-mysql/mysql"
 
+	"github.com/romberli/go-util/common"
 	"github.com/romberli/go-util/constant"
 	"github.com/romberli/go-util/middleware"
 	"github.com/romberli/go-util/middleware/result"
@@ -15,9 +18,9 @@ const middlewareType = "mysql"
 var _ middleware.Result = (*Result)(nil)
 
 type Result struct {
-	Raw *mysql.Result
-	*result.Rows
-	result.Map
+	Raw          *mysql.Result `json:"-"`
+	*result.Rows `json:"rows"`
+	result.Map   `json:"-"`
 }
 
 // NewResult returns *Result
@@ -83,4 +86,24 @@ func (r *Result) RowsAffected() (int, error) {
 
 func (r *Result) GetRaw() interface{} {
 	return r.Raw
+}
+
+// MarshalJSON custom marshal method to handle []uint8 to string conversion
+func (r *Result) MarshalJSON() ([]byte, error) {
+	serialized := common.SerializeBytes(r)
+
+	return json.Marshal(serialized)
+}
+
+// UnmarshalJSON custom unmarshal method to handle []uint8 to string conversion
+func (r *Result) UnmarshalJSON(data []byte) error {
+	var raw map[string]interface{}
+	err := json.Unmarshal(data, &raw)
+	if err != nil {
+		return err
+	}
+
+	deserialized := common.DeserializeBytes(raw, reflect.TypeOf(*r))
+	*r = deserialized.(Result)
+	return nil
 }

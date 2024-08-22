@@ -1,6 +1,8 @@
 package common
 
 import (
+	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/buger/jsonparser"
@@ -35,4 +37,133 @@ func GetLength(data []byte, path string) (int, error) {
 	}
 
 	return len(result.Array()), nil
+}
+
+// SerializeBytes serializes the struct to map[string]interface{} and []byte to string
+func SerializeBytes(v interface{}) interface{} {
+	val := reflect.ValueOf(v)
+
+	switch val.Kind() {
+	case reflect.Ptr:
+		if val.IsNil() {
+			return nil
+		}
+		elem := val.Elem().Interface()
+		return SerializeBytes(elem)
+	case reflect.Struct:
+		serialized := make(map[string]interface{})
+		for i := 0; i < val.NumField(); i++ {
+			field := val.Type().Field(i)
+
+			// get json tag
+			tag := field.Tag.Get(constant.DefaultJSONTag)
+			// if tag is "-", skip this field
+			if tag == constant.DashString {
+				continue
+			}
+			key := field.Name
+			if tag != constant.EmptyString {
+				tagParts := strings.Split(tag, constant.CommaString)
+				if tagParts[constant.ZeroInt] != constant.EmptyString {
+					key = tagParts[constant.ZeroInt]
+				}
+			}
+
+			fieldValue := val.Field(i).Interface()
+			serialized[key] = SerializeBytes(fieldValue)
+		}
+		return serialized
+	case reflect.Slice:
+		if val.Type().Elem().Kind() == reflect.Uint8 {
+			// convert []byte to string
+			return string(val.Bytes())
+		}
+		// other slice types
+		serialized := make([]interface{}, val.Len())
+		for i := 0; i < val.Len(); i++ {
+			serialized[i] = SerializeBytes(val.Index(i).Interface())
+		}
+		return serialized
+	case reflect.Map:
+		serialized := make(map[string]interface{})
+		for _, key := range val.MapKeys() {
+			keyStr := fmt.Sprintf("%v", key)
+			serialized[keyStr] = SerializeBytes(val.MapIndex(key).Interface())
+		}
+		return serialized
+	default:
+		return v
+	}
+}
+
+// DeserializeBytes deserializes the map[string]interface{} to struct and string to []byte
+func DeserializeBytes(v interface{}, t reflect.Type) interface{} {
+	val := reflect.ValueOf(v)
+
+	switch t.Kind() {
+	case reflect.Ptr:
+		if val.IsNil() {
+			return reflect.Zero(t).Interface()
+		}
+		elemType := t.Elem()
+		elemValue := DeserializeBytes(val.Interface(), elemType)
+		ptrValue := reflect.New(elemType)
+		ptrValue.Elem().Set(reflect.ValueOf(elemValue))
+		return ptrValue.Interface()
+	case reflect.Struct:
+		structValue := reflect.New(t).Elem()
+		for i := 0; i < t.NumField(); i++ {
+			field := t.Field(i)
+
+			// get json tag
+			tag := field.Tag.Get(constant.DefaultJSONTag)
+			// if tag is "-", skip this field
+			if tag == constant.DashString {
+				continue
+			}
+			key := field.Name
+			if tag != constant.EmptyString {
+				tagParts := strings.Split(tag, constant.CommaString)
+				if tagParts[constant.ZeroInt] != constant.EmptyString {
+					key = tagParts[constant.ZeroInt]
+				}
+			}
+
+			fieldValue := DeserializeBytes(val.MapIndex(reflect.ValueOf(key)).Interface(), field.Type)
+			structValue.Field(i).Set(reflect.ValueOf(fieldValue))
+		}
+		return structValue.Interface()
+	case reflect.Slice:
+		if t.Elem().Kind() == reflect.Uint8 {
+			// convert string to []byte
+			return []byte(val.String())
+		}
+		// other slice types
+		sliceValue := reflect.MakeSlice(t, val.Len(), val.Len())
+		for i := 0; i < val.Len(); i++ {
+			sliceValue.Index(i).Set(reflect.ValueOf(DeserializeBytes(val.Index(i).Interface(), t.Elem())))
+		}
+		return sliceValue.Interface()
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		if val.Kind() == reflect.Float64 {
+			return int(val.Float())
+		}
+		// convert to int
+		return int(val.Float())
+	case reflect.Float32, reflect.Float64:
+		return val.Float()
+	case reflect.String:
+		return val.String()
+	case reflect.Map:
+		mapType := reflect.MapOf(t.Key(), t.Elem())
+		mapValue := reflect.MakeMap(mapType)
+		for _, key := range val.MapKeys() {
+			mapKey := reflect.ValueOf(key.Interface()).Convert(t.Key())
+			mapElem := DeserializeBytes(val.MapIndex(key).Interface(), t.Elem())
+			mapValue.SetMapIndex(mapKey, reflect.ValueOf(mapElem))
+		}
+		return mapValue.Interface()
+	default:
+		return v
+	}
 }

@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -279,26 +280,52 @@ func TestConn_SetGlobalVariables(t *testing.T) {
 func TestTemp(t *testing.T) {
 	asst := assert.New(t)
 
-	addr := "192.168.137.12:2883"
-	dbName := ""
+	addr := "192.168.137.11:3306"
+	dbName := "gp"
 	dbUser := "root"
 	dbPass := "root"
 
-	patches := MockClientNewConn()
-	defer patches.Reset()
+	// patches := MockClientNewConn()
+	// defer patches.Reset()
 
-	conn, err := NewConn(addr, dbName, dbUser, dbPass)
+	var (
+		sql    string
+		result *Result
+		err    error
+		conn   *Conn
+
+		resultUnmarshal *Result
+	)
+
+	conn, err = NewConn(addr, dbName, dbUser, dbPass)
 	asst.Nil(err, "new conn failed")
 
-	sql := `CREATE TENANT %s RESOURCE_POOL_LIST = ('%s'), CHARSET = '%s', PRIMARY_ZONE = '%s' set OB_TCP_INVITED_NODES = '%%' ;`
-	// sql := `CREATE TENANT ? RESOURCE_POOL_LIST = ?, CHARSET = ?, PRIMARY_ZONE = ? set OB_TCP_INVITED_NODES = '%%' ;`
-	zones := "zone1,zone2,zone3"
-	sql = fmt.Sprintf(sql, "test", "test", "utf8mb4", zones)
-
-	sql = `drop tenant test;`
-	result, err := conn.Execute(sql)
+	sql = `select * from t_meta_az_info;`
+	result, err = conn.Execute(sql)
 	asst.Nil(err, "execute sql failed")
-	t.Logf("result: %v", result)
+
+	resultBytes, err := json.Marshal(result)
+	asst.Nil(err, "marshal result failed")
+	t.Logf("result: %s", string(resultBytes))
+
+	err = json.Unmarshal(resultBytes, &resultUnmarshal)
+	if err != nil {
+		t.Errorf("unmarshal result failed.\n%s", err.Error())
+	}
+	asst.Nil(err, "unmarshal result failed")
+	azName, err := resultUnmarshal.GetString(constant.ZeroInt, constant.OneInt)
+	asst.Nil(err, "get string failed")
+	t.Logf("az name: %s", azName)
+
+	// sql = `CREATE TENANT %s RESOURCE_POOL_LIST = ('%s'), CHARSET = '%s', PRIMARY_ZONE = '%s' set OB_TCP_INVITED_NODES = '%%' ;`
+	// // sql := `CREATE TENANT ? RESOURCE_POOL_LIST = ?, CHARSET = ?, PRIMARY_ZONE = ? set OB_TCP_INVITED_NODES = '%%' ;`
+	// zones := "zone1,zone2,zone3"
+	// sql = fmt.Sprintf(sql, "test", "test", "utf8mb4", zones)
+	//
+	// sql = `drop tenant test;`
+	// result, err = conn.Execute(sql)
+	// asst.Nil(err, "execute sql failed")
+	// t.Logf("result: %v", result)
 }
 
 func TestMock(t *testing.T) {

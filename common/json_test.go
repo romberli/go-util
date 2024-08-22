@@ -1,10 +1,44 @@
 package common
 
 import (
+	"encoding/json"
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+type OtherStruct struct {
+	Data       []byte
+	Other      string  `json:"other"`
+	Another    int     `json:",omitempty"`
+	FloatPropA float64 `json:"float_property_a"`
+	FloatPropB float64 `json:"float_property_b,omitempty"`
+	Nested     *NestedStruct
+}
+
+type NestedStruct struct {
+	InnerData []byte `json:"-,omitempty"`
+}
+
+type Example struct {
+	Data *OtherStruct
+}
+
+func (e *Example) MarshalJSON() ([]byte, error) {
+	serialized := SerializeBytes(e)
+	return json.Marshal(serialized)
+}
+
+func (e *Example) UnmarshalJSON(data []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	deserialized := DeserializeBytes(raw, reflect.TypeOf(*e))
+	*e = deserialized.(Example)
+	return nil
+}
 
 func TestKeyPathExists(t *testing.T) {
 	asst := assert.New(t)
@@ -21,4 +55,46 @@ func TestGetLength(t *testing.T) {
 	length, err := GetLength(data, "a")
 	asst.Nil(err, "test GetLength() failed")
 	asst.Equal(3, length, "test GetLength() failed")
+}
+
+func TestSerializeBytes(t *testing.T) {
+	asst := assert.New(t)
+
+	nested := &NestedStruct{
+		InnerData: []byte("Nested data!"),
+	}
+
+	os := &OtherStruct{
+		Data:       []byte("Hello, World!"),
+		Other:      "Some other data",
+		Another:    123,
+		FloatPropA: 1.23,
+		FloatPropB: 4.0,
+		Nested:     nested,
+	}
+
+	tBytes, err := json.Marshal(t)
+	asst.Nil(err, "test SerializeBytes() failed")
+	t.Logf("T Serialized: %s", string(tBytes))
+
+	ex1 := &Example{
+		Data: os,
+	}
+
+	// serialize Example struct
+	serialized, err := json.Marshal(ex1)
+	asst.Nil(err, "test SerializeBytes() failed")
+	t.Logf("Serialized: %s", string(serialized))
+
+	var ex2 Example
+	err = json.Unmarshal(serialized, &ex2)
+	asst.Nil(err, "test SerializeBytes() failed")
+	t.Logf("Deserialized: %+v", ex2)
+
+	asst.Equal(ex1.Data.Data, ex2.Data.Data, "test SerializeBytes() failed")
+	asst.Equal(ex1.Data.Other, ex2.Data.Other, "test SerializeBytes() failed")
+	asst.Equal(ex1.Data.Another, ex2.Data.Another, "test SerializeBytes() failed")
+	asst.Equal(ex1.Data.FloatPropA, ex2.Data.FloatPropA, "test SerializeBytes() failed")
+	asst.Equal(ex1.Data.FloatPropB, ex2.Data.FloatPropB, "test SerializeBytes() failed")
+	asst.Equal(ex1.Data.Nested.InnerData, ex2.Data.Nested.InnerData, "test SerializeBytes() failed")
 }

@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -117,4 +118,58 @@ func TestResult_Tmp(t *testing.T) {
 	asst.Nil(err, common.CombineMessageWithError("map to struct failed", err))
 	t.Logf(serverInfo.HostTags)
 	t.Logf("%v", serverInfo.HostTagList)
+}
+
+func TestResult_Marshal(t *testing.T) {
+	asst := assert.New(t)
+
+	addr := "192.168.137.11:3306"
+	dbName := "gp"
+	dbUser := "root"
+	dbPass := "root"
+
+	sql := `select server_id, host_tags, host_tags as host_tag_list from t_meta_server_info;`
+	c, err := NewConn(addr, dbName, dbUser, dbPass)
+	asst.Nil(err, common.CombineMessageWithError("create connection failed", err))
+	result, err := c.Execute(sql)
+	asst.Nil(err, common.CombineMessageWithError("execute sql failed", err))
+	resultBytes, err := json.Marshal(result)
+	asst.Nil(err, common.CombineMessageWithError("marshal result failed", err))
+	t.Logf(string(resultBytes))
+
+	type ServerInfo struct {
+		ServerID    int      `middleware:"server_id"`
+		HostTags    string   `middleware:"host_tags"`
+		HostTagList []string `middleware:"host_tag_list"`
+	}
+	serverInfoList1 := make([]*ServerInfo, result.RowNumber())
+	for i := range serverInfoList1 {
+		serverInfoList1[i] = &ServerInfo{}
+	}
+
+	err = result.MapToStructSlice(serverInfoList1, constant.DefaultMiddlewareTag)
+	asst.Nil(err, common.CombineMessageWithError("map to struct slice failed", err))
+	for _, serverInfo := range serverInfoList1 {
+		t.Logf("ServerID: %d", serverInfo.ServerID)
+		t.Logf("HostTags: %s", serverInfo.HostTags)
+		t.Logf("HostTagList: %v", serverInfo.HostTagList)
+	}
+
+	var resultUnmarshal *Result
+
+	serverInfoList2 := make([]*ServerInfo, result.RowNumber())
+	for i := range serverInfoList2 {
+		serverInfoList2[i] = &ServerInfo{}
+	}
+
+	err = json.Unmarshal(resultBytes, &resultUnmarshal)
+	asst.Nil(err, common.CombineMessageWithError("unmarshal result failed", err))
+
+	err = resultUnmarshal.MapToStructSlice(serverInfoList2, constant.DefaultMiddlewareTag)
+	asst.Nil(err, common.CombineMessageWithError("map to struct slice failed", err))
+	for _, serverInfo := range serverInfoList2 {
+		t.Logf("ServerID: %d", serverInfo.ServerID)
+		t.Logf("HostTags: %s", serverInfo.HostTags)
+		t.Logf("HostTagList: %v", serverInfo.HostTagList)
+	}
 }

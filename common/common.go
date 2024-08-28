@@ -601,7 +601,9 @@ func SetValueOfStructByKind(in interface{}, field string, value interface{}, kin
 		if err != nil {
 			return err
 		}
-
+		if v == constant.EmptyString {
+			return SetValueOfStruct(in, field, time.Time{})
+		}
 		t, err := time.ParseInLocation(constant.DefaultTimeLayout, v, time.Local)
 		if err != nil {
 			return err

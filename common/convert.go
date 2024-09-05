@@ -10,7 +10,6 @@ import (
 	"unsafe"
 
 	"github.com/pingcap/errors"
-	"github.com/siddontang/go/hack"
 
 	"github.com/romberli/go-util/constant"
 	"github.com/romberli/go-util/types"
@@ -287,7 +286,7 @@ func ConvertToString(in interface{}) (string, error) {
 	case string:
 		return v, nil
 	case []byte:
-		return hack.String(v), nil
+		return BytesToString(v), nil
 	case int, int8, int16, int32, int64,
 		uint, uint8, uint16, uint32, uint64:
 		return fmt.Sprintf("%d", v), nil

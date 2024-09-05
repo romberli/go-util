@@ -59,15 +59,15 @@ func TestFile(t *testing.T) {
 	asst.False(isDir, "test IsDir() failed")
 	t.Log("==========test IsDir() completed.==========\n")
 
-	// test Readdir()
-	t.Log("==========test Readdir() started.==========")
-	fileInfoList, err = Readdir(dirName)
-	asst.Nil(err, "test Readdir() failed")
-	asst.Equal(len(fileInfoList), expectedFileNum, "test Readdir() failed")
+	// test ReadDir()
+	t.Log("==========test ReadDir() started.==========")
+	fileInfoList, err = ReadDir(dirName)
+	asst.Nil(err, "test ReadDir() failed")
+	asst.Equal(len(fileInfoList), expectedFileNum, "test ReadDir() failed")
 
-	fileInfoList, err = Readdir(fileName)
-	asst.NotNil(err, "test Readdir() failed")
-	t.Log("==========test Readdir() completed.==========\n")
+	fileInfoList, err = ReadDir(fileName)
+	asst.NotNil(err, "test ReadDir() failed")
+	t.Log("==========test ReadDir() completed.==========\n")
 
 	// test IsEmptyDir()
 	t.Log("==========test IsEmptyDir() started.==========")

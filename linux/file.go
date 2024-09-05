@@ -58,8 +58,8 @@ func IsDir(path string) (isDir bool, err error) {
 	return fileInfo.IsDir(), nil
 }
 
-// Readdir returns subdirectories and files of given directory on the remote host, it returns a slice of os.FileInfo
-func Readdir(dirName string) (fileInfoList []os.FileInfo, err error) {
+// ReadDir returns subdirectories and files of given directory on the host, it returns a slice of os.FileInfo
+func ReadDir(dirName string) (fileInfoList []os.FileInfo, err error) {
 	isDir, err := IsDir(dirName)
 	if err != nil {
 		return nil, err
@@ -84,7 +84,7 @@ func Readdir(dirName string) (fileInfoList []os.FileInfo, err error) {
 
 // IsEmptyDir returns if given directory is empty or not
 func IsEmptyDir(dirName string) (isEmpty bool, err error) {
-	fileInfoList, err := Readdir(dirName)
+	fileInfoList, err := ReadDir(dirName)
 	if err != nil {
 		return false, err
 	}
@@ -109,7 +109,7 @@ func GetPathDirMapLocal(dirName, rootPath string) (map[string]string, error) {
 }
 
 func getPathDirMapLocal(pathDirMap map[string]string, dirName, rootPath string) error {
-	pathInfoList, err := Readdir(dirName)
+	pathInfoList, err := ReadDir(dirName)
 	if err != nil {
 		return err
 	}

@@ -2,8 +2,6 @@ module github.com/romberli/go-util
 
 go 1.22
 
-toolchain go1.22.1
-
 require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.28.2
 	github.com/Shopify/sarama v1.38.1

@@ -4,18 +4,20 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"sync"
 	"testing"
 	"time"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 	"github.com/romberli/log"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/romberli/go-util/constant"
 	"github.com/romberli/go-util/linux"
 )
 
 const (
-	DefaultProduceTime = 5 * time.Second
+	DefaultProduceTime = 10 * time.Second
 )
 
 func TestProduce(t *testing.T) {
@@ -30,21 +32,31 @@ func TestProduce(t *testing.T) {
 
 	asst := assert.New(t)
 
-	kafkaVersion := "2.2.0"
-	brokerList := []string{"10.0.0.63:9092", "10.0.0.84:9092", "10.0.0.92:9092"}
+	log.SetDisableEscape(true)
+	log.SetDisableDoubleQuotes(true)
+
+	kafkaVersion := "3.8.0"
+	brokerList := []string{"192.168.137.11:9092"}
 	topicName := "test001"
-	// clusterNameHeader := p.BuildProducerMessageHeader("clusterName", "main01")
+
+	p, err = NewAsyncProducer(kafkaVersion, brokerList)
+	asst.Nil(err, "create producer failed.")
+
+	topics, err := p.Client.Topics()
+	asst.Nil(err, "get topics failed.")
+	for _, topic := range topics {
+		t.Logf("topic: %s", topic)
+	}
+
 	clusterNameHeader := p.BuildProducerMessageHeader("clusterName", "main01")
 	hostIP, err = linux.GetDefaultIP()
 	if err != nil {
 		asst.Nil(err, fmt.Sprintf("get host ip failed. message: %s", err.Error()))
 	}
+	hostIP = "192.168.137.11"
 	addrHeader := p.BuildProducerMessageHeader("addr", fmt.Sprintf("%s:%d", hostIP, 3306))
 	headers = append(headers, clusterNameHeader, addrHeader)
 	ctx, cancel := context.WithCancel(context.Background())
-
-	p, err = NewAsyncProducer(kafkaVersion, brokerList)
-	asst.Nil(err, "create producer failed.")
 
 	defer func() {
 		err = p.Close()
@@ -53,15 +65,18 @@ func TestProduce(t *testing.T) {
 		}
 	}()
 
+	var wg sync.WaitGroup
 	go func() {
+		wg.Add(constant.OneInt)
 		for i := 0; i < 10; i++ {
-			ts = time.Now().String()
+			ts = time.Now().Format(constant.DefaultTimeLayout)
+			msg := fmt.Sprintf(`{"id": "%d", "message": "hello, world!", "timestamp": %s}`, i, ts)
 
 			if i%2 == 0 {
-				err = p.Produce(topicName, ts)
+				err = p.Produce(topicName, msg)
 				asst.Nil(err, "produce string message failed. topic: %s, message: %s", topicName, ts)
 			} else {
-				message = p.BuildProducerMessage(topicName, strconv.Itoa(i), ts, headers)
+				message = p.BuildProducerMessage(topicName, strconv.Itoa(i), msg, headers)
 				err = p.Produce(topicName, message)
 				asst.Nil(err, "produce producer message failed. topic: %s, message: %v", topicName, message)
 			}
@@ -69,8 +84,11 @@ func TestProduce(t *testing.T) {
 			err = ctx.Err()
 			asst.Nil(err, "context error is not nil. topic: %s, errMessage: %v", topicName, err)
 		}
+
+		wg.Done()
 	}()
 
+	wg.Wait()
 	time.Sleep(DefaultProduceTime)
 
 	cancel()

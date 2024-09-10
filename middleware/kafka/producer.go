@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 	"github.com/pingcap/errors"
 	"github.com/romberli/log"
 
@@ -81,7 +81,9 @@ func (p *AsyncProducer) BuildProducerMessage(topicName string, key string, messa
 }
 
 func (p *AsyncProducer) Produce(topicName string, message interface{}) error {
-	var producerMessage *sarama.ProducerMessage
+	var (
+		producerMessage *sarama.ProducerMessage
+	)
 
 	// Track error
 	go func() {

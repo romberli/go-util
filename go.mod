@@ -4,7 +4,7 @@ go 1.22.0
 
 require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.28.2
-	github.com/Shopify/sarama v1.38.1
+	github.com/IBM/sarama v1.43.3
 	github.com/agiledragon/gomonkey/v2 v2.12.0
 	github.com/buger/jsonparser v1.1.1
 	github.com/bwmarrin/snowflake v0.3.0
@@ -16,8 +16,8 @@ require (
 	github.com/pingcap/errors v0.11.5-0.20221009092201-b66cddb77c32
 	github.com/pingcap/parser v0.0.0-20211004012448-687005894c4e
 	github.com/pkg/sftp v1.13.6
-	github.com/prometheus/client_golang v1.20.2
-	github.com/prometheus/common v0.58.0
+	github.com/prometheus/client_golang v1.20.3
+	github.com/prometheus/common v0.59.1
 	github.com/rabbitmq/amqp091-go v1.10.0
 	github.com/romberli/dynamic-struct v1.2.1
 	github.com/romberli/go-multierror v1.1.2
@@ -28,7 +28,7 @@ require (
 	github.com/tidwall/gjson v1.17.3
 	go.etcd.io/etcd/client/v3 v3.5.15
 	go.uber.org/zap v1.27.0
-	golang.org/x/crypto v0.26.0
+	golang.org/x/crypto v0.27.0
 	k8s.io/apimachinery v0.31.0
 )
 
@@ -43,8 +43,8 @@ require (
 	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
 	github.com/cznic/mathutil v0.0.0-20181122101859-297441e03548 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/eapache/go-resiliency v1.3.0 // indirect
-	github.com/eapache/go-xerial-snappy v0.0.0-20230111030713-bf00bc1b83b6 // indirect
+	github.com/eapache/go-resiliency v1.7.0 // indirect
+	github.com/eapache/go-xerial-snappy v0.0.0-20230731223053-c322873962e3 // indirect
 	github.com/eapache/queue v1.1.0 // indirect
 	github.com/go-faster/city v1.0.1 // indirect
 	github.com/go-faster/errors v0.7.1 // indirect
@@ -59,7 +59,7 @@ require (
 	github.com/jcmturner/aescts/v2 v2.0.0 // indirect
 	github.com/jcmturner/dnsutils/v2 v2.0.0 // indirect
 	github.com/jcmturner/gofork v1.7.6 // indirect
-	github.com/jcmturner/gokrb5/v8 v8.4.3 // indirect
+	github.com/jcmturner/gokrb5/v8 v8.4.4 // indirect
 	github.com/jcmturner/rpc/v2 v2.0.3 // indirect
 	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/klauspost/compress v1.17.9 // indirect
@@ -99,8 +99,8 @@ require (
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d // indirect
 	golang.org/x/net v0.28.0 // indirect
 	golang.org/x/oauth2 v0.22.0 // indirect
-	golang.org/x/sys v0.24.0 // indirect
-	golang.org/x/text v0.17.0 // indirect
+	golang.org/x/sys v0.25.0 // indirect
+	golang.org/x/text v0.18.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240318140521-94a12d6c2237 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240318140521-94a12d6c2237 // indirect
 	google.golang.org/grpc v1.62.1 // indirect

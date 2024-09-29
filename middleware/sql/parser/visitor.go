@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 
@@ -22,6 +23,7 @@ const (
 	ReplaceStmtString     = "*ast.ReplaceStmt"
 	UpdateStmtString      = "*ast.UpdateStmt"
 	DeleteStmtString      = "*ast.DeleteStmt"
+	GrantStmtString       = "*ast.GrantStmt"
 
 	FuncCallExprString      = "*ast.FuncCallExpr"
 	AggregateFuncExprString = "*ast.AggregateFuncExpr"
@@ -39,6 +41,7 @@ var (
 		ReplaceStmtString,
 		UpdateStmtString,
 		DeleteStmtString,
+		GrantStmtString,
 	}
 	DefaultFuncList = []string{
 		FuncCallExprString,
@@ -106,6 +109,8 @@ func (v *Visitor) Enter(in ast.Node) (out ast.Node, skipChildren bool) {
 			v.visitCreateTableStmt(node)
 		case *ast.AlterTableStmt:
 			v.visitAlterTableStmt(node)
+		case *ast.GrantStmt:
+			v.visitGrantStmt(node)
 		case *ast.SelectField:
 			v.visitSelectField(node)
 		case *ast.ColumnDef:
@@ -152,6 +157,26 @@ func (v *Visitor) visitAlterTableStmt(node *ast.AlterTableStmt) {
 				break
 			}
 		}
+	}
+}
+
+// visitGrantStmt visits the given node which type is *ast.GrantStmt
+func (v *Visitor) visitGrantStmt(node *ast.GrantStmt) {
+	if len(node.Users) > constant.ZeroInt {
+		user := node.Users[constant.ZeroInt]
+		fullUserName := fmt.Sprintf("'%s'@'%s'", user.User.Username, user.User.Hostname)
+		v.result.SetUser(fullUserName)
+	}
+
+	for _, priv := range node.Privs {
+		v.result.AddPrivilege(priv.Priv, node.WithGrant)
+	}
+
+	v.result.AddDBName(node.Level.DBName)
+
+	if node.Level.TableName != constant.EmptyString {
+		v.result.AddTableName(node.Level.TableName)
+		v.result.AddTableDBListMap(node.Level.TableName, node.Level.DBName)
 	}
 }
 

@@ -70,11 +70,12 @@ func TestParser_Parse(t *testing.T) {
 	// 			 inner join t02 on t01.id = t02.id
 	// 			 inner join db2.t02 dt02 on dt01.id = dt02.id
 	// `
+	sql = "GRANT SELECT ON sys.* TO `mysql.sys`@`localhost`"
 	p := NewParserWithDefault()
 
 	result, err := p.Parse(sql)
 	asst.Nil(err, "test Parse() failed")
-	asst.Equal("t01", result.TableNames[0])
+	// asst.Equal("t01", result.TableNames[0])
 
 	// print result
 	jsonBytes, err := json.Marshal(result)

@@ -1,25 +1,29 @@
 package parser
 
 import (
+	"github.com/pingcap/parser/mysql"
+
 	"github.com/romberli/go-util/common"
 	"github.com/romberli/go-util/constant"
 )
 
 type Result struct {
-	SQLType        string              `json:"sql_type"`
-	TableDBListMap map[string][]string `json:"table_db_list_map"`
-	DBNames        []string            `json:"db_names"`
-	TableNames     []string            `json:"table_names"`
-	TableComments  map[string]string   `json:"table_comments"`
-	ColumnNames    []string            `json:"column_names"`
-	ColumnTypes    map[string]string   `json:"column_types"`
-	ColumnComments map[string]string   `json:"column_comments"`
+	SQLType        string                       `json:"sql_type"`
+	TableDBListMap map[string][]string          `json:"table_db_list_map"`
+	DBNames        []string                     `json:"db_names"`
+	TableNames     []string                     `json:"table_names"`
+	TableComments  map[string]string            `json:"table_comments"`
+	ColumnNames    []string                     `json:"column_names"`
+	ColumnTypes    map[string]string            `json:"column_types"`
+	ColumnComments map[string]string            `json:"column_comments"`
+	User           string                       `json:"user"`
+	Privileges     map[mysql.PrivilegeType]bool `json:"privileges"`
 }
 
 // NewResult returns a new *Result
 func NewResult(sqlType string, TableDBListMap map[string][]string, dbNames []string, tableNames []string,
 	tableComments map[string]string, columnNames []string, columnTypes map[string]string,
-	columnComments map[string]string) *Result {
+	columnComments map[string]string, user string, privileges map[mysql.PrivilegeType]bool) *Result {
 	return &Result{
 		SQLType:        sqlType,
 		TableDBListMap: TableDBListMap,
@@ -29,6 +33,8 @@ func NewResult(sqlType string, TableDBListMap map[string][]string, dbNames []str
 		ColumnNames:    columnNames,
 		ColumnTypes:    columnTypes,
 		ColumnComments: columnComments,
+		User:           user,
+		Privileges:     privileges,
 	}
 }
 
@@ -43,6 +49,8 @@ func NewEmptyResult() *Result {
 		ColumnNames:    []string{},
 		ColumnTypes:    make(map[string]string),
 		ColumnComments: make(map[string]string),
+		User:           constant.EmptyString,
+		Privileges:     make(map[mysql.PrivilegeType]bool),
 	}
 }
 
@@ -136,4 +144,14 @@ func (r *Result) SetColumnType(columnName string, columnType string) {
 // SetColumnComment sets column comment of corresponding column
 func (r *Result) SetColumnComment(columnName string, columnComment string) {
 	r.ColumnComments[columnName] = columnComment
+}
+
+// SetUser sets user of the result
+func (r *Result) SetUser(user string) {
+	r.User = user
+}
+
+// AddPrivilege adds privilege to the result
+func (r *Result) AddPrivilege(privilege mysql.PrivilegeType, withGrant bool) {
+	r.Privileges[privilege] = withGrant
 }

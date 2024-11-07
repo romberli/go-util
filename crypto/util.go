@@ -1,6 +1,12 @@
 package crypto
 
-func padKey(key []byte) []byte {
+import (
+	"strings"
+
+	"github.com/romberli/go-util/constant"
+)
+
+func padKey(key string) string {
 	keyLengths := []int{AESKeySize16, AESKeySize24, AESKeySize32}
 
 	if len(key) > AESKeySize32 {
@@ -9,7 +15,7 @@ func padKey(key []byte) []byte {
 
 	for _, length := range keyLengths {
 		if len(key) < length {
-			return append(key, make([]byte, length-len(key))...)
+			return key + strings.Repeat(constant.EqualString, length-len(key))
 		} else if len(key) == length {
 			return key
 		}

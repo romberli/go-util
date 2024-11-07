@@ -20,7 +20,7 @@ const (
 )
 
 type AES struct {
-	key []byte
+	key string
 }
 
 // NewAES returns a new *AES
@@ -47,22 +47,19 @@ func newAESWithKeySize(size int) (*AES, error) {
 		return nil, err
 	}
 
-	keyStr := base64.StdEncoding.EncodeToString(key)
-	paddedKey := padKey(common.StringToBytes(keyStr))
-
-	return newAESWithKey(common.BytesToString(paddedKey)), nil
+	return newAESWithKey(padKey(base64.StdEncoding.EncodeToString(key))), nil
 }
 
 // newAESWithKey returns a new *AES with given key
 func newAESWithKey(key string) *AES {
 	return &AES{
-		key: padKey(common.StringToBytes(key)),
+		key: padKey(key),
 	}
 }
 
 func (a *AES) Encrypt(message string) (string, error) {
 	// create block
-	block, err := aes.NewCipher(a.key)
+	block, err := aes.NewCipher(common.StringToBytes(a.key))
 	if err != nil {
 		return constant.EmptyString, err
 	}
@@ -70,10 +67,10 @@ func (a *AES) Encrypt(message string) (string, error) {
 	plaintext := common.StringToBytes(message)
 	// pad message
 	blockSize := block.BlockSize()
-	paddedText := a.applyPKCS5Padding(plaintext, blockSize)
+	padText := a.applyPKCS5Padding(plaintext, blockSize)
 
 	// generate a random initialization vector
-	ciphertext := make([]byte, blockSize+len(paddedText))
+	ciphertext := make([]byte, blockSize+len(padText))
 	iv := ciphertext[:blockSize]
 	if _, err := rand.Read(iv); err != nil {
 		return constant.EmptyString, err
@@ -81,7 +78,7 @@ func (a *AES) Encrypt(message string) (string, error) {
 
 	// create a new CBC encryptor
 	stream := cipher.NewCBCEncrypter(block, iv)
-	stream.CryptBlocks(ciphertext[blockSize:], paddedText)
+	stream.CryptBlocks(ciphertext[blockSize:], padText)
 
 	return base64.StdEncoding.EncodeToString(ciphertext), nil
 }
@@ -93,7 +90,7 @@ func (a *AES) Decrypt(ciphertextBase64 string) (string, error) {
 	}
 
 	// create block
-	block, err := aes.NewCipher(a.key)
+	block, err := aes.NewCipher(common.StringToBytes(a.key))
 	if err != nil {
 		return "", err
 	}

@@ -44,7 +44,7 @@ func TestAES_Decrypt(t *testing.T) {
 func TestAES_Temp(t *testing.T) {
 	asst := assert.New(t)
 
-	key := "abcdefghijklmnopqrstuvwxyz123456"
+	key := "aaa"
 	message := defaultMessage
 	a := newAESWithKey(key)
 
@@ -53,4 +53,9 @@ func TestAES_Temp(t *testing.T) {
 	plainText, err := a.Decrypt(cipherText)
 	asst.Nil(err, "test AES.Temp() failed")
 	asst.Equal(message, plainText, "test AES.Temp() failed")
+
+	t.Logf("original key: %s", key)
+	t.Logf("actual key: %s", a.key)
+	t.Logf("message: %s", message)
+	t.Logf("cipher text: %s", cipherText)
 }

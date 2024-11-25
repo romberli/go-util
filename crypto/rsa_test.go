@@ -182,32 +182,7 @@ func TestRSA_DecryptWithPublicKey(t *testing.T) {
 func Test_Temp(t *testing.T) {
 	asst := assert.New(t)
 
-	r, err := newRSAWithKeySize(512)
-	asst.Nil(err, "test Temp failed")
-	privateKeyString, err := r.GetPrivateKey()
-	asst.Nil(err, "test Temp failed")
-	publicKeyString, err := r.GetPublicKey()
-	asst.Nil(err, "test Temp failed")
-
-	t.Logf("private key: %s", privateKeyString)
-	t.Logf("public key: %s", publicKeyString)
-
-	message := "hello, world!12345678"
-	cipherText, err := r.EncryptWithPublicKey(message)
-	asst.Nil(err, "test Temp failed")
-	decryptedMessage, err := r.DecryptWithPrivateKey(cipherText)
-	asst.Nil(err, "test Temp failed")
-	asst.Equal(message, decryptedMessage, "test Temp failed")
-
-	t.Logf("message: %s", message)
-	t.Logf("cipher: %s", cipherText)
-}
-
-func Test_Temp1(t *testing.T) {
-	asst := assert.New(t)
-
-	privateKey := "MIIBPAIBAAJBAMnHSrZBtIMXbIpE12TlNs/RbB/9TfkiPJjmRK1CxqGsqBRb7hufXP2o1uw3+smDEnxhR+hpblTIMlp3UdQQB3cCAwEAAQJAJEjDJZ0RIdWvffm9JfaV8a7+G46IW/mNHg2iYem1IFNDMCgKZntjzyCDlkThi6TX+8I/8rEvEMoYw4VxkQn24QIhAN6RBbL0ybeet1a34zQDd0zE2uO65EtdRL6sQ0uhixRHAiEA6BbZfPs4Y+jf2Lp6tUD8ruq4S1moSfWZLyHqJNvr+1ECIQDZDSM6sAEcwntX5cN80TiCNKSnXHcRjGbjcIm8c1F4NwIhAMo/DyuAaDV4O4jLiB7nEMsEs7DF4ocAxIp0DWwtUUjhAiEAtO6WrtQvXY8wE1yLUMqy4OCaHB4UlQP3gOuT4sqmXWc="
-	r, err := NewRSAWithPrivateKeyString(privateKey)
+	r, err := newRSAWithKeySize(2048)
 	asst.Nil(err, "test Temp failed")
 	privateKeyString, err := r.GetPrivateKey()
 	asst.Nil(err, "test Temp failed")

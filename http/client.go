@@ -31,18 +31,18 @@ const (
 
 	defaultResponseCodeJSON = "code"
 
-	defaultClientTimeout         = 60 * time.Second
-	defaultDialTimeout           = 30 * time.Second
-	defaultKeepAlive             = 30 * time.Second
+	defaultClientTimeout         = 20 * time.Second
+	defaultDialTimeout           = 10 * time.Second
+	defaultKeepAlive             = 10 * time.Second
 	defaultTLSHandshakeTimeout   = 10 * time.Second
 	defaultMaxIdleConns          = 100
 	defaultIdleConnTimeout       = 90 * time.Second
 	defaultExpectContinueTimeout = 1 * time.Second
 	defaultMaxIdleConnsPerHost   = 10
 
-	DefaultMaxWaitTime   = 60 // seconds
+	DefaultMaxWaitTime   = 90 // seconds
 	DefaultMaxRetryCount = 3
-	DefaultDelayTime     = 10 // milliseconds
+	DefaultDelayTime     = 100 // milliseconds
 
 	DefaultUnlimitedWaitTime   = -1 // seconds
 	DefaultUnlimitedRetryCount = -1

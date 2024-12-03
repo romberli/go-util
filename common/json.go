@@ -105,7 +105,7 @@ func DeserializeBytes(v interface{}, t reflect.Type) interface{} {
 
 	switch t.Kind() {
 	case reflect.Ptr:
-		if val.IsNil() {
+		if v == nil || val.IsNil() {
 			return reflect.Zero(t).Interface()
 		}
 		elemType := t.Elem()

@@ -189,3 +189,36 @@ func TestResult_Marshal(t *testing.T) {
 		t.Logf("HostTagList: %v", serverInfo.HostTagList)
 	}
 }
+
+func TestResult_Unmarshal(t *testing.T) {
+	data := `
+		{
+		  "result" : {
+			"raw" : {
+			  "AffectedRows" : 1,
+			  "InsertId" : 0,
+			  "Resultset" : null,
+			  "Status" : 16386,
+			  "Warnings" : 0
+			},
+			"rows" : {
+			  "FieldMap" : { },
+			  "FieldSlice" : [ ],
+			  "Values" : [ ]
+			}
+		  },
+		  "code" : 0
+		}
+	`
+	type GPResultResponse struct {
+		Code    int     `json:"code"`
+		Message string  `json:"message,omitempty"`
+		Result  *Result `json:"result,omitempty"`
+	}
+
+	var resp *GPResultResponse
+	err := json.Unmarshal([]byte(data), &resp)
+	if err != nil {
+		panic(err)
+	}
+}

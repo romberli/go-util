@@ -166,6 +166,38 @@ func StringKeyInMap(m map[string]string, str string) bool {
 	return false
 }
 
+// ElementEqualOrderInSlice checks if given elements are same in the slices,
+// note that the order of elements in the slices must be same
+func ElementEqualOrderInSlice[T types.Primitive](s1, s2 []T) bool {
+	if len(s1) != len(s2) {
+		return false
+	}
+
+	for i := range s1 {
+		if s1[i] != s2[i] {
+			return false
+		}
+	}
+
+	return true
+}
+
+// ElementEqualInSlice checks if given elements are same in the slices,
+// note that the order of elements in the slices is not important
+func ElementEqualInSlice[T types.Primitive](s1, s2 []T) bool {
+	if len(s1) != len(s2) {
+		return false
+	}
+
+	for _, v1 := range s1 {
+		if !ElementInSlice(s2, v1) {
+			return false
+		}
+	}
+
+	return true
+}
+
 // ElementInSlice checks if given element is in the slice
 func ElementInSlice[T types.Primitive](s []T, e T) bool {
 	for i := range s {

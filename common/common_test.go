@@ -71,9 +71,11 @@ func TestCommon(t *testing.T) {
 	str1 := "a"
 	str2 := "xxx"
 	int1 := 1234
+	int2 := 3
+	int3 := 6
 	float1 := 1.234
 
-	sliceInt := []int{1, 2, 3}
+	sliceInt := []int{1, 2, 3, 5, 7}
 	sliceStr := []string{"a", "b", "c"}
 
 	mapStrInt := map[string]int{"a": 1, "b": 2, "c": 3}
@@ -189,6 +191,15 @@ func TestCommon(t *testing.T) {
 	exists = ElementInSlice(sliceStr, str2)
 	asst.False(exists, "test ElementInSlice() failed")
 	t.Log("==========test ElementInSlice() completed==========")
+
+	t.Log("==========test ElementInSortedSlice() started==========")
+	exists = ElementInSortedSlice(sliceInt, int1)
+	asst.False(exists, "test ElementInSortedSlice() failed")
+	exists = ElementInSortedSlice(sliceInt, int2)
+	asst.True(exists, "test ElementInSortedSlice() failed")
+	exists = ElementInSortedSlice(sliceInt, int3)
+	asst.False(exists, "test ElementInSortedSlice() failed")
+	t.Log("==========test ElementInSortedSlice() completed==========")
 
 	t.Log("==========test ElementInSliceInterface() started==========")
 	exists, err = ElementInSliceInterface(tsList, ts)

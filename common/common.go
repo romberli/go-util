@@ -200,9 +200,29 @@ func ElementEqualInSlice[T types.Primitive](s1, s2 []T) bool {
 
 // ElementInSlice checks if given element is in the slice
 func ElementInSlice[T types.Primitive](s []T, e T) bool {
-	for i := range s {
-		if s[i] == e {
+	for _, element := range s {
+		if element == e {
 			return true
+		}
+	}
+
+	return false
+}
+
+// ElementInSortedSlice checks if given element is in the sorted slice,
+// note that the slice must be sorted in ascending order
+func ElementInSortedSlice[T types.Number](s []T, e T) bool {
+	if e < s[constant.ZeroInt] || e > s[len(s)-constant.OneInt] {
+		return false
+	}
+
+	for _, element := range s {
+		if element == e {
+			return true
+		}
+
+		if element > e {
+			return false
 		}
 	}
 

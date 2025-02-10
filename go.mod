@@ -8,7 +8,7 @@ require (
 	github.com/agiledragon/gomonkey/v2 v2.12.0
 	github.com/buger/jsonparser v1.1.1
 	github.com/bwmarrin/snowflake v0.3.0
-	github.com/go-mysql-org/go-mysql v1.10.0
+	github.com/go-mysql-org/go-mysql v1.11.0
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/hnlq715/rsa v0.0.0-20180422013825-cf1887b20766
 	github.com/json-iterator/go v1.1.12

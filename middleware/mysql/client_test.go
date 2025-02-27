@@ -84,6 +84,7 @@ func dropTable() error {
 
 func TestConn_All(t *testing.T) {
 	TestMySQLConnection(t)
+	TestConn_ExecuteInBatch(t)
 	TestConn_Execute(t)
 	TestConn_IsReplicationSlave(t)
 	TestConn_IsMater(t)
@@ -156,6 +157,29 @@ func TestMySQLConnection(t *testing.T) {
 	// drop table
 	err = dropTable()
 	asst.Nil(err, "execute drop sql failed")
+}
+
+func TestConn_ExecuteInBatch(t *testing.T) {
+	asst := assert.New(t)
+
+	// create table
+	err := createTable()
+	asst.Nil(err, "execute create table sql failed")
+	// insert data
+	ts := newTestStruct("aa", 1, 3.14)
+	tsEmpty := newTestStructWithDefault()
+	sql1 := `INSERT INTO t05(name, col1, col2) VALUES(?, ?, ?);`
+	sql2 := `INSERT INTO t05(name, col1, col2) VALUES(?, ?, ?);`
+	commands := []*middleware.Command{
+		middleware.NewCommand(sql1, ts.Name, ts.Col1, ts.Col2),
+		middleware.NewCommand(sql2, tsEmpty.Name, tsEmpty.Col1, tsEmpty.Col2),
+	}
+	results, err := conn.ExecuteInBatch(commands, true)
+	asst.Nil(err, "execute in batch failed")
+	asst.Equal(2, len(results), "execute in batch failed")
+	// drop table
+	err = dropTable()
+	asst.Nil(err, "execute drop table sql failed")
 }
 
 func TestConn_Execute(t *testing.T) {

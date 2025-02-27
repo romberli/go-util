@@ -202,18 +202,33 @@ func (conn *Conn) prepareContext(ctx context.Context, command string) (middlewar
 	return NewStatement(stmt, tx, command), nil
 }
 
+// ExecuteInBatch executes given commands in batch
+func (conn *Conn) ExecuteInBatch(commands []*middleware.Command) ([]*Result, error) {
+	var results []*Result
+	for _, command := range commands {
+		result, err := conn.Execute(command.GetStatement(), command.GetArgs()...)
+		if err != nil {
+			return nil, err
+		}
+
+		results = append(results, result)
+	}
+
+	return results, nil
+}
+
 // Execute executes given sql with arguments and return a result
-func (conn *Conn) Execute(command string, args ...interface{}) (middleware.Result, error) {
+func (conn *Conn) Execute(command string, args ...interface{}) (*Result, error) {
 	return conn.executeContext(context.Background(), command, args...)
 }
 
 // ExecuteContext executes given sql with arguments and context then return a result
-func (conn *Conn) ExecuteContext(ctx context.Context, command string, args ...interface{}) (middleware.Result, error) {
+func (conn *Conn) ExecuteContext(ctx context.Context, command string, args ...interface{}) (*Result, error) {
 	return conn.executeContext(ctx, command, args...)
 }
 
 // execute executes given sql with arguments and context then return a result
-func (conn *Conn) executeContext(ctx context.Context, command string, args ...interface{}) (middleware.Result, error) {
+func (conn *Conn) executeContext(ctx context.Context, command string, args ...interface{}) (*Result, error) {
 	// set random value to nil
 	err := common.SetRandomValueToNil(args...)
 	if err != nil {

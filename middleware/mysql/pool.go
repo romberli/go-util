@@ -217,6 +217,21 @@ func (pc *PoolConn) prepareContext(ctx context.Context, command string) (middlew
 	return pc.Conn.PrepareContext(ctx, command)
 }
 
+// ExecuteInBatch executes given commands in batch
+func (pc *PoolConn) ExecuteInBatch(commands []*middleware.Command, isTransaction bool) ([]middleware.Result, error) {
+	var resultList []middleware.Result
+	results, err := pc.Conn.ExecuteInBatch(commands, isTransaction)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, result := range results {
+		resultList = append(resultList, result)
+	}
+
+	return resultList, nil
+}
+
 // Execute executes given sql and placeholders on the mysql server
 func (pc *PoolConn) Execute(command string, args ...interface{}) (middleware.Result, error) {
 	return pc.executeContext(context.Background(), command, args...)

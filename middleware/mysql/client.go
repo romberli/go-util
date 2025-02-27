@@ -7,9 +7,11 @@ import (
 
 	"github.com/go-mysql-org/go-mysql/client"
 	"github.com/pingcap/errors"
+	"github.com/romberli/log"
 
 	"github.com/romberli/go-util/common"
 	"github.com/romberli/go-util/constant"
+	"github.com/romberli/go-util/middleware"
 )
 
 type ReplicationRole string
@@ -121,6 +123,47 @@ func (conn *Conn) prepareContext(ctx context.Context, command string) (*Statemen
 	}
 
 	return NewStatement(stmt), nil
+}
+
+// ExecuteInBatch executes given sql and placeholders in batch and returns a result
+func (conn *Conn) ExecuteInBatch(commands []*middleware.Command, isTransaction bool) ([]*Result, error) {
+	var err error
+	if isTransaction {
+		err = conn.Begin()
+		if err != nil {
+			return nil, err
+		}
+		defer func() {
+			if err != nil {
+				rollbackErr := conn.Rollback()
+				if rollbackErr != nil {
+					log.Errorf("rollback failed, addr: %s, user: %s, error:\n%+v",
+						conn.Addr, conn.DBUser, rollbackErr)
+				}
+			} else {
+				commitErr := conn.Commit()
+				if commitErr != nil {
+					log.Errorf("commit failed, addr: %s, user: %s, error:\n%+v",
+						conn.Addr, conn.DBUser, commitErr)
+				}
+			}
+		}()
+	}
+
+	var (
+		result  *Result
+		results []*Result
+	)
+	for _, command := range commands {
+		result, err = conn.Execute(command.GetStatement(), command.GetArgs()...)
+		if err != nil {
+			return nil, err
+		}
+
+		results = append(results, result)
+	}
+
+	return results, nil
 }
 
 // Execute executes given sql and placeholders and returns a result

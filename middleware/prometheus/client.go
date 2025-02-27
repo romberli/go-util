@@ -12,6 +12,7 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/romberli/go-util/constant"
+	"github.com/romberli/go-util/middleware"
 
 	client "github.com/prometheus/client_golang/api"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
@@ -90,7 +91,7 @@ func NewConfigWithBasicAuth(addr, user, pass string) Config {
 	return Config{
 		client.Config{
 			Address:      addr,
-			RoundTripper: config.NewBasicAuthRoundTripper(user, config.Secret(pass), constant.EmptyString, constant.EmptyString, DefaultRoundTripper),
+			RoundTripper: config.NewBasicAuthRoundTripper(config.NewInlineSecret(user), config.NewInlineSecret(pass), DefaultRoundTripper),
 		},
 	}
 }
@@ -128,6 +129,21 @@ func (conn *Conn) CheckInstanceStatus() bool {
 	}
 
 	return status == 1
+}
+
+// ExecuteInBatch executes given commands in batch
+func (conn *Conn) ExecuteInBatch(commands []*middleware.Command) ([]*Result, error) {
+	var results []*Result
+	for _, command := range commands {
+		result, err := conn.Execute(command.GetStatement(), command.GetArgs()...)
+		if err != nil {
+			return nil, err
+		}
+
+		results = append(results, result)
+	}
+
+	return results, nil
 }
 
 // Execute executes given command with arguments and returns a result

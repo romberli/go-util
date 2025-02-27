@@ -194,6 +194,25 @@ func (pc *PoolConn) prepare() (middleware.Statement, error) {
 	return nil, errors.New("prometheus does not support prepare command, never call this function")
 }
 
+// ExecuteInBatch executes given commands and placeholders on the clickhouse server
+func (pc *PoolConn) ExecuteInBatch(commands []*middleware.Command, isTransaction bool) ([]middleware.Result, error) {
+	if isTransaction {
+		return nil, errors.Errorf("prometheus does not support transaction, never set isTransaction to true")
+	}
+
+	results, err := pc.Conn.ExecuteInBatch(commands)
+	if err != nil {
+		return nil, err
+	}
+
+	var resultList []middleware.Result
+	for _, result := range results {
+		resultList = append(resultList, result)
+	}
+
+	return resultList, nil
+}
+
 // Execute executes given sql and placeholders on the mysql server
 func (pc *PoolConn) Execute(command string, args ...interface{}) (middleware.Result, error) {
 	return pc.executeContext(context.Background(), command, args...)

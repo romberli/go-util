@@ -165,7 +165,7 @@ func (pc *PoolConn) Close() error {
 	return nil
 }
 
-// Disconnect disconnects from mysql, normally when using connection pool,
+// Disconnect disconnects from clickhouse, normally when using connection pool,
 // there is no need to disconnect manually, consider to use Close() instead.
 func (pc *PoolConn) Disconnect() error {
 	pc.Pool = nil
@@ -187,17 +187,36 @@ func (pc *PoolConn) PrepareContext(ctx context.Context, command string) (middlew
 	return pc.Conn.prepareContext(ctx, command)
 }
 
-// Execute executes given sql and placeholders on the mysql server
+// ExecuteInBatch executes given commands and placeholders on the clickhouse server
+func (pc *PoolConn) ExecuteInBatch(commands []*middleware.Command, isTransaction bool) ([]middleware.Result, error) {
+	if isTransaction {
+		return nil, errors.Errorf("clickhouse does not support transaction, never set isTransaction to true")
+	}
+
+	results, err := pc.Conn.ExecuteInBatch(commands)
+	if err != nil {
+		return nil, err
+	}
+
+	var resultList []middleware.Result
+	for _, result := range results {
+		resultList = append(resultList, result)
+	}
+
+	return resultList, nil
+}
+
+// Execute executes given sql and placeholders on the clickhouse server
 func (pc *PoolConn) Execute(command string, args ...interface{}) (middleware.Result, error) {
 	return pc.executeContext(context.Background(), command, args...)
 }
 
-// ExecuteContext executes given sql and placeholders on the mysql server
+// ExecuteContext executes given sql and placeholders on the clickhouse server
 func (pc *PoolConn) ExecuteContext(ctx context.Context, command string, args ...interface{}) (middleware.Result, error) {
 	return pc.executeContext(ctx, command, args...)
 }
 
-// Execute executes given sql and placeholders on the mysql server
+// Execute executes given sql and placeholders on the clickhouse server
 func (pc *PoolConn) executeContext(ctx context.Context, command string, args ...interface{}) (middleware.Result, error) {
 	return pc.Conn.executeContext(ctx, command, args...)
 }

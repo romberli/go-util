@@ -42,6 +42,8 @@ type PoolConn interface {
 	Prepare(command string) (Statement, error)
 	// PrepareContext prepares a statement with context and returns a Statement
 	PrepareContext(ctx context.Context, command string) (Statement, error)
+	// ExecuteInBatch executes given commands and placeholders on the middleware
+	ExecuteInBatch(commands []*Command, isTransaction bool) ([]Result, error)
 	// Execute executes given command and placeholders on the middleware
 	Execute(command string, args ...interface{}) (Result, error)
 	// ExecuteContext executes given command and placeholders with context on the middleware

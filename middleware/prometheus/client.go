@@ -135,7 +135,7 @@ func (conn *Conn) CheckInstanceStatus() bool {
 func (conn *Conn) ExecuteInBatch(commands []*middleware.Command) ([]*Result, error) {
 	var results []*Result
 	for _, command := range commands {
-		result, err := conn.Execute(command.GetStatement(), command.GetArgs()...)
+		result, err := conn.Execute(command.Statement, command.Args...)
 		if err != nil {
 			return nil, err
 		}

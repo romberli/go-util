@@ -157,7 +157,8 @@ func (conn *Conn) ExecuteInBatch(commands []*middleware.Command, isTransaction b
 	for _, command := range commands {
 		result, err = conn.Execute(command.Statement, command.Args...)
 		if err != nil {
-			return nil, err
+			return nil, errors.Errorf("execute failed, addr: %s, user: %s, %s, error:\n%+v",
+				conn.Addr, conn.DBUser, command.String(), err)
 		}
 
 		results = append(results, result)

@@ -1,6 +1,12 @@
 package middleware
 
-import "fmt"
+import (
+	"fmt"
+	"regexp"
+
+	"github.com/romberli/go-util/common"
+	"github.com/romberli/go-util/constant"
+)
 
 type Command struct {
 	Statement string        `middleware:"statement" json:"statement"`
@@ -17,5 +23,12 @@ func NewCommand(statement string, args ...interface{}) *Command {
 
 // String returns the sql of the command
 func (c *Command) String() string {
-	return fmt.Sprintf("statement: %s, args: %v", c.Statement, c.Args)
+	return fmt.Sprintf("statement: %s, args: %v",
+		c.GetMaskedStatement(), common.ConvertInterfaceSliceToString(c.Args, constant.CommaString))
+}
+
+func (c *Command) GetMaskedStatement() string {
+	re := regexp.MustCompile(`(?i)(IDENTIFIED BY\s*')([^']+)(')`)
+
+	return re.ReplaceAllString(c.Statement, "${1}xxxxxx${3}")
 }

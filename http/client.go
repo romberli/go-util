@@ -26,6 +26,10 @@ const (
 	DefaultContentTypeKey   = "Content-Type"
 	DefaultContentTypeValue = "application/json"
 
+	DefaultXTargetHeader        = "X-Target"
+	DefaultXForwardedHostHeader = "X-Forwarded-Host"
+	DefaultXForwardedForHeader  = "X-Forwarded-For"
+
 	StatusOK                  = http.StatusOK
 	StatusInternalServerError = http.StatusInternalServerError
 

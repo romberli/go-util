@@ -177,6 +177,9 @@ func TestSafeViper_ReloadConfig(t *testing.T) {
 			return
 		}
 
+		allowList := GetStringSlice(testServerSwaggerAllowListKey)
+		t.Logf("allowList: %v", allowList)
+
 		callbackMutex.Lock()
 		defer callbackMutex.Unlock()
 
@@ -248,8 +251,8 @@ func TestSafeViper_ReloadConfig(t *testing.T) {
 
 	callbackMutex.Lock()
 	defer callbackMutex.Unlock()
-	asst.True(callbackTriggered >= testMaxModifyNum, "Expected at least %d callbacks, got %d",
+	asst.True(callbackTriggered >= testMaxModifyNum, "expected at least %d callbacks, got %d",
 		testMaxModifyNum, callbackTriggered)
-	asst.Equal([]string{"domain5.local"}, lastAllowList, "Should have latest config value")
+	asst.Equal([]string{"domain5.local"}, lastAllowList, "should have latest config value")
 	t.Logf("lastAllowList: %v", lastAllowList)
 }

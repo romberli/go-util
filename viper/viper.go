@@ -64,12 +64,7 @@ func (sv *SafeViper) WatchConfig() {
 // OnConfigChange sets the config file while the config file changes
 func (sv *SafeViper) OnConfigChange(handler func(error)) {
 	sv.viper.OnConfigChange(func(event fsnotify.Event) {
-		sv.mutex.Lock()
-		defer sv.mutex.Unlock()
-
-		// 重新加载配置
-		err := sv.viper.ReadInConfig()
-
+		err := sv.ReadInConfig()
 		handler(errors.Trace(err))
 	})
 

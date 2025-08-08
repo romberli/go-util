@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/fsnotify/fsnotify"
+	"github.com/pingcap/errors"
 	"github.com/spf13/viper"
 )
 
@@ -69,7 +70,7 @@ func (sv *SafeViper) OnConfigChange(handler func(error)) {
 		// 重新加载配置
 		err := sv.viper.ReadInConfig()
 
-		handler(err)
+		handler(errors.Trace(err))
 	})
 
 	sv.WatchConfig()

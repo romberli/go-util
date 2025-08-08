@@ -1,6 +1,8 @@
 package viper
 
-import "time"
+import (
+	"time"
+)
 
 const (
 	DefaultFileType = "yaml"
@@ -11,6 +13,10 @@ var (
 )
 
 func init() {
+	sv = NewSafeViper()
+}
+
+func Reset() {
 	sv = NewSafeViper()
 }
 

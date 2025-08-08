@@ -7,17 +7,28 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/pingcap/errors"
 	"github.com/spf13/viper"
+
+	"github.com/romberli/go-util/constant"
+)
+
+const (
+	DefaultReloadThreshold = 500 * time.Millisecond
 )
 
 type SafeViper struct {
 	mutex sync.RWMutex
 	viper *viper.Viper
+
+	lastReload      time.Time
+	reloadThreshold time.Duration
 }
 
 // NewSafeViper returns a new *SafeViper
 func NewSafeViper() *SafeViper {
 	return &SafeViper{
-		viper: viper.New(),
+		viper:           viper.New(),
+		lastReload:      time.Now().Add(-constant.Century),
+		reloadThreshold: DefaultReloadThreshold,
 	}
 }
 
@@ -27,6 +38,16 @@ func (sv *SafeViper) Reset() {
 	defer sv.mutex.Unlock()
 
 	sv.viper = viper.New()
+	sv.lastReload = time.Now().Add(-constant.Century)
+	sv.reloadThreshold = DefaultReloadThreshold
+}
+
+// SetReloadThreshold sets the reload threshold
+func (sv *SafeViper) SetReloadThreshold(threshold time.Duration) {
+	sv.mutex.Lock()
+	defer sv.mutex.Unlock()
+
+	sv.reloadThreshold = threshold
 }
 
 // SetConfigFile sets the config file
@@ -64,7 +85,15 @@ func (sv *SafeViper) WatchConfig() {
 // OnConfigChange sets the config file while the config file changes
 func (sv *SafeViper) OnConfigChange(handler func(error)) {
 	sv.viper.OnConfigChange(func(event fsnotify.Event) {
+		now := time.Now()
+		if now.Sub(sv.lastReload) < sv.reloadThreshold {
+			return
+		}
+
+		sv.lastReload = now
+
 		err := sv.ReadInConfig()
+
 		handler(errors.Trace(err))
 	})
 

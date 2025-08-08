@@ -20,6 +20,14 @@ func NewSafeViper() *SafeViper {
 	}
 }
 
+// Reset resets the config file
+func (sv *SafeViper) Reset() {
+	sv.mutex.Lock()
+	defer sv.mutex.Unlock()
+
+	sv.viper = viper.New()
+}
+
 // SetConfigFile sets the config file
 func (sv *SafeViper) SetConfigFile(file string) {
 	sv.mutex.Lock()

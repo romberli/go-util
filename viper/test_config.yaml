@@ -1,0 +1,14 @@
+log:
+  file: log/run.log
+  maxSize: 20
+
+server:
+  pprof:
+    enabled: true
+  swagger:
+    allowList: ["localhost", "127.0.0.1", "192.168.137.2", "192.168.3.11"]
+  router:
+    pathMap: {
+      "/aaa1": "/aaa2",
+      "/bbb1": "/bbb2"
+    }

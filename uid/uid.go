@@ -2,7 +2,7 @@ package uid
 
 import (
 	"hash/crc32"
-	"math/rand"
+	"math/rand/v2"
 	"net"
 	"time"
 
@@ -66,8 +66,6 @@ func GetIPWorkerID(ip string) int {
 
 // GetRandWorkerID gets the worker id with random number
 func GetRandWorkerID() int {
-	rand.New(rand.NewSource(time.Now().UnixNano()))
-
 	return int(rand.Uint32()) & defaultMaxNodeID
 }
 

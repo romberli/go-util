@@ -1,8 +1,7 @@
 package common
 
 import (
-	"math/rand"
-	"time"
+	"math/rand/v2"
 
 	"github.com/pingcap/errors"
 
@@ -69,10 +68,9 @@ func GetRandomString(s string, num int) string {
 }
 
 func GetRandomBytes(s string, num int) []byte {
-	source := rand.NewSource(time.Now().UnixNano())
 	b := make([]byte, num)
 	for i := range b {
-		b[i] = s[source.Int63()%int64(len(s))]
+		b[i] = s[rand.IntN(len(s))]
 	}
 
 	return b

@@ -45,3 +45,23 @@ func DecryptWithPrivateKeyString(privateKeyStr, cipher string) (string, error) {
 
 	return rsa.DecryptWithPrivateKey(cipher)
 }
+
+// EncryptWithSM2PublicKeyString encrypts the data with public key string
+func EncryptWithSM2PublicKeyString(publicKeyStr, message string) (string, error) {
+	sm2, err := NewSM2WithPublicKeyHexString(publicKeyStr)
+	if err != nil {
+		return constant.EmptyString, err
+	}
+
+	return sm2.Encrypt(message)
+}
+
+// DecryptWithSM2PrivateKeyString decrypts the data with public key string
+func DecryptWithSM2PrivateKeyString(privateKeyStr, cipher string) (string, error) {
+	sm2, err := NewSM2WithPrivateKeyHexString(privateKeyStr)
+	if err != nil {
+		return constant.EmptyString, err
+	}
+
+	return sm2.Decrypt(cipher)
+}

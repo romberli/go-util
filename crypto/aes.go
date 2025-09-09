@@ -47,13 +47,13 @@ func newAESWithKeySize(size int) (*AES, error) {
 		return nil, err
 	}
 
-	return newAESWithKey(padKey(base64.StdEncoding.EncodeToString(key))), nil
+	return newAESWithKey(padAESKey(base64.StdEncoding.EncodeToString(key))), nil
 }
 
 // newAESWithKey returns a new *AES with given key
 func newAESWithKey(key string) *AES {
 	return &AES{
-		key: padKey(key),
+		key: padAESKey(key),
 	}
 }
 

@@ -119,6 +119,15 @@ func TestCommon(t *testing.T) {
 	asst.Equal(constant.TrueString, s, "convert string to string failed")
 	t.Log("==========test ConvertInterfaceToString() completed==========")
 
+	// test ConvertInterfaceToString()
+	t.Log("==========test ConvertInterfaceToString() started==========")
+	s = ConvertInterfaceToString(ts)
+	t.Logf("convert string: %s", s)
+	jsonBytes, err := json.Marshal(ts)
+	asst.Nil(err, "json.Marshal failed")
+	t.Logf("marshal string: %s", jsonBytes)
+	t.Log("==========test ConvertInterfaceToString() completed==========")
+
 	// test ConvertInterfaceToSliceInterface()
 	t.Log("==========test ConvertInterfaceToSliceInterface() started==========")
 	sliceInterface, err = ConvertInterfaceToSliceInterface(sliceInt)
@@ -330,7 +339,7 @@ func TestCommon(t *testing.T) {
 
 	ns4, err := CopyStructWithFields(ti, "TestInterface")
 	asst.Nil(err, "test CopyStructWithFields() failed")
-	jsonBytes, err := json.Marshal(ns4)
+	jsonBytes, err = json.Marshal(ns4)
 	t.Logf("copied field: %s", string(jsonBytes))
 	asst.Nil(err, "test CopyStructWithFields() failed")
 

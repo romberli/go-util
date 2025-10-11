@@ -49,6 +49,103 @@ func ConvertNumberToString(in interface{}) (string, error) {
 	}
 }
 
+// ConvertInterfaceToString converts struct pointer to string
+func ConvertInterfaceToString(in interface{}) string {
+	val := reflect.ValueOf(in)
+
+	if val.Kind() != reflect.Ptr {
+		return fmt.Sprintf("%v", in)
+	}
+	if val.IsNil() {
+		return "<nil>"
+	}
+
+	elem := val.Elem()
+
+	if elem.Kind() != reflect.Struct {
+		return fmt.Sprintf("%v", in)
+	}
+
+	var builder strings.Builder
+	builder.WriteString(elem.Type().Name())
+	builder.WriteString(constant.LeftBraceString)
+
+	for i := constant.ZeroInt; i < elem.NumField(); i++ {
+		field := elem.Type().Field(i)
+		fieldValue := elem.Field(i)
+		if field.PkgPath != constant.EmptyString {
+			continue
+		}
+		if i > constant.ZeroInt {
+			builder.WriteString(constant.CommaString + constant.SpaceString)
+		}
+
+		builder.WriteString(field.Name)
+		builder.WriteString(constant.ColonString)
+
+		switch fieldValue.Kind() {
+		case reflect.Slice, reflect.Array:
+			builder.WriteString(formatSlice(fieldValue))
+		case reflect.Map:
+			builder.WriteString(formatMap(fieldValue))
+		case reflect.Ptr:
+			if fieldValue.IsNil() {
+				builder.WriteString("<nil>")
+			} else {
+				builder.WriteString(fmt.Sprintf("%v", fieldValue.Interface()))
+			}
+		default:
+			builder.WriteString(fmt.Sprintf("%v", fieldValue.Interface()))
+		}
+	}
+
+	builder.WriteString(constant.RightBraceString)
+
+	return builder.String()
+}
+
+// formatSlice formats slice type
+func formatSlice(v reflect.Value) string {
+	if v.Len() == constant.ZeroInt {
+		return constant.EmptyListString
+	}
+
+	var builder strings.Builder
+	builder.WriteString(constant.LeftBracketString)
+
+	for i := constant.ZeroInt; i < v.Len(); i++ {
+		if i > constant.ZeroInt {
+			builder.WriteString(constant.CommaString + constant.SpaceString)
+		}
+		builder.WriteString(fmt.Sprintf("%v", v.Index(i).Interface()))
+	}
+
+	builder.WriteString(constant.RightBracketString)
+	return builder.String()
+}
+
+// formatMap formats map type
+func formatMap(v reflect.Value) string {
+	if v.Len() == constant.ZeroInt {
+		return constant.EmptyMapString
+	}
+
+	var builder strings.Builder
+	builder.WriteString(constant.LeftBraceString)
+
+	keys := v.MapKeys()
+	for i, key := range keys {
+		if i > 0 {
+			builder.WriteString(constant.CommaString + constant.SpaceString)
+		}
+		value := v.MapIndex(key)
+		builder.WriteString(fmt.Sprintf("%v:%v", key.Interface(), value.Interface()))
+	}
+
+	builder.WriteString(constant.RightBraceString)
+	return builder.String()
+}
+
 // ConvertInterfaceToSliceInterface converts input data which must be slice type to interface slice,
 // it means each element in the slice is interface type.
 func ConvertInterfaceToSliceInterface(in interface{}) ([]interface{}, error) {

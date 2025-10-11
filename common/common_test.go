@@ -28,6 +28,14 @@ func (ts *trimStruct) GetNSA() *nestStruct {
 	return ts.NSA
 }
 
+func (ts *trimStruct) String() string {
+	if ts == nil {
+		return constant.EmptyString
+	}
+
+	return ConvertInterfaceToString(ts)
+}
+
 type expectStructA struct {
 	ID   int
 	Name string
@@ -122,10 +130,12 @@ func TestCommon(t *testing.T) {
 	// test ConvertInterfaceToString()
 	t.Log("==========test ConvertInterfaceToString() started==========")
 	s = ConvertInterfaceToString(ts)
-	t.Logf("convert string: %s", s)
+	t.Logf("convert struct to string: %s", s)
 	jsonBytes, err := json.Marshal(ts)
 	asst.Nil(err, "json.Marshal failed")
 	t.Logf("marshal string: %s", jsonBytes)
+	tsl := []*trimStruct{ts}
+	t.Logf("print struct list: %v", tsl)
 	t.Log("==========test ConvertInterfaceToString() completed==========")
 
 	// test ConvertInterfaceToSliceInterface()

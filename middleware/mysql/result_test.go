@@ -122,7 +122,7 @@ func TestResult_Tmp(t *testing.T) {
 	asst.Nil(err, common.CombineMessageWithError("execute sql failed", err))
 	err = result.MapToStructByRowIndex(serverInfo, 0, constant.DefaultMiddlewareTag)
 	asst.Nil(err, common.CombineMessageWithError("map to struct failed", err))
-	t.Logf(serverInfo.HostTags)
+	t.Logf("%v", serverInfo.HostTags)
 	t.Logf("%v", serverInfo.HostTagList)
 }
 
@@ -145,7 +145,7 @@ func TestResult_Marshal(t *testing.T) {
 	}
 	respBytes, err := json.Marshal(resp)
 	asst.Nil(err, common.CombineMessageWithError("marshal response failed", err))
-	t.Logf(string(respBytes))
+	t.Logf("%v", string(respBytes))
 
 	resultBytes, _, _, err := jsonparser.Get(respBytes, "result")
 	asst.Nil(err, common.CombineMessageWithError("get result failed", err))

@@ -378,3 +378,37 @@ func TestMock(t *testing.T) {
 	asst.Nil(err, "execute sql failed")
 	asst.Equal(1, r, "execute sql failed")
 }
+
+func TestInsightRDB_GetRegionNameByAZName(t *testing.T) {
+	asst := assert.New(t)
+
+	addr := "192.168.137.31:3309"
+	dbName := ""
+	dbUser := "super"
+	dbPass := "super"
+
+	conn, err := NewConn(addr, dbName, dbUser, dbPass)
+	asst.Nil(err, "test GetRegionNameByAZName() failed")
+
+	sql := `
+		SELECT ci.city_name
+		FROM goldendb_omm.gdb_room_info ri
+			INNER JOIN goldendb_omm.gdb_city_info ci ON ri.city_id = ci.city_id
+		WHERE ri.room_name = ?
+	`
+	azName := "上海机房"
+
+	result, err := conn.Execute(sql, azName)
+	asst.Nil(err, "test GetRegionNameByAZName() failed")
+
+	switch result.RowNumber() {
+	case constant.ZeroInt:
+		t.Errorf("metadata.InsightRDBRepo.GetRegionNameByAZName(): data does not exist. azName: %s", azName)
+	case constant.OneInt:
+		regionName, err := result.GetString(constant.ZeroInt, constant.ZeroInt)
+		asst.Nil(err, "test GetRegionNameByAZName() failed")
+		t.Logf("region name: %s", regionName)
+	default:
+		t.Errorf("metadata.InsightRDBRepo.GetRegionNameByAZName(): duplicate key exists. azName: %s", azName)
+	}
+}

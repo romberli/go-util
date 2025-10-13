@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	DefaultRSAKeySize = 512
+	DefaultRSAKeySize = 1024
 )
 
 type RSA struct {

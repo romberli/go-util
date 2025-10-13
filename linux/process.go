@@ -11,7 +11,7 @@ import (
 
 	"github.com/pingcap/errors"
 	"github.com/romberli/log"
-	"github.com/shirou/gopsutil/v3/process"
+	"github.com/shirou/gopsutil/v4/process"
 
 	"github.com/romberli/go-util/constant"
 )

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/romberli/log"
-	"github.com/shirou/gopsutil/v3/process"
+	"github.com/shirou/gopsutil/v4/process"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/romberli/go-util/constant"
@@ -75,7 +75,7 @@ func TestProcess(t *testing.T) {
 	t.Log("==========GetPidFromPidFile completed.==========")
 
 	t.Log("==========KillServer started.==========")
-	binPath := "/Users/romber/work/source_code/go/src/github.com/romberli/go-util/linux/test/bin/go-sandbox"
+	binPath := "/Users/romber/source_code/go/src/github.com/romberli/go-util/linux/test/bin/go-sandbox"
 	count := 100
 	pidFileSandbox := "/tmp/go-sandbox.pid"
 	cmd := fmt.Sprintf("%s --count=%d --pid-file=%s", binPath, count, pidFileSandbox)

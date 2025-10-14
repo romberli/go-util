@@ -24,19 +24,22 @@ func verifyKeyMatch(privateKey *sm2.PrivateKey, publicKey *sm2.PublicKey) bool {
 }
 
 func TestSM2_All(t *testing.T) {
-	TestSM2_GetPrivateKeyHexString(t)
+	TestSM2_GetKeyHexString(t)
 	TestSM2_Encrypt(t)
 	TestSM2_Decrypt(t)
 }
 
-func TestSM2_GetPrivateKeyHexString(t *testing.T) {
+func TestSM2_GetKeyHexString(t *testing.T) {
 	asst := assert.New(t)
 	s, err := NewSM2()
-	asst.Nil(err, "test SM2.GetPrivateKeyHexString() failed")
+	asst.Nil(err, "test SM2.GetKeyHexString() failed")
 	privateKeyStr := s.GetPrivateKeyHexString()
-	asst.Nil(err, "test SM2.GetPrivateKeyHexString() failed")
-	asst.NotEmpty(privateKeyStr, "test SM2.GetPrivateKeyHexString() failed")
+	asst.Nil(err, "test SM2.GetKeyHexString() failed")
+	asst.NotEmpty(privateKeyStr, "test SM2.GetKeyHexString() failed")
+	publicKeyStr := s.GetPublicKeyHexString()
+	asst.NotEmpty(publicKeyStr, "test SM2.GetKeyHexString() failed")
 	t.Logf("private key: %s", privateKeyStr)
+	t.Logf("public key: %s", publicKeyStr)
 }
 
 func TestSM2_Encrypt(t *testing.T) {

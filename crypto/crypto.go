@@ -4,8 +4,8 @@ import (
 	"github.com/romberli/go-util/constant"
 )
 
-// EncryptWithPublicKeyString encrypts the data with public key string
-func EncryptWithPublicKeyString(publicKeyStr, message string) (string, error) {
+// EncryptWithRSAPublicKeyString encrypts the data with public key string
+func EncryptWithRSAPublicKeyString(publicKeyStr, message string) (string, error) {
 	rsa := NewEmptyRSA()
 	err := rsa.SetPublicKey(publicKeyStr)
 	if err != nil {
@@ -15,8 +15,8 @@ func EncryptWithPublicKeyString(publicKeyStr, message string) (string, error) {
 	return rsa.EncryptWithPublicKey(message)
 }
 
-// DecryptWithPublicKeyString decrypts the data with public key string
-func DecryptWithPublicKeyString(publicKeyStr, cipher string) (string, error) {
+// DecryptWithRSAPublicKeyString decrypts the data with public key string
+func DecryptWithRSAPublicKeyString(publicKeyStr, cipher string) (string, error) {
 	rsa := NewEmptyRSA()
 	err := rsa.SetPublicKey(publicKeyStr)
 	if err != nil {
@@ -26,8 +26,8 @@ func DecryptWithPublicKeyString(publicKeyStr, cipher string) (string, error) {
 	return rsa.DecryptWithPublicKey(cipher)
 }
 
-// EncryptWithPrivateKeyString encrypts the data with private key string
-func EncryptWithPrivateKeyString(privateKeyStr, message string) (string, error) {
+// EncryptWithRSAPrivateKeyString encrypts the data with private key string
+func EncryptWithRSAPrivateKeyString(privateKeyStr, message string) (string, error) {
 	rsa, err := NewRSAWithPrivateKeyString(privateKeyStr)
 	if err != nil {
 		return constant.EmptyString, err
@@ -36,8 +36,8 @@ func EncryptWithPrivateKeyString(privateKeyStr, message string) (string, error) 
 	return rsa.EncryptWithPrivateKey(message)
 }
 
-// DecryptWithPrivateKeyString decrypts the data with private key string
-func DecryptWithPrivateKeyString(privateKeyStr, cipher string) (string, error) {
+// DecryptWithRSAPrivateKeyString decrypts the data with private key string
+func DecryptWithRSAPrivateKeyString(privateKeyStr, cipher string) (string, error) {
 	rsa, err := NewRSAWithPrivateKeyString(privateKeyStr)
 	if err != nil {
 		return constant.EmptyString, err

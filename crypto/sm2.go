@@ -131,6 +131,9 @@ func (s *SM2) EncryptWithPublicKey(message string, mode int) (string, error) {
 // DecryptWithPrivateKey decrypts the data with private key
 func (s *SM2) DecryptWithPrivateKey(cipher string, mode int) (string, error) {
 	cipherBytes, err := hex.DecodeString(cipher)
+	if err != nil {
+		return constant.EmptyString, errors.Trace(err)
+	}
 	message, err := sm2.Decrypt(s.privateKey, cipherBytes, mode)
 	if err != nil {
 		return constant.EmptyString, errors.Trace(err)

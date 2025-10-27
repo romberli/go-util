@@ -1,6 +1,7 @@
 package viper
 
 import (
+	"io"
 	"time"
 )
 
@@ -28,6 +29,10 @@ func SetConfigType(fileType string) {
 	sv.SetConfigType(fileType)
 }
 
+func ReadConfig(in io.Reader) error {
+	return sv.ReadConfig(in)
+}
+
 func ReadInConfig() error {
 	return sv.ReadInConfig()
 }
@@ -40,12 +45,40 @@ func OnConfigChange(handler func(err error)) {
 	sv.OnConfigChange(handler)
 }
 
+func WriteConfig() error {
+	return sv.WriteConfig()
+}
+
+func SafeWriteConfig() error {
+	return sv.SafeWriteConfig()
+}
+
+func WriteConfigAs(file string) error {
+	return sv.WriteConfigAs(file)
+}
+
+func SafeWriteConfigAs(file string) error {
+	return sv.SafeWriteConfigAs(file)
+}
+
+func WriteConfigTo(writer io.Writer) error {
+	return sv.WriteConfigTo(writer)
+}
+
 func SetDefault(key string, value interface{}) {
 	sv.SetDefault(key, value)
 }
 
 func Set(key string, value interface{}) {
 	sv.Set(key, value)
+}
+
+func AllKeys() []string {
+	return sv.AllKeys()
+}
+
+func InConfig(key string) bool {
+	return sv.InConfig(key)
 }
 
 func Get(key string) interface{} {

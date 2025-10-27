@@ -12,6 +12,16 @@ import (
 	"github.com/romberli/go-util/constant"
 )
 
+// KeyExists checks if the key exists in the json data
+func KeyExists(data []byte, keys ...string) bool {
+	_, _, _, err := jsonparser.Get(data, keys...)
+	if err != nil {
+		return false
+	}
+
+	return true
+}
+
 // KeyPathExists checks if the key path exists in the json data
 func KeyPathExists(data []byte, path string) bool {
 	_, _, _, err := jsonparser.Get(data, strings.Split(path, constant.DotString)...)

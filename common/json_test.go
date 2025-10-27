@@ -40,6 +40,14 @@ func (e *Example) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func TestKeyExists(t *testing.T) {
+	asst := assert.New(t)
+
+	data := []byte(`{"a": {"b": {"c": 1}}}`)
+	asst.True(KeyExists(data, "a", "b", "c"), "test KeyPathExists() failed")
+	asst.False(KeyExists(data, "a", "b", "c", "d"), "test KeyPathExists() failed")
+}
+
 func TestKeyPathExists(t *testing.T) {
 	asst := assert.New(t)
 

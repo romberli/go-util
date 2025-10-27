@@ -1,6 +1,7 @@
 package viper
 
 import (
+	"io"
 	"sync"
 	"time"
 
@@ -66,12 +67,30 @@ func (sv *SafeViper) SetConfigType(fileType string) {
 	sv.viper.SetConfigType(fileType)
 }
 
+// ReadConfig sets the config file
+func (sv *SafeViper) ReadConfig(in io.Reader) error {
+	sv.mutex.Lock()
+	defer sv.mutex.Unlock()
+
+	err := sv.viper.ReadConfig(in)
+	if err != nil {
+		return errors.Trace(err)
+	}
+
+	return nil
+}
+
 // SetConfigName sets the name of the config file
 func (sv *SafeViper) ReadInConfig() error {
 	sv.mutex.Lock()
 	defer sv.mutex.Unlock()
 
-	return sv.viper.ReadInConfig()
+	err := sv.viper.ReadInConfig()
+	if err != nil {
+		return errors.Trace(err)
+	}
+
+	return nil
 }
 
 // WatchConfig sets the config file
@@ -100,6 +119,66 @@ func (sv *SafeViper) OnConfigChange(handler func(error)) {
 	sv.WatchConfig()
 }
 
+func (sv *SafeViper) WriteConfig() error {
+	sv.mutex.Lock()
+	defer sv.mutex.Unlock()
+
+	err := sv.viper.WriteConfig()
+	if err != nil {
+		return errors.Trace(err)
+	}
+
+	return nil
+}
+
+func (sv *SafeViper) SafeWriteConfig() error {
+	sv.mutex.Lock()
+	defer sv.mutex.Unlock()
+
+	err := sv.viper.SafeWriteConfig()
+	if err != nil {
+		return errors.Trace(err)
+	}
+
+	return nil
+}
+
+func (sv *SafeViper) WriteConfigAs(file string) error {
+	sv.mutex.Lock()
+	defer sv.mutex.Unlock()
+
+	err := sv.viper.WriteConfigAs(file)
+	if err != nil {
+		return errors.Trace(err)
+	}
+
+	return nil
+}
+
+func (sv *SafeViper) SafeWriteConfigAs(file string) error {
+	sv.mutex.Lock()
+	defer sv.mutex.Unlock()
+
+	err := sv.viper.SafeWriteConfigAs(file)
+	if err != nil {
+		return errors.Trace(err)
+	}
+
+	return nil
+}
+
+func (sv *SafeViper) WriteConfigTo(writer io.Writer) error {
+	sv.mutex.Lock()
+	defer sv.mutex.Unlock()
+
+	err := sv.viper.WriteConfigTo(writer)
+	if err != nil {
+		return errors.Trace(err)
+	}
+
+	return nil
+}
+
 func (sv *SafeViper) SetDefault(key string, value interface{}) {
 	sv.mutex.Lock()
 	defer sv.mutex.Unlock()
@@ -112,6 +191,20 @@ func (sv *SafeViper) Set(key string, value interface{}) {
 	defer sv.mutex.Unlock()
 
 	sv.viper.Set(key, value)
+}
+
+func (sv *SafeViper) AllKeys() []string {
+	sv.mutex.RLock()
+	defer sv.mutex.RUnlock()
+
+	return sv.viper.AllKeys()
+}
+
+func (sv *SafeViper) InConfig(key string) bool {
+	sv.mutex.RLock()
+	defer sv.mutex.RUnlock()
+
+	return sv.viper.InConfig(key)
 }
 
 func (sv *SafeViper) Get(key string) interface{} {

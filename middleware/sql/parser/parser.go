@@ -7,8 +7,8 @@ import (
 
 	"github.com/percona/go-mysql/query"
 	"github.com/pingcap/errors"
-	"github.com/pingcap/parser"
-	"github.com/pingcap/parser/ast"
+	"github.com/pingcap/tidb/pkg/parser"
+	"github.com/pingcap/tidb/pkg/parser/ast"
 	"github.com/romberli/go-multierror"
 
 	"github.com/romberli/go-util/constant"
@@ -65,6 +65,11 @@ func (p *Parser) GetSQLID(sql string) string {
 	return query.Id(p.GetFingerprint(sql))
 }
 
+// SetParseTableDefinition sets the parse table definition flag of the visitor
+func (p *Parser) SetParseTableDefinition(parseTableDefinition bool) {
+	p.visitor.SetParseTableDefinition(parseTableDefinition)
+}
+
 // Parse parses sql and returns the result,
 // not that only some kinds of statements will be parsed,
 // see the constants defined at the top of visitor.go file
@@ -83,7 +88,7 @@ func (p *Parser) Parse(sql string) (*Result, error) {
 
 // GetStatementNodes gets the statement nodes of the given sql
 func (p *Parser) GetStatementNodes(sql string) ([]ast.StmtNode, error) {
-	stmtNodes, warns, err := p.GetTiDBParser().Parse(sql, constant.EmptyString, constant.EmptyString)
+	stmtNodes, warns, err := p.GetTiDBParser().ParseSQL(sql)
 	if err != nil || warns != nil {
 		merr := &multierror.Error{}
 
@@ -98,6 +103,17 @@ func (p *Parser) GetStatementNodes(sql string) ([]ast.StmtNode, error) {
 	}
 
 	return stmtNodes, nil
+}
+
+// GetTableDefinition gets the table definition of the given sql
+func (p *Parser) GetTableDefinition(sql string) (*TableDefinition, error) {
+	p.SetParseTableDefinition(true)
+	_, err := p.Parse(sql)
+	if err != nil {
+		return nil, err
+	}
+	
+	return p.visitor.tableDefinition, nil
 }
 
 // Split splits multiple sql statements into a slice

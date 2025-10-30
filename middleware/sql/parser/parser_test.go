@@ -51,17 +51,21 @@ func TestParser_GetSQLID(t *testing.T) {
 func TestParser_Parse(t *testing.T) {
 	asst := assert.New(t)
 
-	sql := `CREATE TABLE ` + "`t01`" + `(
-	 id bigint(20) comment '主键ID',
-	 col1 varchar(64) NOT NULL,
-	 col2 varchar(64)  NOT NULL,
+	sql := `CREATE TABLE ` + "t01" + `(
+	 id bigint(20) auto_increment comment '主键ID',
+	 col1 varchar(64) character set gbk NOT NULL,
+	 col2 varchar(64) collate utf8mb4_bin NOT NULL default 'abc',
 	 col3 varchar(64) NOT NULL,
-	 col4 int,
-	 col5 mediumtext,
+	 col4 int unsigned NOT NULL Default 123,
+	 col5 decimal(10,2), 
+	 col6 mediumtext,
+	 col7 mediumblob,
 	 created_at datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
 	 last_updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后更新时间',
 	 PRIMARY KEY (id),
-	 KEY idx_col1_col2_col3 (col1, col2, col3)
+	 UNIQUE KEY idx01_col1 (col1) visible,
+	 KEY IDX02_COL1_COL2_COL3 (col1(10) asc, col2(20) desc, col3),
+	 KEY Idx03_col2(col2) invisible
 	 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ;`
 	// sql = `
 	// 	select *
@@ -70,8 +74,9 @@ func TestParser_Parse(t *testing.T) {
 	// 			 inner join t02 on t01.id = t02.id
 	// 			 inner join db2.t02 dt02 on dt01.id = dt02.id
 	// `
-	sql = "GRANT SELECT ON *.* TO `mysql.sys`@`localhost`"
+	// sql = "GRANT SELECT ON *.* TO `mysql.sys`@`localhost`"
 	p := NewParserWithDefault()
+	p.SetParseTableDefinition(true)
 
 	result, err := p.Parse(sql)
 	asst.Nil(err, "test Parse() failed")
@@ -114,4 +119,33 @@ func TestParser_MergeDDLStatements(t *testing.T) {
 	for _, sql := range result {
 		t.Log(sql)
 	}
+}
+
+func TestParser_GetTableDefinition(t *testing.T) {
+	asst := assert.New(t)
+
+	sql := `CREATE TABLE ` + "t01" + `(
+	 id bigint(20) auto_increment comment '主键ID',
+	 col1 varchar(64) character set gbk NOT NULL,
+	 col2 varchar(64) collate utf8mb4_bin NOT NULL default 'abc',
+	 col3 varchar(64) NOT NULL,
+	 col4 int unsigned NOT NULL Default 123 comment 'this is col4',
+	 col5 decimal(10,2), 
+	 col6 mediumtext,
+	 col7 mediumblob,
+	 created_at datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+	 last_updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后更新时间',
+	 PRIMARY KEY (id),
+	 UNIQUE KEY idx01_col1 (col1) visible,
+	 KEY IDX02_COL1_COL2_COL3 (col1(10) asc, col2(20) desc, col3),
+	 KEY Idx03_col2(col2) invisible
+	 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ;`
+	p := NewParserWithDefault()
+	p.SetParseTableDefinition(true)
+
+	td, err := p.GetTableDefinition(sql)
+	asst.Nil(err, "test GetTableDefinition() failed")
+	jsonBytes, err := json.Marshal(td)
+	asst.Nil(err, "test GetTableDefinition() failed")
+	t.Log(string(jsonBytes))
 }

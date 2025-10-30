@@ -5,12 +5,14 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/pingcap/parser/ast"
+	"github.com/pingcap/errors"
+	"github.com/pingcap/tidb/pkg/parser/ast"
+	"github.com/pingcap/tidb/pkg/parser/types"
 
 	"github.com/romberli/go-util/common"
 	"github.com/romberli/go-util/constant"
 
-	driver "github.com/pingcap/parser/test_driver"
+	driver "github.com/pingcap/tidb/pkg/parser/test_driver"
 )
 
 const (
@@ -28,6 +30,8 @@ const (
 	FuncCallExprString      = "*ast.FuncCallExpr"
 	AggregateFuncExprString = "*ast.AggregateFuncExpr"
 	WindowFuncExprString    = "*ast.WindowFuncExpr"
+
+	CurrentTimeStampFuncName = "current_timestamp"
 )
 
 var (
@@ -55,6 +59,9 @@ type Visitor struct {
 	sqlList  []string
 	funcList []string
 	result   *Result
+
+	parseTableDefinition bool
+	tableDefinition      *TableDefinition
 }
 
 // NewVisitor returns a new *Visitor
@@ -73,6 +80,12 @@ func NewVisitorWithDefault() *Visitor {
 		funcList: DefaultFuncList,
 		result:   NewEmptyResult(),
 	}
+}
+
+// SetParseTableDefinition sets the flag to parse table definition
+func (v *Visitor) SetParseTableDefinition(parseTableDefinition bool) {
+	v.parseTableDefinition = parseTableDefinition
+	v.tableDefinition = NewEmptyTableDefinition()
 }
 
 // GetSQLList returns the sql list
@@ -140,10 +153,127 @@ func (v *Visitor) visitTableName(node *ast.TableName) {
 
 // visitCreateTableStmt visits the given node which type is *ast.CreateTableStmt
 func (v *Visitor) visitCreateTableStmt(node *ast.CreateTableStmt) {
-	for _, tableOption := range node.Options {
-		if tableOption.Tp == ast.TableOptionComment {
-			v.result.SetTableComment(node.Table.Name.L, tableOption.StrValue)
-			break
+	if v.parseTableDefinition {
+		tableSchema := node.Table.Schema.L
+		tableName := node.Table.Name.L
+		v.tableDefinition.TableSchema = tableSchema
+		v.tableDefinition.TableName = tableName
+		// table options
+		for _, tableOption := range node.Options {
+			switch tableOption.Tp {
+			case ast.TableOptionEngine:
+				v.tableDefinition.TableEngine = tableOption.StrValue
+			case ast.TableOptionCharset:
+				v.tableDefinition.Charset = tableOption.StrValue
+			case ast.TableOptionCollate:
+				v.tableDefinition.Collation = tableOption.StrValue
+			case ast.TableOptionComment:
+				v.tableDefinition.TableComment = tableOption.StrValue
+			case ast.TableOptionRowFormat:
+				v.tableDefinition.RowFormat = tableOption.StrValue
+			}
+		}
+		// column definitions
+		for i, column := range node.Cols {
+			columnName := column.Name.Name.L
+			cd := NewColumnDefinition(tableSchema, tableName, columnName)
+			cd.OrdinalPosition = i + constant.OneInt
+			cd.CharacterSetName = column.Tp.GetCharset()
+			cd.CollationName = column.Tp.GetCollate()
+			fieldType := column.Tp.GetType()
+			cd.DataType = types.TypeToStr(fieldType, cd.CharacterSetName)
+			cd.ColumnType = column.Tp.InfoSchemaStr()
+
+			for _, option := range column.Options {
+				switch option.Tp {
+				case ast.ColumnOptionDefaultValue:
+					switch expr := option.Expr.(type) {
+					case *driver.ValueExpr:
+						cd.DefaultValue = common.ConvertInterfaceToString(expr.GetValue())
+					case *ast.FuncCallExpr:
+						if expr.FnName.L == CurrentTimeStampFuncName {
+							var args []string
+							for _, arg := range expr.Args {
+								strVal := common.ConvertInterfaceToString(arg.(*driver.ValueExpr).GetValue())
+								args = append(args, strVal)
+							}
+							cd.DefaultValue = GetFullFuncName(expr.FnName.L, args...)
+						}
+					default:
+						err := errors.Errorf("unknown default value expression type. columnName: %s", columnName)
+						cd.AddError(err)
+					}
+				case ast.ColumnOptionCollate:
+					cd.CollationName = option.StrValue
+				case ast.ColumnOptionNotNull:
+					cd.NotNull = true
+				case ast.ColumnOptionAutoIncrement:
+					cd.IsAutoIncrement = true
+					cd.NotNull = true
+				case ast.ColumnOptionComment:
+					cd.ColumnComment = option.Expr.(*driver.ValueExpr).GetDatumString()
+				case ast.ColumnOptionOnUpdate:
+					switch expr := option.Expr.(type) {
+					case *driver.ValueExpr:
+						cd.OnUpdateValue = common.ConvertInterfaceToString(expr.GetValue())
+					case *ast.FuncCallExpr:
+						if expr.FnName.L == CurrentTimeStampFuncName {
+							var args []string
+							for _, arg := range expr.Args {
+								strVal := common.ConvertInterfaceToString(arg.(*driver.ValueExpr).GetValue())
+								args = append(args, strVal)
+							}
+							cd.OnUpdateValue = GetFullFuncName(expr.FnName.L, args...)
+						}
+					default:
+						err := errors.Errorf("unknown default value expression type. columnName: %s", columnName)
+						cd.AddError(err)
+					}
+				default:
+					err := errors.Errorf("unknown column option. columnName: %s, optionType: %d", columnName, option.Tp)
+					cd.AddError(err)
+				}
+			}
+
+			v.tableDefinition.AddColumn(cd)
+		}
+		// index definition
+		for _, constraint := range node.Constraints {
+			indexName := constraint.Name
+			id := NewIndexDefinition(tableSchema, tableName, indexName)
+			id.HandleOption(constraint.Option)
+
+			switch constraint.Tp {
+			case ast.ConstraintPrimaryKey:
+				id.IndexName = PrimaryKeyName
+				id.IsPrimary = true
+				id.IsUnique = true
+
+				for _, column := range constraint.Keys {
+					columnName := column.Column.Name.L
+					cd := v.tableDefinition.GetColumnDefinition(columnName)
+					cd.NotNull = true
+					is := NewIndexSpec(cd, column.Desc, column.Length)
+					id.AddIndexSpec(is)
+				}
+			case ast.ConstraintIndex, ast.ConstraintUniq:
+				id.IndexName = constraint.Name
+				if constraint.Tp == ast.ConstraintUniq {
+					id.IsUnique = true
+				}
+
+				for _, column := range constraint.Keys {
+					columnName := column.Column.Name.L
+					cd := v.tableDefinition.GetColumnDefinition(columnName)
+					is := NewIndexSpec(cd, column.Desc, column.Length)
+					id.AddIndexSpec(is)
+				}
+			default:
+				err := errors.Errorf("unknown index type. indexName: %s, indexType: %d", indexName, constraint.Tp)
+				id.AddError(err)
+			}
+
+			v.tableDefinition.AddIndex(id)
 		}
 	}
 }

@@ -80,8 +80,8 @@ func (p *Parser) GetSQLID(sql string) string {
 }
 
 // SetParseTableDefinition sets the parse table definition flag of the visitor
-func (p *Parser) SetParseTableDefinition(sql string, parseTableDefinition bool) {
-	p.visitor.SetParseTableDefinition(sql, parseTableDefinition)
+func (p *Parser) SetParseTableDefinition(parseTableDefinition bool) {
+	p.visitor.SetParseTableDefinition(p.sql, parseTableDefinition)
 }
 
 // Parse parses sql and returns the result,
@@ -122,7 +122,7 @@ func (p *Parser) GetStatementNodes(sql string) ([]ast.StmtNode, error) {
 
 // ParseTableDefinition gets the table definition of the given sql
 func (p *Parser) ParseTableDefinition(sql string) (*TableFullDefinition, error) {
-	p.SetParseTableDefinition(sql, true)
+	p.SetParseTableDefinition(true)
 
 	_, err := p.Parse(sql)
 	if err != nil {

@@ -9,7 +9,7 @@ import (
 
 func testParserGetTableDefinition(sql string) (*TableFullDefinition, error) {
 	p := NewParserWithDefault()
-	p.SetParseTableDefinition(sql, true)
+	p.SetParseTableDefinition(true)
 
 	td, err := p.ParseTableDefinition(sql)
 	if err != nil {
@@ -88,7 +88,7 @@ func TestParser_Parse(t *testing.T) {
 	// `
 	// sql = "GRANT SELECT ON *.* TO `mysql.sys`@`localhost`"
 	p := NewParserWithDefault()
-	p.SetParseTableDefinition(sql, true)
+	p.SetParseTableDefinition(true)
 
 	result, err := p.Parse(sql)
 	asst.Nil(err, "test Parse() failed")

@@ -463,7 +463,14 @@ func (td *TableDefinition) Equal(other *TableDefinition) bool {
 
 // Diff returns the difference between two table definitions
 func (td *TableDefinition) Diff(source *TableDefinition) *TableDiff {
-	if td.Equal(source) {
+	if td == nil && source != nil {
+		return NewTableDiff(TableDiffTypeDrop, source, nil)
+	}
+	if td != nil && source == nil {
+		return NewTableDiff(TableDiffTypeCreate, nil, td)
+	}
+
+	if (td == nil && source == nil) || td.Equal(source) {
 		return nil
 	}
 

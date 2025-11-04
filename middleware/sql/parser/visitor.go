@@ -61,7 +61,7 @@ type Visitor struct {
 	result   *Result
 
 	parseTableDefinition bool
-	tableDefinition      *TableDefinition
+	tableDefinition      *TableFullDefinition
 }
 
 // NewVisitor returns a new *Visitor
@@ -83,9 +83,11 @@ func NewVisitorWithDefault() *Visitor {
 }
 
 // SetParseTableDefinition sets the flag to parse table definition
-func (v *Visitor) SetParseTableDefinition(parseTableDefinition bool) {
+func (v *Visitor) SetParseTableDefinition(sql string, parseTableDefinition bool) {
 	v.parseTableDefinition = parseTableDefinition
-	v.tableDefinition = NewEmptyTableDefinition()
+	v.tableDefinition = NewEmptyTableFullDefinition()
+	v.tableDefinition.CreateTableSQL = sql
+	v.tableDefinition.Table.CreateTableSQL = sql
 }
 
 // GetSQLList returns the sql list
@@ -156,23 +158,25 @@ func (v *Visitor) visitCreateTableStmt(node *ast.CreateTableStmt) {
 	if v.parseTableDefinition {
 		tableSchema := node.Table.Schema.L
 		tableName := node.Table.Name.L
-		v.tableDefinition.TableSchema = tableSchema
-		v.tableDefinition.TableName = tableName
+		v.tableDefinition.Table.TableSchema = tableSchema
+		v.tableDefinition.Table.TableName = tableName
 		// table options
 		for _, tableOption := range node.Options {
 			switch tableOption.Tp {
 			case ast.TableOptionEngine:
-				v.tableDefinition.TableEngine = tableOption.StrValue
+				v.tableDefinition.Table.TableEngine = tableOption.StrValue
 			case ast.TableOptionCharset:
-				v.tableDefinition.Charset = tableOption.StrValue
+				v.tableDefinition.Table.Charset = tableOption.StrValue
 			case ast.TableOptionCollate:
-				v.tableDefinition.Collation = tableOption.StrValue
+				v.tableDefinition.Table.Collation = tableOption.StrValue
 			case ast.TableOptionComment:
-				v.tableDefinition.TableComment = tableOption.StrValue
+				v.tableDefinition.Table.TableComment = tableOption.StrValue
 			case ast.TableOptionRowFormat:
-				v.tableDefinition.RowFormat = tableOption.StrValue
+				v.tableDefinition.Table.RowFormat = v.getRowFormatString(tableOption)
 			}
 		}
+
+		var after string
 		// column definitions
 		for i, column := range node.Cols {
 			columnName := column.Name.Name.L
@@ -183,26 +187,16 @@ func (v *Visitor) visitCreateTableStmt(node *ast.CreateTableStmt) {
 			fieldType := column.Tp.GetType()
 			cd.DataType = types.TypeToStr(fieldType, cd.CharacterSetName)
 			cd.ColumnType = column.Tp.InfoSchemaStr()
+			if i == constant.ZeroInt {
+				cd.IsFirst = true
+			}
+			if after != constant.EmptyString {
+				cd.After = after
+			}
+			after = columnName
 
 			for _, option := range column.Options {
 				switch option.Tp {
-				case ast.ColumnOptionDefaultValue:
-					switch expr := option.Expr.(type) {
-					case *driver.ValueExpr:
-						cd.DefaultValue = common.ConvertInterfaceToString(expr.GetValue())
-					case *ast.FuncCallExpr:
-						if expr.FnName.L == CurrentTimeStampFuncName {
-							var args []string
-							for _, arg := range expr.Args {
-								strVal := common.ConvertInterfaceToString(arg.(*driver.ValueExpr).GetValue())
-								args = append(args, strVal)
-							}
-							cd.DefaultValue = GetFullFuncName(expr.FnName.L, args...)
-						}
-					default:
-						err := errors.Errorf("unknown default value expression type. columnName: %s", columnName)
-						cd.AddError(err)
-					}
 				case ast.ColumnOptionCollate:
 					cd.CollationName = option.StrValue
 				case ast.ColumnOptionNotNull:
@@ -211,24 +205,27 @@ func (v *Visitor) visitCreateTableStmt(node *ast.CreateTableStmt) {
 					cd.IsAutoIncrement = true
 					cd.NotNull = true
 				case ast.ColumnOptionComment:
-					cd.ColumnComment = option.Expr.(*driver.ValueExpr).GetDatumString()
-				case ast.ColumnOptionOnUpdate:
-					switch expr := option.Expr.(type) {
-					case *driver.ValueExpr:
-						cd.OnUpdateValue = common.ConvertInterfaceToString(expr.GetValue())
-					case *ast.FuncCallExpr:
-						if expr.FnName.L == CurrentTimeStampFuncName {
-							var args []string
-							for _, arg := range expr.Args {
-								strVal := common.ConvertInterfaceToString(arg.(*driver.ValueExpr).GetValue())
-								args = append(args, strVal)
-							}
-							cd.OnUpdateValue = GetFullFuncName(expr.FnName.L, args...)
-						}
-					default:
-						err := errors.Errorf("unknown default value expression type. columnName: %s", columnName)
+					value, ok := option.Expr.(*driver.ValueExpr)
+					if !ok {
+						err := errors.Errorf("unkwown comment expression. columnName: %s", columnName)
 						cd.AddError(err)
+						continue
 					}
+					cd.ColumnComment = value.GetDatumString()
+				case ast.ColumnOptionDefaultValue:
+					expression, err := v.parseOptionExpression(columnName, option.Expr)
+					if err != nil {
+						cd.AddError(err)
+						continue
+					}
+					cd.DefaultValue = expression
+				case ast.ColumnOptionOnUpdate:
+					expression, err := v.parseOptionExpression(columnName, option.Expr)
+					if err != nil {
+						cd.AddError(err)
+						continue
+					}
+					cd.OnUpdateValue = expression
 				default:
 					err := errors.Errorf("unknown column option. columnName: %s, optionType: %d", columnName, option.Tp)
 					cd.AddError(err)
@@ -245,13 +242,17 @@ func (v *Visitor) visitCreateTableStmt(node *ast.CreateTableStmt) {
 
 			switch constraint.Tp {
 			case ast.ConstraintPrimaryKey:
-				id.IndexName = PrimaryKeyName
+				id.IndexName = IndexPrimaryKeyName
 				id.IsPrimary = true
 				id.IsUnique = true
 
 				for _, column := range constraint.Keys {
 					columnName := column.Column.Name.L
 					cd := v.tableDefinition.GetColumnDefinition(columnName)
+					if cd == nil {
+						id.AddError(errors.Errorf("could not find column definition. tableName: %s, indexName: %s, columnName: %s",
+							tableName, indexName, columnName))
+					}
 					cd.NotNull = true
 					is := NewIndexSpec(cd, column.Desc, column.Length)
 					id.AddIndexSpec(is)
@@ -265,6 +266,10 @@ func (v *Visitor) visitCreateTableStmt(node *ast.CreateTableStmt) {
 				for _, column := range constraint.Keys {
 					columnName := column.Column.Name.L
 					cd := v.tableDefinition.GetColumnDefinition(columnName)
+					if cd == nil {
+						id.AddError(errors.Errorf("could not find column definition. tableName: %s, indexName: %s, columnName: %s",
+							tableName, indexName, columnName))
+					}
 					is := NewIndexSpec(cd, column.Desc, column.Length)
 					id.AddIndexSpec(is)
 				}
@@ -359,4 +364,68 @@ func (v *Visitor) visitColumnDef(node *ast.ColumnDef) {
 // visitColumnName visits the given node which type is *ast.ColumnName
 func (v *Visitor) visitColumnName(node *ast.ColumnName) {
 	v.result.AddColumn(node.Name.L)
+}
+
+// getRowFormatString returns the row format string
+func (v *Visitor) getRowFormatString(tableOption *ast.TableOption) string {
+	switch tableOption.UintValue {
+	case ast.RowFormatDefault:
+		return "DEFAULT"
+	case ast.RowFormatDynamic:
+		return "DYNAMIC"
+	case ast.RowFormatFixed:
+		return "FIXED"
+	case ast.RowFormatCompressed:
+		return "COMPRESSED"
+	case ast.RowFormatRedundant:
+		return "REDUNDANT"
+	case ast.RowFormatCompact:
+		return "COMPACT"
+	case ast.TokuDBRowFormatDefault:
+		return "TOKUDB_DEFAULT"
+	case ast.TokuDBRowFormatFast:
+		return "TOKUDB_FAST"
+	case ast.TokuDBRowFormatSmall:
+		return "TOKUDB_SMALL"
+	case ast.TokuDBRowFormatZlib:
+		return "TOKUDB_ZLIB"
+	case ast.TokuDBRowFormatQuickLZ:
+		return "TOKUDB_QUICKLZ"
+	case ast.TokuDBRowFormatLzma:
+		return "TOKUDB_LZMA"
+	case ast.TokuDBRowFormatSnappy:
+		return "TOKUDB_SNAPPY"
+	case ast.TokuDBRowFormatZstd:
+		return "TOKUDB_ZSTD"
+	case ast.TokuDBRowFormatUncompressed:
+		return "TOKUDB_UNCOMPRESSED"
+	default:
+		return "UNKNOWN"
+	}
+}
+
+// parseOptionExpression parses the given option expression
+func (v *Visitor) parseOptionExpression(columnName string, exprNode ast.ExprNode) (*Expression, error) {
+	switch expr := exprNode.(type) {
+	case *driver.ValueExpr:
+		val := expr.GetValue()
+		if val == nil {
+			return NewExpression(ExpressionTypeNull, constant.EmptyString), nil
+		}
+		return NewExpression(ExpressionTypeString, common.ConvertInterfaceToString(expr.GetValue())), nil
+	case *ast.FuncCallExpr:
+		if expr.FnName.L == CurrentTimeStampFuncName {
+			var args []string
+			for _, arg := range expr.Args {
+				strVal := common.ConvertInterfaceToString(arg.(*driver.ValueExpr).GetValue())
+				args = append(args, strVal)
+			}
+
+			return NewExpression(ExpressionTypeFunc, GetFullFuncName(expr.FnName.L, args...)), nil
+		} else {
+			return nil, errors.Errorf("unknown function call expression. columnName: %s, funcName: %s", columnName, expr.FnName.L)
+		}
+	default:
+		return nil, errors.Errorf("unknown default value expression type. columnName: %s", columnName)
+	}
 }

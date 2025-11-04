@@ -7,6 +7,18 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func testParserGetTableDefinition(sql string) (*TableFullDefinition, error) {
+	p := NewParserWithDefault()
+	p.SetParseTableDefinition(sql, true)
+
+	td, err := p.ParseTableDefinition(sql)
+	if err != nil {
+		return nil, err
+	}
+
+	return td, nil
+}
+
 func TestParser_All(t *testing.T) {
 	TestParser_GetFingerprint(t)
 	TestParser_GetSQLID(t)
@@ -76,7 +88,7 @@ func TestParser_Parse(t *testing.T) {
 	// `
 	// sql = "GRANT SELECT ON *.* TO `mysql.sys`@`localhost`"
 	p := NewParserWithDefault()
-	p.SetParseTableDefinition(true)
+	p.SetParseTableDefinition(sql, true)
 
 	result, err := p.Parse(sql)
 	asst.Nil(err, "test Parse() failed")
@@ -140,12 +152,10 @@ func TestParser_GetTableDefinition(t *testing.T) {
 	 KEY IDX02_COL1_COL2_COL3 (col1(10) asc, col2(20) desc, col3),
 	 KEY Idx03_col2(col2) invisible
 	 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ;`
-	p := NewParserWithDefault()
-	p.SetParseTableDefinition(true)
 
-	td, err := p.GetTableDefinition(sql)
+	tfd, err := testParserGetTableDefinition(sql)
 	asst.Nil(err, "test GetTableDefinition() failed")
-	jsonBytes, err := json.Marshal(td)
+	jsonBytes, err := json.Marshal(tfd)
 	asst.Nil(err, "test GetTableDefinition() failed")
 	t.Log(string(jsonBytes))
 }

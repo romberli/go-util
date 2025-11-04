@@ -22,9 +22,18 @@ const (
 	alterTableExpString  = `(?i)alter\s*table\s*(` + backTicks + `|([^\s]*))\s*`
 	createIndexExpString = `(?i)create((unique)|(fulltext)|(spatial)|(primary)|(\s*)\s*)((index)|(key))\s*`
 	indexNameExpString   = `(?i)(` + backTicks + `|([^\s]*))\s*`
+
+	UnknownKeyWord = "UNKNOWN OPERATION"
+	CreateKeyWord  = "CREATE"
+	AlterKeyWord   = "ALTER"
+	DropKeyWord    = "DROP"
+	AddKeyword     = "ADD"
+	ModifyKeyWord  = "MODIFY"
+	ChangeKeyWord  = "CHANGE"
 )
 
 type Parser struct {
+	sql     string
 	parser  *parser.Parser
 	visitor *Visitor
 }
@@ -43,6 +52,11 @@ func NewParserWithDefault() *Parser {
 		parser:  parser.New(),
 		visitor: NewVisitorWithDefault(),
 	}
+}
+
+// GetSQL returns the sql of the parser
+func (p *Parser) GetSQL() string {
+	return p.sql
 }
 
 // GetTiDBParser returns the TiDB parser
@@ -66,14 +80,15 @@ func (p *Parser) GetSQLID(sql string) string {
 }
 
 // SetParseTableDefinition sets the parse table definition flag of the visitor
-func (p *Parser) SetParseTableDefinition(parseTableDefinition bool) {
-	p.visitor.SetParseTableDefinition(parseTableDefinition)
+func (p *Parser) SetParseTableDefinition(sql string, parseTableDefinition bool) {
+	p.visitor.SetParseTableDefinition(sql, parseTableDefinition)
 }
 
 // Parse parses sql and returns the result,
 // not that only some kinds of statements will be parsed,
 // see the constants defined at the top of visitor.go file
 func (p *Parser) Parse(sql string) (*Result, error) {
+	p.sql = sql
 	stmtNodes, err := p.GetStatementNodes(sql)
 	if err != nil {
 		return nil, err
@@ -105,14 +120,20 @@ func (p *Parser) GetStatementNodes(sql string) ([]ast.StmtNode, error) {
 	return stmtNodes, nil
 }
 
-// GetTableDefinition gets the table definition of the given sql
-func (p *Parser) GetTableDefinition(sql string) (*TableDefinition, error) {
-	p.SetParseTableDefinition(true)
+// ParseTableDefinition gets the table definition of the given sql
+func (p *Parser) ParseTableDefinition(sql string) (*TableFullDefinition, error) {
+	p.SetParseTableDefinition(sql, true)
+
 	_, err := p.Parse(sql)
 	if err != nil {
 		return nil, err
 	}
-	
+
+	err = p.visitor.tableDefinition.Error()
+	if err != nil {
+		return nil, err
+	}
+
 	return p.visitor.tableDefinition, nil
 }
 

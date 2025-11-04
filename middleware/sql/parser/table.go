@@ -252,10 +252,11 @@ func (tdd *TableDefinitionDiff) GetTableMigrationSQL() string {
 	var sql string
 	// table
 	if tdd.TableDiff != nil {
-		sql += tdd.TableDiff.GetTableMigrationSQL() + constant.CommaString + constant.SpaceString
+		sql += tdd.TableDiff.GetTableMigrationSQL()
 		if tdd.TableDiff.DiffType == TableDiffTypeCreate || tdd.TableDiff.DiffType == TableDiffTypeDrop {
 			return sql
 		}
+		sql += constant.CommaString + constant.SpaceString
 	}
 	// column
 	if len(tdd.ColumnDiff) > constant.ZeroInt || len(tdd.IndexDiff) > constant.ZeroInt {

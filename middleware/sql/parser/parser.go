@@ -122,6 +122,7 @@ func (p *Parser) GetStatementNodes(sql string) ([]ast.StmtNode, error) {
 
 // ParseTableDefinition gets the table definition of the given sql
 func (p *Parser) ParseTableDefinition(sql string) (*TableFullDefinition, error) {
+	p.sql = sql
 	p.SetParseTableDefinition(true)
 
 	_, err := p.Parse(sql)

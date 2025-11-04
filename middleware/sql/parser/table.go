@@ -333,7 +333,7 @@ func (td *TableDiff) GetTableMigrationSQL() string {
 
 	switch td.DiffType {
 	case TableDiffTypeCreate:
-		return strings.TrimSuffix(td.Target.CreateTableSQL, constant.SemicolonString)
+		return strings.TrimSuffix(strings.TrimSpace(td.Target.CreateTableSQL), constant.SemicolonString) + constant.SemicolonString
 	case TableDiffTypeAlter:
 		sql := AlterKeyWord + constant.SpaceString + TableTableString + constant.SpaceString +
 			td.Source.GetFullTableName() + constant.SpaceString

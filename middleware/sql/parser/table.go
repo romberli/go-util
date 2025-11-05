@@ -192,7 +192,11 @@ func (td *TableFullDefinition) Diff(source *TableFullDefinition) *TableDefinitio
 		}
 	}
 
-	return NewTableDefinitionDiff(source.Table.GetFullTableName(), td.Table.GetFullTableName(), tableDiff, columnDiffList, indexDiffList)
+	if tableDiff != nil || len(columnDiffList) > constant.ZeroInt || len(indexDiffList) > constant.ZeroInt {
+		return NewTableDefinitionDiff(source.Table.GetFullTableName(), td.Table.GetFullTableName(), tableDiff, columnDiffList, indexDiffList)
+	}
+
+	return nil
 }
 
 // AddColumn adds a column to the table definition
@@ -472,15 +476,15 @@ func (td *TableDefinition) Equal(other *TableDefinition) bool {
 
 // Diff returns the difference between two table definitions
 func (td *TableDefinition) Diff(source *TableDefinition) *TableDiff {
-	if td == nil && source != nil {
-		return NewTableDiff(TableDiffTypeDrop, source, nil)
-	}
-	if td != nil && source == nil {
-		return NewTableDiff(TableDiffTypeCreate, nil, td)
+	if td.Equal(source) {
+		return nil
 	}
 
-	if (td == nil && source == nil) || td.Equal(source) {
-		return nil
+	if td == nil {
+		return NewTableDiff(TableDiffTypeDrop, source, nil)
+	}
+	if source == nil {
+		return NewTableDiff(TableDiffTypeCreate, nil, td)
 	}
 
 	diff := NewEmptyTableDiff()

@@ -151,7 +151,11 @@ func (id *IndexDefinition) Error() error {
 
 // Equal checks whether two IndexDefinition objects are equal
 func (id *IndexDefinition) Equal(other *IndexDefinition) bool {
-	if id.IndexName == other.IndexName &&
+	if id == nil && other == nil {
+		return true
+	}
+	if id != nil && other != nil &&
+		id.IndexName == other.IndexName &&
 		id.IsPrimary == other.IsPrimary &&
 		id.IsUnique == other.IsUnique &&
 		id.IsVisible == other.IsVisible &&
@@ -264,9 +268,14 @@ func (is *IndexSpec) Clone() *IndexSpec {
 
 // Equal checks whether two IndexSpec objects are equal
 func (is *IndexSpec) Equal(other *IndexSpec) bool {
-	if is.Column.Equal(other.Column) &&
+	if is == nil && other == nil {
+		return true
+	}
+	if is != nil && other != nil &&
+		is.Column.ColumnName == other.Column.ColumnName &&
 		is.Descending == other.Descending &&
-		is.Length == other.Length {
+		is.Length == other.Length &&
+		is.Expr.Equal(other.Expr) {
 		return true
 	}
 

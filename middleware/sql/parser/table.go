@@ -115,7 +115,11 @@ func (td *TableFullDefinition) Error() error {
 
 // Equal checks whether two TableFullDefinition objects are equal
 func (td *TableFullDefinition) Equal(other *TableFullDefinition) bool {
-	if td.Table.Equal(other.Table) &&
+	if td == nil && other == nil {
+		return true
+	}
+	if td != nil && other != nil &&
+		td.Table.Equal(other.Table) &&
 		len(td.Columns) == len(other.Columns) &&
 		len(td.Indexes) == len(other.Indexes) {
 		for _, cd := range td.Columns {
@@ -450,7 +454,11 @@ func (td *TableDefinition) String() string {
 
 // Equal checks whether two TableDefinition objects are equal
 func (td *TableDefinition) Equal(other *TableDefinition) bool {
-	if td.TableName == other.TableName &&
+	if td == nil && other == nil {
+		return true
+	}
+	if td != nil && other != nil &&
+		td.TableName == other.TableName &&
 		td.TableEngine == other.TableEngine &&
 		td.Charset == other.Charset &&
 		td.Collation == other.Collation &&

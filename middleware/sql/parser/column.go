@@ -171,11 +171,12 @@ func (cd *ColumnDefinition) Error() error {
 
 // Equal checks whether two ColumnDefinition objects are equal
 func (cd *ColumnDefinition) Equal(other *ColumnDefinition) bool {
-	if other == nil {
-		return false
+	if cd == nil && other == nil {
+		return true
 	}
 
-	if cd.ColumnName == other.ColumnName &&
+	if cd != nil && other != nil &&
+		cd.ColumnName == other.ColumnName &&
 		cd.DataType == other.DataType &&
 		cd.ColumnType == other.ColumnType &&
 		cd.DefaultValue.Equal(other.DefaultValue) &&

@@ -188,7 +188,7 @@ func (td *TableFullDefinition) Diff(source *TableFullDefinition) *TableDefinitio
 		}
 	}
 
-	return NewTableDefinitionDiff(source, td, tableDiff, columnDiffList, indexDiffList)
+	return NewTableDefinitionDiff(source.Table.GetFullTableName(), td.Table.GetFullTableName(), tableDiff, columnDiffList, indexDiffList)
 }
 
 // AddColumn adds a column to the table definition
@@ -223,15 +223,15 @@ func (td *TableFullDefinition) MaintainOrdinalPosition(diffType ColumnDiffType, 
 }
 
 type TableDefinitionDiff struct {
-	Source     *TableFullDefinition `json:"-"`
-	Target     *TableFullDefinition `json:"-"`
-	TableDiff  *TableDiff           `json:"tableDiff"`
-	ColumnDiff []*ColumnDiff        `json:"columnDiff"`
-	IndexDiff  []*IndexDiff         `json:"indexDiff"`
+	Source     string        `json:"source"`
+	Target     string        `json:"target"`
+	TableDiff  *TableDiff    `json:"tableDiff"`
+	ColumnDiff []*ColumnDiff `json:"columnDiff"`
+	IndexDiff  []*IndexDiff  `json:"indexDiff"`
 }
 
 // NewTableDefinitionDiff returns a new *TableDefinitionDiff
-func NewTableDefinitionDiff(source, target *TableFullDefinition, tableDiff *TableDiff,
+func NewTableDefinitionDiff(source, target string, tableDiff *TableDiff,
 	columnDiff []*ColumnDiff, indexDiff []*IndexDiff) *TableDefinitionDiff {
 	return &TableDefinitionDiff{
 		Source:     source,
@@ -262,7 +262,7 @@ func (tdd *TableDefinitionDiff) GetTableMigrationSQL() string {
 	if len(tdd.ColumnDiff) > constant.ZeroInt || len(tdd.IndexDiff) > constant.ZeroInt {
 		if tdd.TableDiff == nil {
 			sql = AlterKeyWord + constant.SpaceString + TableTableString + constant.SpaceString +
-				tdd.Target.Table.GetFullTableName() + constant.SpaceString
+				tdd.Target + constant.SpaceString
 		}
 
 		// drop index

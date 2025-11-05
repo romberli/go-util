@@ -223,20 +223,26 @@ type IndexSpec struct {
 	Column     *ColumnDefinition `json:"column"`
 	Descending bool              `json:"descending"`
 	Length     int               `json:"length"`
+	Expr       *Expression       `json:"expr"`
 }
 
 // NewIndexSpec returns a new *IndexSpec
-func NewIndexSpec(cd *ColumnDefinition, descending bool, length int) *IndexSpec {
+func NewIndexSpec(cd *ColumnDefinition, descending bool, length int, expr *Expression) *IndexSpec {
 	return &IndexSpec{
 		Column:     cd,
 		Descending: descending,
 		Length:     length,
+		Expr:       expr,
 	}
 }
 
 // String returns the string of IndexSpec
 func (is *IndexSpec) String() string {
-	s := constant.BackTickString + is.Column.ColumnName + constant.BackTickString
+	columnName := constant.BackTickString + is.Column.ColumnName + constant.BackTickString
+	if is.Expr != nil {
+		columnName = constant.LeftParenthesisString + is.Expr.String() + constant.RightParenthesisString
+	}
+	s := columnName
 	if is.Length > constant.ZeroInt {
 		s += constant.LeftParenthesisString + strconv.Itoa(is.Length) + constant.RightParenthesisString
 	}
@@ -287,6 +293,9 @@ func (id *IndexDiff) GetMigrationSQL() string {
 	case IndexDiffTypeAdd:
 		return AddKeyword + constant.SpaceString + id.Target.String()
 	case IndexDiffTypeDrop:
+		if id.Source.IsPrimary {
+			return DropKeyWord + constant.SpaceString + IndexPrimaryKeyName + constant.SpaceString + IndexKeyString
+		}
 		return DropKeyWord + constant.SpaceString + IndexIndexString + constant.SpaceString +
 			constant.BackTickString + id.Source.IndexName + constant.BackTickString
 	default:

@@ -1,12 +1,14 @@
 package parser
 
 import (
+	"bytes"
 	"fmt"
 	"reflect"
 	"strings"
 
 	"github.com/pingcap/errors"
 	"github.com/pingcap/tidb/pkg/parser/ast"
+	"github.com/pingcap/tidb/pkg/parser/charset"
 	"github.com/pingcap/tidb/pkg/parser/types"
 
 	"github.com/romberli/go-util/common"
@@ -182,11 +184,20 @@ func (v *Visitor) visitCreateTableStmt(node *ast.CreateTableStmt) {
 			columnName := column.Name.Name.L
 			cd := NewColumnDefinition(tableSchema, tableName, columnName)
 			cd.OrdinalPosition = i + constant.OneInt
-			cd.CharacterSetName = column.Tp.GetCharset()
-			cd.CollationName = column.Tp.GetCollate()
 			fieldType := column.Tp.GetType()
 			cd.DataType = types.TypeToStr(fieldType, cd.CharacterSetName)
 			cd.ColumnType = column.Tp.InfoSchemaStr()
+			if types.IsTypeChar(fieldType) || types.IsTypeBlob(fieldType) {
+				cs := column.Tp.GetCharset()
+				c := column.Tp.GetCollate()
+				if cs != constant.EmptyString && cs != charset.CharsetBin {
+					cd.CharacterSetName = cs
+				}
+				if c != constant.EmptyString && c != charset.CharsetBin {
+					cd.CollationName = c
+				}
+			}
+
 			if i == constant.ZeroInt {
 				cd.IsFirst = true
 			}
@@ -254,7 +265,7 @@ func (v *Visitor) visitCreateTableStmt(node *ast.CreateTableStmt) {
 							tableName, indexName, columnName))
 					}
 					cd.NotNull = true
-					is := NewIndexSpec(cd, column.Desc, column.Length)
+					is := NewIndexSpec(cd, column.Desc, column.Length, nil)
 					id.AddIndexSpec(is)
 				}
 			case ast.ConstraintIndex, ast.ConstraintUniq:
@@ -263,14 +274,41 @@ func (v *Visitor) visitCreateTableStmt(node *ast.CreateTableStmt) {
 					id.IsUnique = true
 				}
 
+				var (
+					err        error
+					columnName string
+					expression *Expression
+				)
 				for _, column := range constraint.Keys {
-					columnName := column.Column.Name.L
+					if column.Column == nil {
+						if column.Expr == nil {
+							err = errors.Errorf("both column and expression in index specfication is empty. tableName: %s, indexName: %s",
+								tableName, indexName)
+							id.AddError(err)
+							continue
+						}
+
+						columnName, err = v.parseColumnExpression(column.Expr)
+						if err != nil {
+							id.AddError(err)
+							continue
+						}
+						expression, err = v.parseOptionExpression(columnName, column.Expr)
+						if err != nil {
+							id.AddError(err)
+							continue
+						}
+					} else {
+						columnName = column.Column.Name.L
+						expression = nil
+					}
+
 					cd := v.tableDefinition.GetColumnDefinition(columnName)
 					if cd == nil {
 						id.AddError(errors.Errorf("could not find column definition. tableName: %s, indexName: %s, columnName: %s",
 							tableName, indexName, columnName))
 					}
-					is := NewIndexSpec(cd, column.Desc, column.Length)
+					is := NewIndexSpec(cd, column.Desc, column.Length, expression)
 					id.AddIndexSpec(is)
 				}
 			default:
@@ -404,7 +442,7 @@ func (v *Visitor) getRowFormatString(tableOption *ast.TableOption) string {
 	}
 }
 
-// parseOptionExpression parses the given option expression
+// parseOptionExpression parses the option expression
 func (v *Visitor) parseOptionExpression(columnName string, exprNode ast.ExprNode) (*Expression, error) {
 	switch expr := exprNode.(type) {
 	case *driver.ValueExpr:
@@ -425,7 +463,26 @@ func (v *Visitor) parseOptionExpression(columnName string, exprNode ast.ExprNode
 		} else {
 			return nil, errors.Errorf("unknown function call expression. columnName: %s, funcName: %s", columnName, expr.FnName.L)
 		}
+	case *ast.FuncCastExpr:
+		var buffer bytes.Buffer
+		exprNode.Format(&buffer)
+		return NewExpression(ExpressionTypeFunc, buffer.String()), nil
 	default:
 		return nil, errors.Errorf("unknown default value expression type. columnName: %s", columnName)
+	}
+}
+
+// parseColumnExpression parses the column expression
+func (v *Visitor) parseColumnExpression(exprNode ast.ExprNode) (string, error) {
+	switch expr := exprNode.(type) {
+	case *ast.FuncCastExpr:
+		columnNameExpr, ok := expr.Expr.(*ast.ColumnNameExpr)
+		if !ok {
+			return constant.EmptyString, errors.Errorf("unknown column name expression type. expressionType: %s", expr.Expr.GetType().String())
+		}
+
+		return columnNameExpr.Name.Name.L, nil
+	default:
+		return constant.EmptyString, errors.Errorf("unknown column expression type. expressionType: %s", expr.GetType().String())
 	}
 }

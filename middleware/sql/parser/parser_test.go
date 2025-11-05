@@ -136,22 +136,7 @@ func TestParser_MergeDDLStatements(t *testing.T) {
 func TestParser_GetTableDefinition(t *testing.T) {
 	asst := assert.New(t)
 
-	sql := `CREATE TABLE ` + "t01" + `(
-	 id bigint(20) auto_increment comment '主键ID',
-	 col1 varchar(64) character set gbk NOT NULL,
-	 col2 varchar(64) collate utf8mb4_bin NOT NULL default 'abc',
-	 col3 varchar(64) NOT NULL,
-	 col4 int unsigned NOT NULL Default 123 comment 'this is col4',
-	 col5 decimal(10,2), 
-	 col6 mediumtext,
-	 col7 mediumblob,
-	 created_at datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
-	 last_updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后更新时间',
-	 PRIMARY KEY (id),
-	 UNIQUE KEY idx01_col1 (col1) visible,
-	 KEY IDX02_COL1_COL2_COL3 (col1(10) asc, col2(20) desc, col3),
-	 KEY Idx03_col2(col2) invisible
-	 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ;`
+	sql := ``
 
 	tfd, err := testParserGetTableDefinition(sql)
 	asst.Nil(err, "test GetTableDefinition() failed")

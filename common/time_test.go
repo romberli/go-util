@@ -2,6 +2,7 @@ package common
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -14,29 +15,39 @@ func TestTime_All(t *testing.T) {
 
 func TestTime_ConvertStringToTime(t *testing.T) {
 	asst := assert.New(t)
+	var (
+		timeString string
+		ts       time.Time
+		err        error
+	)
 
-	timeString := "2025-09-25 10:02:05"
-	time, err := ConvertStringToTime(timeString)
+	timeString = "2025-09-25"
+	ts, err = ConvertStringToTime(timeString)
 	asst.Nil(err, "test ConvertStringToTime() failed")
-	t.Logf("time: %s", time.Format(constant.TimeLayoutMicrosecond))
+	t.Logf("time: %s", ts.Format(constant.TimeLayoutMicrosecond))
+
+	timeString = "2025-09-25 10:02:05"
+	ts, err = ConvertStringToTime(timeString)
+	asst.Nil(err, "test ConvertStringToTime() failed")
+	t.Logf("time: %s", ts.Format(constant.TimeLayoutMicrosecond))
 
 	timeString = "2025-12-28 10:02:05.000"
-	time, err = ConvertStringToTime(timeString)
+	ts, err = ConvertStringToTime(timeString)
 	asst.Nil(err, "test ConvertStringToTime() failed")
-	t.Logf("time: %s", time.Format(constant.TimeLayoutMicrosecond))
+	t.Logf("time: %s", ts.Format(constant.TimeLayoutMicrosecond))
 
 	timeString = "2025-07-09 10:02:05.000000"
-	time, err = ConvertStringToTime(timeString)
+	ts, err = ConvertStringToTime(timeString)
 	asst.Nil(err, "test ConvertStringToTime() failed")
-	t.Logf("time: %s", time.Format(constant.TimeLayoutMicrosecond))
+	t.Logf("time: %s", ts.Format(constant.TimeLayoutMicrosecond))
 
 	timeString = "2025-12-28 10:02:05.012"
-	time, err = ConvertStringToTime(timeString)
+	ts, err = ConvertStringToTime(timeString)
 	asst.Nil(err, "test ConvertStringToTime() failed")
-	t.Logf("time: %s", time.Format(constant.TimeLayoutMicrosecond))
+	t.Logf("time: %s", ts.Format(constant.TimeLayoutMicrosecond))
 
 	timeString = "2025-07-09 10:02:05.123456"
-	time, err = ConvertStringToTime(timeString)
+	ts, err = ConvertStringToTime(timeString)
 	asst.Nil(err, "test ConvertStringToTime() failed")
-	t.Logf("time: %s", time.Format(constant.TimeLayoutMicrosecond))
+	t.Logf("time: %s", ts.Format(constant.TimeLayoutMicrosecond))
 }

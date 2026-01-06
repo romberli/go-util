@@ -15,7 +15,9 @@ func ConvertStringToTime(s string) (time.Time, error) {
 	}
 
 	layout := constant.TimeLayoutSecond
-	if strings.Contains(s, constant.DotString) {
+	if !strings.Contains(s, constant.ColonString) {
+		layout = constant.TimeLayoutDate
+	} else if strings.Contains(s, constant.DotString) {
 		vl := strings.Split(s, constant.DotString)
 		f := vl[constant.OneInt]
 		if len(f) == constant.ThreeInt {

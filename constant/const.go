@@ -130,6 +130,7 @@ const (
 	TrueString                          = "true"
 	FalseString                         = "false"
 	DefaultRandomTimeString             = "9999-07-02 09:55:32.346082"
+	TimeLayoutDate                      = "2006-01-02"
 	TimeLayoutSecond                    = "2006-01-02 15:04:05"
 	TimeLayoutMillisecond               = "2006-01-02 15:04:05.000"
 	TimeLayoutMicrosecond               = "2006-01-02 15:04:05.000000"

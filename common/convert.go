@@ -401,6 +401,9 @@ func ConvertToString(in interface{}) (string, error) {
 }
 
 func ConvertToSlice(in interface{}, kind reflect.Kind) (interface{}, error) {
+	if in == nil {
+		return nil, nil
+	}
 	inKind := reflect.TypeOf(in).Kind()
 	if inKind != reflect.String && inKind != reflect.Slice {
 		return nil, errors.Errorf("value must be a string or a slice, not %s", inKind.String())

@@ -9,6 +9,8 @@ import (
 )
 
 func TestConvert_All(t *testing.T) {
+	TestConver_StringToBytes(t)
+	TestConvert_BytesToString(t)
 	TestConvert_ConvertSliceToString(t)
 	TestConvert_ConvertInterfaceSliceToString(t)
 }

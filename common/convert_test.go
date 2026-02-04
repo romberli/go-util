@@ -10,6 +10,23 @@ import (
 
 func TestConvert_All(t *testing.T) {
 	TestConvert_ConvertSliceToString(t)
+	TestConvert_ConvertInterfaceSliceToString(t)
+}
+
+func TestConver_StringToBytes(t *testing.T) {
+	asst := assert.New(t)
+
+	// empty string
+	b := StringToBytes(constant.EmptyString)
+	asst.Equal([]byte(nil), b, "test StringToBytes() failed")
+}
+
+func TestConvert_BytesToString(t *testing.T) {
+	asst := assert.New(t)
+
+	// nil
+	s := BytesToString(nil)
+	asst.Equal(constant.EmptyString, s, "test BytesToString() failed")
 }
 
 func TestConvert_ConvertSliceToString(t *testing.T) {

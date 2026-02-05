@@ -111,7 +111,12 @@ func TestJSON_MaskJSON(t *testing.T) {
 	asst := assert.New(t)
 
 	data := []byte(`{"a": {"b": {"password": "sssss"}}}`)
-	masked, err := MaskJSON(data, "pass")
+	masked, err := MaskJSON(data, []string{"pass"})
 	asst.Nil(err, "test MaskJSON() failed")
 	asst.Equal(`{"a":{"b":{"password":"******"}}}`, string(masked), "test MaskJSON() failed")
+
+	data = []byte(`{"a":{"b":{"password":"sssss"}}}`)
+	masked, err = MaskJSON(data, []string{"pass"}, "password")
+	asst.Nil(err, "test MaskJSON() failed")
+	asst.Equal(string(data), string(masked), "test MaskJSON() failed")
 }

@@ -106,3 +106,12 @@ func TestSerializeBytes(t *testing.T) {
 	asst.Equal(ex1.Data.FloatPropB, ex2.Data.FloatPropB, "test SerializeBytes() failed")
 	asst.Equal(ex1.Data.Nested.InnerData, ex2.Data.Nested.InnerData, "test SerializeBytes() failed")
 }
+
+func TestJSON_MaskJSON(t *testing.T) {
+	asst := assert.New(t)
+
+	data := []byte(`{"a": {"b": {"password": "sssss"}}}`)
+	masked, err := MaskJSON(data, "pass")
+	asst.Nil(err, "test MaskJSON() failed")
+	asst.Equal(`{"a":{"b":{"password":"******"}}}`, string(masked), "test MaskJSON() failed")
+}

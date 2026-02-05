@@ -1,6 +1,7 @@
 package common
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
@@ -10,6 +11,21 @@ import (
 	"github.com/tidwall/gjson"
 
 	"github.com/romberli/go-util/constant"
+)
+
+const (
+	// sensitive keyword
+	DefaultSensitivePassKeyword   = "pass"
+	DefaultSensitiveSecretKeyword = "secret"
+	DefaultSensitivePwdKeyword    = "pwd"
+)
+
+var (
+	DefaultSensitiveKeywords = []string{
+		DefaultSensitivePassKeyword,
+		DefaultSensitiveSecretKeyword,
+		DefaultSensitivePwdKeyword,
+	}
 )
 
 // KeyExists checks if the key exists in the json data
@@ -183,4 +199,62 @@ func DeserializeBytes(v interface{}, t reflect.Type) interface{} {
 	default:
 		return v
 	}
+}
+
+// MaskJSON masks the sensitive fields in the json body
+func MaskJSON(jsonnBytes []byte, sensitiveFields ...string) ([]byte, error) {
+	if len(jsonnBytes) == constant.ZeroInt {
+		return jsonnBytes, nil
+	}
+
+	var data interface{}
+	err := json.Unmarshal(jsonnBytes, &data)
+	if err != nil {
+		return jsonnBytes, errors.Trace(err)
+	}
+
+	maskedValue := maskValue(data, sensitiveFields...)
+
+	result, err := json.Marshal(maskedValue)
+	if err != nil {
+		return jsonnBytes, errors.Trace(err)
+	}
+
+	return result, nil
+}
+
+func maskValue(value interface{}, sensitiveFields ...string) interface{} {
+	switch v := value.(type) {
+	case map[string]interface{}:
+		for key, val := range v {
+			if isSensitiveField(key, sensitiveFields...) {
+				v[key] = constant.DefaultMaskedValue
+			} else {
+				// mask value recursively
+				v[key] = maskValue(val, sensitiveFields...)
+			}
+		}
+		return v
+
+	case []interface{}:
+		for i, item := range v {
+			v[i] = maskValue(item, sensitiveFields...)
+		}
+		return v
+
+	default:
+		return v
+	}
+}
+
+// isSensitiveField checks if the field name contains any of the sensitive fields
+func isSensitiveField(fieldName string, sensitiveFields ...string) bool {
+	lowerField := strings.ToLower(fieldName)
+	for _, sensitiveField := range sensitiveFields {
+		if strings.Contains(lowerField, sensitiveField) {
+			return true
+		}
+	}
+
+	return false
 }

@@ -184,4 +184,6 @@ const (
 	UTF8MB4Charset = "utf8mb4"
 	GB18030Charset = "gb18030"
 	GBKCharset     = "gbk"
+
+	DefaultMaskedValue = "******"
 )

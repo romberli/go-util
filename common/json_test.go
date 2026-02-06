@@ -116,7 +116,22 @@ func TestJSON_MaskJSON(t *testing.T) {
 	asst.Equal(`{"a":{"b":{"password":"******"}}}`, string(masked), "test MaskJSON() failed")
 
 	data = []byte(`{"a":{"b":{"password":"sssss"}}}`)
-	masked, err = MaskJSON(data, []string{"pass"}, "password")
+	masked, err = MaskJSON(data, DefaultSensitiveKeywords, "password")
+	asst.Nil(err, "test MaskJSON() failed")
+	asst.Equal(string(data), string(masked), "test MaskJSON() failed")
+}
+
+func TestJSON_MaskJSONWithPatterns(t *testing.T) {
+	asst := assert.New(t)
+
+	data := []byte(`{"a": {"b": {"password": "sssss", "sql": "create user 'root'@'localhost' identified by '123456';"}}}`)
+	masked, err := MaskJSONWithPatterns(data, DefaultSensitiveKeywords, DefaultSensitivePatterns)
+	asst.Nil(err, "test MaskJSON() failed")
+	asst.Equal(`{"a":{"b":{"password":"******","sql":"create user 'root'@'localhost' identified by '******';"}}}`,
+		string(masked), "test MaskJSON() failed")
+
+	data = []byte(`{"a":{"b":{"PasSwOrd":"sssss","sql":"ALTER USER 'root'@'localhost' IDENTIFIED BY '******';"}}}`)
+	masked, err = MaskJSONWithPatterns(data, DefaultSensitiveKeywords, DefaultSensitivePatterns, "PaSSWord")
 	asst.Nil(err, "test MaskJSON() failed")
 	asst.Equal(string(data), string(masked), "test MaskJSON() failed")
 }

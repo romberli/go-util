@@ -22,6 +22,8 @@ const (
 	CreateTableStmtString = "*ast.CreateTableStmt"
 	AlterTableStmtString  = "*ast.AlterTableStmt"
 	DropTableStmtString   = "*ast.DropTableStmt"
+	CreateIndexStmtString = "*ast.CreateIndexStmt"
+	DropIndexStmtString   = "*ast.DropIndexStmt"
 	SelectStmtString      = "*ast.SelectStmt"
 	UnionStmtString       = "*ast.UnionStmt"
 	InsertStmtString      = "*ast.InsertStmt"

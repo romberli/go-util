@@ -9,6 +9,22 @@ import (
 	"github.com/romberli/go-util/constant"
 )
 
+const (
+	SQLTypeCreateUserStmt  = "CreateUserStmt"
+	SQLTypeAlterUserStmt   = "AlterUserStmt"
+	SQLTypeCreateTableStmt = "CreateTableStmt"
+	SQLTypeAlterTableStmt  = "AlterTableStmt"
+	SQLTypeDropTableStmt   = "DropTableStmt"
+	SQLTypeCreateIndexStmt = "CreateIndexStmt"
+	SQLTypeDropIndexStmt   = "DropIndexStmt"
+	SQLTypeSelectStmt      = "SelectStmt"
+	SQLTypeInsertStmt      = "InsertStmt"
+	SQLTypeReplaceStmt     = "ReplaceStmt"
+	SQLTypeUpdateStmt      = "UpdateStmt"
+	SQLTypeDeleteStmt      = "DeleteStmt"
+	SQLTypeGrantStmt       = "GrantStmt"
+)
+
 type User struct {
 	User string `json:"user"`
 	Host string `json:"host"`

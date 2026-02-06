@@ -1,11 +1,38 @@
 package parser
 
 import (
+	"fmt"
+
 	"github.com/pingcap/tidb/pkg/parser/mysql"
 
 	"github.com/romberli/go-util/common"
 	"github.com/romberli/go-util/constant"
 )
+
+type User struct {
+	User string `json:"user"`
+	Host string `json:"host"`
+	Pass string `json:"pass"`
+}
+
+// NewUser returns a new *User
+func NewUser(user, host, pass string) *User {
+	return &User{
+		User: user,
+		Host: host,
+		Pass: pass,
+	}
+}
+
+// NewEmptyUser returns an empty *User
+func NewEmptyUser() *User {
+	return &User{}
+}
+
+// String returns the string of the user
+func (u *User) String() string {
+	return fmt.Sprintf("%s@'%s'", u.User, u.Host)
+}
 
 type Result struct {
 	SQLType        string                       `json:"sql_type"`
@@ -16,14 +43,14 @@ type Result struct {
 	ColumnNames    []string                     `json:"column_names"`
 	ColumnTypes    map[string]string            `json:"column_types"`
 	ColumnComments map[string]string            `json:"column_comments"`
-	User           string                       `json:"user"`
+	User           *User                        `json:"user"`
 	Privileges     map[mysql.PrivilegeType]bool `json:"privileges"`
 }
 
 // NewResult returns a new *Result
 func NewResult(sqlType string, TableDBListMap map[string][]string, dbNames []string, tableNames []string,
 	tableComments map[string]string, columnNames []string, columnTypes map[string]string,
-	columnComments map[string]string, user string, privileges map[mysql.PrivilegeType]bool) *Result {
+	columnComments map[string]string, user *User, privileges map[mysql.PrivilegeType]bool) *Result {
 	return &Result{
 		SQLType:        sqlType,
 		TableDBListMap: TableDBListMap,
@@ -49,7 +76,7 @@ func NewEmptyResult() *Result {
 		ColumnNames:    []string{},
 		ColumnTypes:    make(map[string]string),
 		ColumnComments: make(map[string]string),
-		User:           constant.EmptyString,
+		User:           NewEmptyUser(),
 		Privileges:     make(map[mysql.PrivilegeType]bool),
 	}
 }
@@ -147,7 +174,7 @@ func (r *Result) SetColumnComment(columnName string, columnComment string) {
 }
 
 // SetUser sets user of the result
-func (r *Result) SetUser(user string) {
+func (r *Result) SetUser(user *User) {
 	r.User = user
 }
 

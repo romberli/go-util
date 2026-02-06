@@ -2,7 +2,6 @@ package parser
 
 import (
 	"bytes"
-	"fmt"
 	"reflect"
 	"strings"
 
@@ -18,6 +17,8 @@ import (
 )
 
 const (
+	CreateUserStmtString  = "*ast.CreateUserStmt"
+	AlterUserStmtString   = "*ast.AlterUserStmt"
 	CreateTableStmtString = "*ast.CreateTableStmt"
 	AlterTableStmtString  = "*ast.AlterTableStmt"
 	DropTableStmtString   = "*ast.DropTableStmt"
@@ -38,6 +39,8 @@ const (
 
 var (
 	DefaultSQLList = []string{
+		CreateUserStmtString,
+		AlterUserStmtString,
 		CreateTableStmtString,
 		AlterTableStmtString,
 		DropTableStmtString,
@@ -122,6 +125,10 @@ func (v *Visitor) Enter(in ast.Node) (out ast.Node, skipChildren bool) {
 		switch node := in.(type) {
 		case *ast.TableName:
 			v.visitTableName(node)
+		case *ast.CreateUserStmt:
+			v.visitCreateUserStmt(node)
+		case *ast.AlterUserStmt:
+			v.visitAlterUserStmt(node)
 		case *ast.CreateTableStmt:
 			v.visitCreateTableStmt(node)
 		case *ast.AlterTableStmt:
@@ -153,6 +160,28 @@ func (v *Visitor) visitTableName(node *ast.TableName) {
 	v.result.AddTableDBListMap(tableName, dbName)
 	v.result.AddDBName(dbName)
 	v.result.AddTableName(tableName)
+}
+
+// visitCreateUserStmt visits the given node which type is *ast.CreateUserStmt
+func (v *Visitor) visitCreateUserStmt(node *ast.CreateUserStmt) {
+	if len(node.Specs) == constant.ZeroInt {
+		return
+	}
+
+	spec := node.Specs[constant.ZeroInt]
+	user := NewUser(spec.User.Username, spec.User.Hostname, spec.AuthOpt.AuthString)
+	v.result.SetUser(user)
+}
+
+// visitAlterUserStmt visits the given node which type is *ast.AlterUserStmt
+func (v *Visitor) visitAlterUserStmt(node *ast.AlterUserStmt) {
+	if len(node.Specs) == constant.ZeroInt {
+		return
+	}
+
+	spec := node.Specs[constant.ZeroInt]
+	user := NewUser(spec.User.Username, spec.User.Hostname, spec.AuthOpt.AuthString)
+	v.result.SetUser(user)
 }
 
 // visitCreateTableStmt visits the given node which type is *ast.CreateTableStmt
@@ -337,8 +366,8 @@ func (v *Visitor) visitAlterTableStmt(node *ast.AlterTableStmt) {
 func (v *Visitor) visitGrantStmt(node *ast.GrantStmt) {
 	if len(node.Users) > constant.ZeroInt {
 		user := node.Users[constant.ZeroInt]
-		fullUserName := fmt.Sprintf("'%s'@'%s'", user.User.Username, user.User.Hostname)
-		v.result.SetUser(fullUserName)
+		u := NewUser(user.User.Username, user.User.Hostname, constant.EmptyString)
+		v.result.SetUser(u)
 	}
 
 	for _, priv := range node.Privs {

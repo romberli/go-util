@@ -100,6 +100,38 @@ func TestParser_Parse(t *testing.T) {
 	t.Log(string(jsonBytes))
 }
 
+func TestParser_ParseCreateUserStatement(t *testing.T) {
+	asst := assert.New(t)
+
+	sql := `CREATE USER 'root'@'%' IDENTIFIED BY 'root';`
+	p := NewParserWithDefault()
+
+	result, err := p.Parse(sql)
+	asst.Nil(err, "test Parse() failed")
+	// asst.Equal("t01", result.TableNames[0])
+
+	// print result
+	jsonBytes, err := json.Marshal(result)
+	asst.Nil(err, "test Parse() failed")
+	t.Log(string(jsonBytes))
+}
+
+func TestParser_ParseAlterUserStatement(t *testing.T) {
+	asst := assert.New(t)
+
+	sql := `ALTER USER 'root'@'%' IDENTIFIED BY 'root.pass';`
+	p := NewParserWithDefault()
+
+	result, err := p.Parse(sql)
+	asst.Nil(err, "test Parse() failed")
+	// asst.Equal("t01", result.TableNames[0])
+
+	// print result
+	jsonBytes, err := json.Marshal(result)
+	asst.Nil(err, "test Parse() failed")
+	t.Log(string(jsonBytes))
+}
+
 func TestParser_Split(t *testing.T) {
 	asst := assert.New(t)
 

@@ -15,6 +15,22 @@ import (
 	"github.com/romberli/go-util/types"
 )
 
+// IsNil checks if given value is nil
+func IsNil(value interface{}) bool {
+	if value == nil {
+		return true
+	}
+
+	val := reflect.ValueOf(value)
+	kind := val.Kind()
+	switch kind {
+	case reflect.Ptr, reflect.Slice, reflect.Map, reflect.Chan, reflect.Func, reflect.Interface:
+		return val.IsNil()
+	default:
+		return false
+	}
+}
+
 // ReverseString reverses a string
 func ReverseString(s string) string {
 	var reverse string

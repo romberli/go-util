@@ -400,6 +400,20 @@ func TestCommon(t *testing.T) {
 	t.Log("==========test UnmarshalToMapWithStructTagFromString() completed==========")
 }
 
+func TestConvertStructToMapStringInterface(t *testing.T) {
+	asst := assert.New(t)
+
+	envInfo := &EnvInfo{
+		ID:      101010101010101,
+		EnvName: "test",
+		DelFlag: "delete",
+	}
+
+	result, err := ConvertStructToMapStringInterface(envInfo)
+	asst.Nil(err, "test ConvertStructToMapStringInterface() failed")
+	asst.Equal(result["ID"], envInfo.ID, "test ConvertStructToMapStringInterface() failed")
+}
+
 func TestSetValuesWithMapAndRandom(t *testing.T) {
 	asst := assert.New(t)
 

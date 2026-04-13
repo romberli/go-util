@@ -166,6 +166,33 @@ func ConvertInterfaceToSliceInterface(in interface{}) ([]interface{}, error) {
 	return sliceInterface, nil
 }
 
+// ConvertStructToMapStringInterface converts input struct which must be map type to map[string]interface,
+// it means each pair of key and value in the map will be string type
+func ConvertStructToMapStringInterface(in interface{}) (map[string]interface{}, error) {
+	result := make(map[string]interface{})
+
+	v := reflect.ValueOf(in).Elem()
+	t := v.Type()
+
+	if t.Kind() != reflect.Struct && t.Kind() != reflect.Ptr {
+		return nil, errors.New("argument must be struct or struct pointer")
+	}
+
+	if t.Kind() == reflect.Ptr {
+		v, t = v.Elem(), v.Elem().Type()
+	}
+	for i := 0; i < t.NumField(); i++ {
+		tag := t.Field(i).Tag.Get(constant.DefaultJSONTag)
+		key := t.Field(i).Name
+		if tag != constant.EmptyString && tag != constant.DashString {
+			key = strings.Split(tag, constant.CommaString)[constant.ZeroInt]
+		}
+		result[key] = v.Field(i).Interface()
+	}
+
+	return result, nil
+}
+
 // ConvertInterfaceToMapInterfaceInterface converts input data which must be map type to map[interface]interface,
 // it means each pair of key and value in the map will be interface type
 func ConvertInterfaceToMapInterfaceInterface(in interface{}) (map[interface{}]interface{}, error) {

@@ -49,6 +49,17 @@ func ConvertNumberToString(in interface{}) (string, error) {
 	}
 }
 
+// ConvertFloatStringToInt converts float string to int,
+// Note that it will truncate the float part
+func ConvertFloatStringToInt(in string) (int, error) {
+	f, err := strconv.ParseFloat(in, constant.ZeroInt)
+	if err != nil {
+		return constant.ZeroInt, errors.Trace(err)
+	}
+
+	return int(f), nil
+}
+
 // ConvertInterfaceToString converts struct pointer to string
 func ConvertInterfaceToString(in interface{}) string {
 	val := reflect.ValueOf(in)

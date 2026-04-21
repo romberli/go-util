@@ -2,11 +2,13 @@ package pulsar
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 	"time"
 
 	"github.com/apache/pulsar-client-go/pulsar"
 
+	"github.com/romberli/go-util/common"
 	"github.com/romberli/go-util/constant"
 )
 
@@ -107,13 +109,13 @@ func TestProducer_SendJSON(t *testing.T) {
 		"foo": "bar",
 	}
 
-	msgID, err := producer.SendJSON(ctx, testData)
+	jsonBytes, err := json.Marshal(testData)
+	if err != nil {
+		t.Fatalf("failed to marshal JSON data: %v", err)
+	}
+	err = producer.SendJSON(common.BytesToString(jsonBytes))
 	if err != nil {
 		t.Fatalf("failed to send JSON message: %v", err)
-	}
-
-	if msgID == nil {
-		t.Fatal("JSON message ID should not be nil")
 	}
 
 	msg, err := consumer.Receive(ctx)
@@ -126,7 +128,7 @@ func TestProducer_SendJSON(t *testing.T) {
 		t.Fatal("payload should not be empty")
 	}
 
-	t.Logf("JSON message sent and received successfully, ID: %v, payload: %s", msgID, payload)
+	t.Logf("JSON message sent and received successfully, payload: %s", payload)
 
 	if err := consumer.Ack(msg); err != nil {
 		t.Fatalf("failed to ack message: %v", err)

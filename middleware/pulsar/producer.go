@@ -2,7 +2,6 @@ package pulsar
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/pingcap/errors"
 
@@ -85,6 +84,7 @@ func (p *Producer) Send(ctx context.Context, msg *pulsar.ProducerMessage) (pulsa
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
+
 	return msgID, nil
 }
 
@@ -92,17 +92,14 @@ func (p *Producer) SendAsync(ctx context.Context, msg *pulsar.ProducerMessage, c
 	p.Producer.SendAsync(ctx, msg, callback)
 }
 
-func (p *Producer) SendJSON(ctx context.Context, data interface{}) (pulsar.MessageID, error) {
-	jsonBytes, err := json.Marshal(data)
-	if err != nil {
-		return nil, errors.Trace(err)
-	}
-
+func (p *Producer) SendJSON(message string) error {
 	msg := &pulsar.ProducerMessage{
-		Payload: jsonBytes,
+		Payload: common.StringToBytes(message),
 	}
 
-	return p.Send(ctx, msg)
+	_, err := p.Send(context.Background(), msg)
+
+	return err
 }
 
 func (p *Producer) IsConnected() bool {

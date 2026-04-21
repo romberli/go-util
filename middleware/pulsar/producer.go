@@ -24,8 +24,13 @@ type Producer struct {
 }
 
 func NewProducer(config *Config, name string) (*Producer, error) {
+	url, err := config.getURLString()
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
+
 	clientOpts := pulsar.ClientOptions{
-		URL: config.URL,
+		URL: url,
 	}
 	if config.Token != constant.EmptyString {
 		clientOpts.Authentication = pulsar.NewAuthenticationToken(config.Token)

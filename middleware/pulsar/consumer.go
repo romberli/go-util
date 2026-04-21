@@ -68,8 +68,13 @@ func (t SubscriptionType) String() string {
 }
 
 func NewConsumer(config *Config, subscriptionName string, subscriptionType SubscriptionType, name string) (*Consumer, error) {
+	url, err := config.getURLString()
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
+
 	clientOpts := pulsar.ClientOptions{
-		URL: config.URL,
+		URL: url,
 	}
 	if config.Token != constant.EmptyString {
 		clientOpts.Authentication = pulsar.NewAuthenticationToken(config.Token)

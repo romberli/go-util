@@ -18,7 +18,7 @@ const (
 )
 
 func newTestConfig() *Config {
-	return NewConfig(testPulsarURL, testToken, testTopic)
+	return NewConfig([]string{testPulsarURL}, testToken, testTopic)
 }
 
 func newTestProducer(t *testing.T) *Producer {

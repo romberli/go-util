@@ -152,6 +152,10 @@ func (c *Client) Close() {
 	c.client.CloseIdleConnections()
 }
 
+func (c *Client) SetTimeout(timeout time.Duration) {
+	c.client.Timeout = timeout
+}
+
 func (c *Client) SetMaxIdleConns(maxIdleConns int) {
 	c.client.Transport.(*http.Transport).MaxIdleConns = maxIdleConns
 }
@@ -295,6 +299,7 @@ func (c *Client) SendRequestWithBasicAuth(method, url string, body []byte, user,
 	for {
 		resp, err := c.sendRequestWithBasicAuth(method, url, body, user, pass)
 		if err != nil {
+			log.Warnf("http.Client.SendRequestWithBasicAuth(): send request with basic auth failed. error: %s", err.Error())
 			// check retry count
 			if c.maxRetryCount >= constant.ZeroInt && i >= c.maxRetryCount {
 				return resp, errors.Trace(err)

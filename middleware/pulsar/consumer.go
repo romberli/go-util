@@ -4,12 +4,13 @@ import (
 	"context"
 	"time"
 
-	"github.com/pingcap/errors"
-
 	"github.com/apache/pulsar-client-go/pulsar"
+	"github.com/pingcap/errors"
 
 	"github.com/romberli/go-util/common"
 	"github.com/romberli/go-util/constant"
+
+	pulsarlog "github.com/apache/pulsar-client-go/pulsar/log"
 )
 
 const (
@@ -75,6 +76,9 @@ func NewConsumer(config *Config, subscriptionName string, subscriptionType Subsc
 
 	clientOpts := pulsar.ClientOptions{
 		URL: url,
+	}
+	if config.NoLogging {
+		clientOpts.Logger = pulsarlog.DefaultNopLogger()
 	}
 	if config.Token != constant.EmptyString {
 		clientOpts.Authentication = pulsar.NewAuthenticationToken(config.Token)

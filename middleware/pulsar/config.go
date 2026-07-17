@@ -14,23 +14,25 @@ const (
 )
 
 type Config struct {
-	URLs  []string
-	Token string
-	Topic string
+	URLs      []string
+	Token     string
+	Topic     string
+	NoLogging bool
 }
 
-func NewConfig(urls []string, token, topic string) *Config {
+func NewConfig(urls []string, token, topic string, noLogging bool) *Config {
 	return &Config{
-		URLs:  urls,
-		Token: token,
-		Topic: topic,
+		URLs:      urls,
+		Token:     token,
+		Topic:     topic,
+		NoLogging: noLogging,
 	}
 }
 
 func (c *Config) Clone() *Config {
 	urls := make([]string, len(c.URLs))
 	copy(urls, c.URLs)
-	return NewConfig(urls, c.Token, c.Topic)
+	return NewConfig(urls, c.Token, c.Topic, c.NoLogging)
 }
 
 func (c *Config) getURLString() (string, error) {

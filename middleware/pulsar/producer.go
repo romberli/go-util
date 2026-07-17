@@ -9,6 +9,8 @@ import (
 
 	"github.com/romberli/go-util/common"
 	"github.com/romberli/go-util/constant"
+
+	pulsarlog "github.com/apache/pulsar-client-go/pulsar/log"
 )
 
 const (
@@ -30,6 +32,9 @@ func NewProducer(config *Config, name string) (*Producer, error) {
 
 	clientOpts := pulsar.ClientOptions{
 		URL: url,
+	}
+	if config.NoLogging {
+		clientOpts.Logger = pulsarlog.DefaultNopLogger()
 	}
 	if config.Token != constant.EmptyString {
 		clientOpts.Authentication = pulsar.NewAuthenticationToken(config.Token)

@@ -77,7 +77,7 @@ func TestConfig_getURLString(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			config := NewConfig(tt.urls, constant.EmptyString, constant.EmptyString)
+			config := NewConfig(tt.urls, constant.EmptyString, constant.EmptyString, true)
 			result, err := config.getURLString()
 
 			if tt.expectError {
@@ -97,7 +97,7 @@ func TestConfig_getURLString(t *testing.T) {
 }
 
 func TestConfig_Clone(t *testing.T) {
-	original := NewConfig([]string{"192.168.1.1:6650", "192.168.1.2:6650"}, "token", "topic")
+	original := NewConfig([]string{"192.168.1.1:6650", "192.168.1.2:6650"}, "token", "topic", true)
 	cloned := original.Clone()
 
 	if original == cloned {

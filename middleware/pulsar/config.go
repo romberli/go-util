@@ -36,19 +36,20 @@ func (c *Config) Clone() *Config {
 }
 
 func (c *Config) getURLString() (string, error) {
-	var urls []string
+	var urlList []string
 	for _, url := range c.URLs {
 		url = strings.TrimSpace(url)
-		if url == constant.EmptyString {
-			continue
+		if url != constant.EmptyString {
+			urlList = append(urlList, url)
 		}
-		if !strings.HasPrefix(url, PulsarSchemePrefix) && !strings.HasPrefix(url, PulsarSSLSchemePrefix) {
-			url = PulsarSchemePrefix + url
-		}
-		urls = append(urls, url)
 	}
-	if len(urls) == constant.ZeroInt {
-		return constant.EmptyString, errors.Errorf("pulsar urls is empty")
+	if len(urlList) == constant.ZeroInt {
+		return constant.EmptyString, errors.Errorf("pulsar url list is empty")
 	}
-	return strings.Join(urls, constant.CommaString), nil
+	urls := strings.Join(urlList, constant.CommaString)
+	if !strings.HasPrefix(urls, PulsarSchemePrefix) && !strings.HasPrefix(urls, PulsarSSLSchemePrefix) {
+		urls = PulsarSchemePrefix + urls
+	}
+
+	return urls, nil
 }

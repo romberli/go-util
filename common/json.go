@@ -3,6 +3,7 @@ package common
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/buger/jsonparser"
@@ -162,12 +163,30 @@ func DeserializeBytes(v interface{}, t reflect.Type) interface{} {
 		}
 		return sliceValue.Interface()
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		if val.Kind() == reflect.Float64 {
-			return int(val.Float())
+		if val.Kind() == reflect.String {
+			// json.Number: parse the literal directly to avoid float64 precision loss
+			if n, err := strconv.ParseInt(val.String(), 10, 64); err == nil {
+				return int(n)
+			}
+			f, _ := strconv.ParseFloat(val.String(), 64)
+			return int(f)
 		}
-		// convert to int
 		return int(val.Float())
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		if val.Kind() == reflect.String {
+			// json.Number: parse the literal directly to avoid float64 precision loss
+			if n, err := strconv.ParseUint(val.String(), 10, 64); err == nil {
+				return uint(n)
+			}
+			f, _ := strconv.ParseFloat(val.String(), 64)
+			return uint(f)
+		}
+		return uint(val.Float())
 	case reflect.Float32, reflect.Float64:
+		if val.Kind() == reflect.String {
+			f, _ := strconv.ParseFloat(val.String(), 64)
+			return f
+		}
 		return val.Float()
 	case reflect.String:
 		return val.String()

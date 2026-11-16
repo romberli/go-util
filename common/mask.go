@@ -1,6 +1,7 @@
 package common
 
 import (
+	"bytes"
 	"encoding/json"
 	"regexp"
 	"strings"
@@ -68,7 +69,9 @@ func MaskJSONWithPatterns(jsonBytes []byte, sensitiveFields []string, sensitiveP
 	}
 
 	var data interface{}
-	err := json.Unmarshal(jsonBytes, &data)
+	decoder := json.NewDecoder(bytes.NewReader(jsonBytes))
+	decoder.UseNumber()
+	err := decoder.Decode(&data)
 	if err != nil {
 		return jsonBytes, errors.Trace(err)
 	}

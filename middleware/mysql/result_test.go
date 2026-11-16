@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/buger/jsonparser"
+	gomysql "github.com/go-mysql-org/go-mysql/mysql"
 	"github.com/romberli/log"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap/zapcore"
@@ -221,4 +222,43 @@ func TestResult_Unmarshal(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func TestResult_JSONNumberRoundTrip(t *testing.T) {
+	asst := assert.New(t)
+
+	raw := &gomysql.Result{
+		InsertId:     9007199254740993,
+		AffectedRows: 1,
+		Resultset: &gomysql.Resultset{
+			Fields:     []*gomysql.Field{{Name: []byte("id")}},
+			FieldNames: map[string]int{"id": 0},
+			Values: [][]gomysql.FieldValue{
+				{gomysql.NewFieldValue(gomysql.FieldValueTypeSigned, uint64(int64(1234567890123456789)), nil)},
+			},
+		},
+	}
+	r := NewResult(raw)
+	b, err := r.MarshalJSON()
+	asst.Nil(err, "test MarshalJSON() failed")
+
+	r2 := NewResult(nil)
+	err = r2.UnmarshalJSON(b)
+	asst.Nil(err, "test UnmarshalJSON() failed")
+
+	id, err := r2.GetInt64ByName(0, "id")
+	asst.Nil(err, "test GetInt64ByName() failed")
+	asst.Equal(int64(1234567890123456789), id, "test UnmarshalJSON() failed")
+
+	insertID, err := r2.LastInsertID()
+	asst.Nil(err, "test LastInsertID() failed")
+	asst.Equal(9007199254740993, insertID, "test UnmarshalJSON() failed")
+
+	type idStruct struct {
+		ID int64 `middleware:"id"`
+	}
+	list := []*idStruct{{}}
+	err = r2.MapToStructSlice(list, constant.DefaultMiddlewareTag)
+	asst.Nil(err, "test MapToStructSlice() failed")
+	asst.Equal(int64(1234567890123456789), list[0].ID, "test MapToStructSlice() failed")
 }

@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"encoding/base64"
 	"testing"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -57,4 +58,22 @@ func TestAuth_ParseUnverified(t *testing.T) {
 	err = testAuth.ParseUnverified(token, &u)
 	asst.Nil(err, common.CombineMessageWithError("test ParseUnverified() failed", err))
 	t.Logf("%+v", u)
+}
+
+func TestAuth_ParseUnverified_JSONNumber(t *testing.T) {
+	asst := assert.New(t)
+
+	// handcrafted token: ParseUnverified does not verify the signature,
+	// so this case does not depend on the RSA signing fixture
+	header := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"RS256","typ":"JWT"}`))
+	payload := base64.RawURLEncoding.EncodeToString([]byte(`{"uid":9007199254740993}`))
+	signature := base64.RawURLEncoding.EncodeToString([]byte("signature"))
+	token := header + "." + payload + "." + signature
+
+	u := &struct {
+		UID int64 `json:"uid"`
+	}{}
+	err := testAuth.ParseUnverified(token, u)
+	asst.Nil(err, common.CombineMessageWithError("test ParseUnverified() failed", err))
+	asst.Equal(int64(9007199254740993), u.UID, "test ParseUnverified() failed")
 }

@@ -1,6 +1,7 @@
 package common
 
 import (
+	"bytes"
 	"encoding/json"
 	"reflect"
 	"testing"
@@ -134,4 +135,36 @@ func TestJSON_MaskJSONWithPatterns(t *testing.T) {
 	masked, err = MaskJSONWithPatterns(data, DefaultSensitiveKeywords, DefaultSensitivePatterns, "PaSSWord")
 	asst.Nil(err, "test MaskJSON() failed")
 	asst.Equal(string(data), string(masked), "test MaskJSON() failed")
+
+	// large integers must keep precision after masking
+	data = []byte(`{"id": 9007199254740993, "password": "sssss"}`)
+	masked, err = MaskJSONWithPatterns(data, DefaultSensitiveKeywords, DefaultSensitivePatterns)
+	asst.Nil(err, "test MaskJSON() failed")
+	asst.Equal(`{"id":9007199254740993,"password":"******"}`, string(masked), "test MaskJSON() failed")
+}
+
+func TestDeserializeBytes_JSONNumber(t *testing.T) {
+	asst := assert.New(t)
+
+	type numberStruct struct {
+		Int64Prop   int64   `json:"int64_prop"`
+		Uint64Prop  uint64  `json:"uint64_prop"`
+		IntProp     int     `json:"int_prop"`
+		Float64Prop float64 `json:"float64_prop"`
+	}
+
+	data := []byte(`{"int64_prop": 9007199254740993, "uint64_prop": 18446744073709551615, "int_prop": 1234567890123456789, "float64_prop": 1.5}`)
+	var raw map[string]interface{}
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.UseNumber()
+	err := decoder.Decode(&raw)
+	asst.Nil(err, "test DeserializeBytes() failed")
+
+	deserialized := DeserializeBytes(raw, reflect.TypeOf(numberStruct{}))
+	result, ok := deserialized.(numberStruct)
+	asst.True(ok, "test DeserializeBytes() failed")
+	asst.Equal(int64(9007199254740993), result.Int64Prop, "test DeserializeBytes() failed")
+	asst.Equal(uint64(18446744073709551615), result.Uint64Prop, "test DeserializeBytes() failed")
+	asst.Equal(1234567890123456789, result.IntProp, "test DeserializeBytes() failed")
+	asst.Equal(1.5, result.Float64Prop, "test DeserializeBytes() failed")
 }

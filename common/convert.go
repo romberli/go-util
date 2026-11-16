@@ -32,7 +32,7 @@ func ConvertNumberToString(in interface{}) (string, error) {
 
 	switch inType.Kind() {
 	case reflect.String:
-		return in.(string), nil
+		return reflect.ValueOf(in).String(), nil
 	case reflect.Bool:
 		if in.(bool) == true {
 			return constant.TrueString, nil
@@ -268,7 +268,7 @@ func ConvertToBool(in interface{}) (bool, error) {
 	switch in.(type) {
 	case bool:
 		return in.(bool), nil
-	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, json.Number:
 		v, err := ConvertToInt(in)
 		if err != nil {
 			return false, err
@@ -327,6 +327,10 @@ func ConvertToInt64(in interface{}) (int64, error) {
 		return int64(v), nil
 	case float64:
 		return int64(v), nil
+	case json.Number:
+		value, err := v.Int64()
+
+		return value, errors.Trace(err)
 	case string:
 		value, err := strconv.ParseInt(v, 10, 64)
 
@@ -395,6 +399,13 @@ func ConvertToFloat(in interface{}) (float64, error) {
 		return float64(v), nil
 	case float64:
 		return v, nil
+	case json.Number:
+		value, err := v.Float64()
+		if err != nil {
+			return constant.ZeroInt, errors.Trace(err)
+		}
+
+		return value, nil
 	case string:
 		value, err := strconv.ParseFloat(v, 64)
 		if err != nil {
@@ -420,6 +431,8 @@ func ConvertToString(in interface{}) (string, error) {
 	switch v := in.(type) {
 	case string:
 		return v, nil
+	case json.Number:
+		return v.String(), nil
 	case []byte:
 		return BytesToString(v), nil
 	case int, int8, int16, int32, int64,

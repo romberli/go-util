@@ -1,11 +1,13 @@
 package mysql
 
 import (
+	"bytes"
 	"database/sql/driver"
 	"encoding/json"
 	"reflect"
 
 	"github.com/go-mysql-org/go-mysql/mysql"
+	"github.com/pingcap/errors"
 
 	"github.com/romberli/go-util/common"
 	"github.com/romberli/go-util/constant"
@@ -98,9 +100,11 @@ func (r *Result) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON custom unmarshal method to handle []uint8 to string conversion
 func (r *Result) UnmarshalJSON(data []byte) error {
 	var raw map[string]interface{}
-	err := json.Unmarshal(data, &raw)
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.UseNumber()
+	err := decoder.Decode(&raw)
 	if err != nil {
-		return err
+		return errors.Trace(err)
 	}
 
 	deserialized := common.DeserializeBytes(raw, reflect.TypeOf(*r))

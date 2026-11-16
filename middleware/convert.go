@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"database/sql/driver"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -66,6 +67,8 @@ func ConvertToString(arg interface{}) (string, error) {
 	case int, int8, int16, int32, int64,
 		uint, uint8, uint16, uint32, uint64:
 		return fmt.Sprintf("%d", v), nil
+	case json.Number:
+		return string(v), nil
 	case float32:
 		return strconv.FormatFloat(float64(v), 'f', -1, 64), nil
 	case float64:

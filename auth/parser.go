@@ -18,20 +18,16 @@ const (
 	tokenPrefix = "Bearer"
 )
 
-type Parser struct {
-	useJSONNumber bool
-}
+type Parser struct{}
 
-// NewParser returns a new *Parser
-func NewParser(useJSONNumber bool) *Parser {
-	return &Parser{
-		useJSONNumber: useJSONNumber,
-	}
+// NewParser returns a new *Parser, claim numbers are decoded as json.Number to preserve precision
+func NewParser() *Parser {
+	return &Parser{}
 }
 
 // NewParserWithDefault returns a new *Parser with default options
 func NewParserWithDefault() *Parser {
-	return NewParser(true)
+	return NewParser()
 }
 
 // Parse parses the token string and verifies the signature
@@ -52,7 +48,6 @@ func (p *Parser) Parse(tokenString string, key []byte) (*Token, error) {
 	if len(parts) != constant.ThreeInt {
 		return nil, errors.Errorf("token contains an invalid number of segments, expected 3, actual: %d", len(parts))
 	}
-
 	err = token.Method.Verify(strings.Join(parts[:constant.TwoInt], constant.DotString), token.Signature, key)
 	if err != nil {
 		return token, errors.Trace(err)
@@ -131,19 +126,11 @@ func (p *Parser) ParseUnverified(tokenString string) (*Token, error) {
 		}
 	}
 
-	if p.useJSONNumber {
-		decoder := json.NewDecoder(bytes.NewBuffer(payloadBytes))
-		decoder.UseNumber()
-
-		err = decoder.Decode(&token.Claims)
-		if err != nil {
-			return nil, errors.Trace(err)
-		}
-	} else {
-		err = json.Unmarshal(payloadBytes, &token.Claims)
-		if err != nil {
-			return nil, errors.Trace(err)
-		}
+	decoder := json.NewDecoder(bytes.NewBuffer(payloadBytes))
+	decoder.UseNumber()
+	err = decoder.Decode(&token.Claims)
+	if err != nil {
+		return nil, errors.Trace(err)
 	}
 
 	// signature
